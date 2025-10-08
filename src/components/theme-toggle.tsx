@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = React.useState<'dark' | 'light'>('light');
   const [isMounted, setIsMounted] = React.useState(false);
+  const [theme, setTheme] = React.useState<'dark' | 'light'>('light');
 
   React.useEffect(() => {
     setIsMounted(true);
