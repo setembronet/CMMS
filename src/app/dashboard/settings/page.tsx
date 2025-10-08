@@ -8,36 +8,36 @@ import { Separator } from "@/components/ui/separator";
 export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-3xl font-bold font-headline">Settings</h1>
+      <h1 className="text-3xl font-bold font-headline">Configurações</h1>
       
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Update your personal information.</CardDescription>
+          <CardTitle>Perfil</CardTitle>
+          <CardDescription>Atualize suas informações pessoais.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nome</Label>
             <Input id="name" defaultValue="Admin Master" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" defaultValue="admin@tenantcare.com" />
           </div>
-          <Button>Save Changes</Button>
+          <Button>Salvar Alterações</Button>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Customize the look and feel of the application.</CardDescription>
+          <CardTitle>Aparência</CardTitle>
+          <CardDescription>Personalize a aparência do aplicativo.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <Label>Theme</Label>
-              <p className="text-sm text-muted-foreground">Select your preferred color scheme.</p>
+              <Label>Tema</Label>
+              <p className="text-sm text-muted-foreground">Selecione seu esquema de cores preferido.</p>
             </div>
             <ThemeToggle />
           </div>
@@ -46,23 +46,23 @@ export default function SettingsPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Password</CardTitle>
-          <CardDescription>Change your password. It is recommended to use a strong password.</CardDescription>
+          <CardTitle>Senha</CardTitle>
+          <CardDescription>Altere sua senha. É recomendável usar uma senha forte.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="current-password">Current Password</Label>
+            <Label htmlFor="current-password">Senha Atual</Label>
             <Input id="current-password" type="password" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-password">New Password</Label>
+            <Label htmlFor="new-password">Nova Senha</Label>
             <Input id="new-password" type="password" />
           </div>
            <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm New Password</Label>
+            <Label htmlFor="confirm-password">Confirme a Nova Senha</Label>
             <Input id="confirm-password" type="password" />
           </div>
-          <Button>Update Password</Button>
+          <Button>Atualizar Senha</Button>
         </CardContent>
       </Card>
     </div>

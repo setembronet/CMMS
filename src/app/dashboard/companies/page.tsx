@@ -82,23 +82,23 @@ export default function CompaniesPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Company Management</h1>
+        <h1 className="text-3xl font-bold font-headline">Gestão de Empresas</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          New Company
+          Nova Empresa
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead>Nome</TableHead>
               <TableHead>CNPJ</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Segment</TableHead>
-              <TableHead>Asset Limit</TableHead>
+              <TableHead>Segmento</TableHead>
+              <TableHead>Limite de Ativos</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -120,13 +120,13 @@ export default function CompaniesPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
+                        <span className="sr-only">Abrir menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(company)}>
-                        Edit
+                        Editar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -140,15 +140,15 @@ export default function CompaniesPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{editingCompany ? 'Edit Company' : 'New Company'}</DialogTitle>
+            <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             <DialogDescription>
-              {editingCompany ? 'Update the details of the company.' : 'Fill in the details for the new company.'}
+              {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveCompany}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Name</Label>
+                <Label htmlFor="name" className="text-right">Nome</Label>
                 <Input id="name" name="name" defaultValue={editingCompany?.name} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -160,25 +160,25 @@ export default function CompaniesPage() {
                 <Input id="email" name="email" type="email" defaultValue={editingCompany?.email} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="segment" className="text-right">Segment</Label>
+                <Label htmlFor="segment" className="text-right">Segmento</Label>
                 <Select name="segment" defaultValue={editingCompany?.activeSegment}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a segment" />
+                    <SelectValue placeholder="Selecione um segmento" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ELEVADOR">Elevator</SelectItem>
-                    <SelectItem value="ESCADA_ROLANTE">Escalator</SelectItem>
+                    <SelectItem value="ELEVADOR">Elevador</SelectItem>
+                    <SelectItem value="ESCADA_ROLANTE">Escada Rolante</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="assetLimit" className="text-right">Asset Limit</Label>
+                <Label htmlFor="assetLimit" className="text-right">Limite de Ativos</Label>
                 <Input id="assetLimit" name="assetLimit" type="number" defaultValue={editingCompany?.assetLimit} className="col-span-3" required />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
-              <Button type="submit">Save</Button>
+              <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
+              <Button type="submit">Salvar</Button>
             </DialogFooter>
           </form>
         </DialogContent>

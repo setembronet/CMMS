@@ -21,13 +21,13 @@ import { Logo } from '@/components/logo';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/dashboard/companies', label: 'Companies', icon: Building2 },
-  { href: '/dashboard/users', label: 'Users', icon: Users },
-  { href: '/dashboard/assets', label: 'Assets', icon: Wrench },
-  { href: '/dashboard/orders', label: 'Work Orders', icon: ClipboardList },
+  { href: '/dashboard/companies', label: 'Empresas', icon: Building2 },
+  { href: '/dashboard/users', label: 'Usuários', icon: Users },
+  { href: '/dashboard/assets', label: 'Ativos', icon: Wrench },
+  { href: '/dashboard/orders', label: 'Ordens de Serviço', icon: ClipboardList },
 ];
 
-const bottomLinks = [{ href: '/dashboard/settings', label: 'Settings', icon: Settings }];
+const bottomLinks = [{ href: '/dashboard/settings', label: 'Configurações', icon: Settings }];
 
 export function SidebarNav() {
   const pathname = usePathname();

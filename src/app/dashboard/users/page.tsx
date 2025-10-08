@@ -82,21 +82,21 @@ export default function UsersPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">User Management</h1>
+        <h1 className="text-3xl font-bold font-headline">Gestão de Usuários</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          New User
+          Novo Usuário
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Company</TableHead>
-              <TableHead>Squad</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Usuário</TableHead>
+              <TableHead>Função</TableHead>
+              <TableHead>Empresa</TableHead>
+              <TableHead>Equipe</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -121,13 +121,13 @@ export default function UsersPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
+                        <span className="sr-only">Abrir menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(user)}>
-                        Edit
+                        Editar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -141,12 +141,12 @@ export default function UsersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{editingUser ? 'Edit User' : 'New User'}</DialogTitle>
+            <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveUser}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Name</Label>
+                <Label htmlFor="name" className="text-right">Nome</Label>
                 <Input id="name" name="name" defaultValue={editingUser?.name} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -154,10 +154,10 @@ export default function UsersPage() {
                 <Input id="email" name="email" type="email" defaultValue={editingUser?.email} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="role" className="text-right">Role</Label>
+                <Label htmlFor="role" className="text-right">Função</Label>
                 <Select name="role" defaultValue={editingUser?.role}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a role" />
+                    <SelectValue placeholder="Selecione uma função" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Gestor de Empresa">Gestor de Empresa</SelectItem>
@@ -166,10 +166,10 @@ export default function UsersPage() {
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="clientId" className="text-right">Company</Label>
+                <Label htmlFor="clientId" className="text-right">Empresa</Label>
                 <Select name="clientId" defaultValue={editingUser?.clientId || undefined}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a company" />
+                    <SelectValue placeholder="Selecione uma empresa" />
                   </SelectTrigger>
                   <SelectContent>
                     {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -177,13 +177,13 @@ export default function UsersPage() {
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="squad" className="text-right">Squad</Label>
-                <Input id="squad" name="squad" defaultValue={editingUser?.squad} className="col-span-3" placeholder="Optional for technicians" />
+                <Label htmlFor="squad" className="text-right">Equipe</Label>
+                <Input id="squad" name="squad" defaultValue={editingUser?.squad} className="col-span-3" placeholder="Opcional para técnicos" />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
-              <Button type="submit">Save</Button>
+              <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
+              <Button type="submit">Salvar</Button>
             </DialogFooter>
           </form>
         </DialogContent>
