@@ -71,8 +71,7 @@ export default function CMMSUsersPage() {
   const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => cmmsRoles.includes(u.cmmsRole as CMMSUserRole)));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
-  const [roles, setRoles] = React.useState<CMMSUserRole[]>(cmmsRoles);
-  const [newRole, setNewRole] = React.useState('');
+  const [roles] = React.useState<CMMSUserRole[]>(cmmsRoles);
   const [formData, setFormData] = React.useState(emptyUser);
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
 
@@ -95,14 +94,12 @@ export default function CMMSUsersPage() {
     const userData = user ? { ...user, password: '', confirmPassword: '' } : emptyUser;
     setFormData(userData);
     setPasswordStrength(null);
-    setNewRole('');
     setIsDialogOpen(true);
   };
 
   const closeDialog = () => {
     setEditingUser(null);
     setIsDialogOpen(false);
-    setNewRole('');
     setFormData(emptyUser);
   };
 
@@ -121,15 +118,6 @@ export default function CMMSUsersPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddNewRole = () => {
-    const formattedRole = newRole.trim().toUpperCase().replace(/\s/g, '_') as CMMSUserRole;
-    if (newRole && !roles.includes(formattedRole)) {
-      setRoles([...roles, formattedRole]);
-      setFormData(prev => ({...prev, cmmsRole: formattedRole}));
-      setNewRole('');
-    }
-  };
-  
   const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -285,21 +273,6 @@ export default function CMMSUsersPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Nova Função CMMS</Label>
-                  <div className="flex gap-2">
-                      <Input 
-                          id="new-role"
-                          placeholder="Ex: Supervisor" 
-                          value={newRole}
-                          onChange={(e) => setNewRole(e.target.value)}
-                      />
-                      <Button type="button" variant="secondary" onClick={handleAddNewRole}>
-                          Adicionar
-                      </Button>
-                  </div>
                 </div>
                 
                 <div className="space-y-2">
