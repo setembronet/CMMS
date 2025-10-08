@@ -14,8 +14,8 @@ import {
   LayoutGrid,
   Package,
   Puzzle,
-  UserCog,
   UserSquare,
+  LogOut,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -154,6 +154,14 @@ export function SidebarNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: 'Sair' }}>
+                    <Link href="/login">
+                        <LogOut />
+                        <span>Sair</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
     </>
