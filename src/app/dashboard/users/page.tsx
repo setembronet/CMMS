@@ -170,12 +170,12 @@ export default function UsersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <form id="user-form" onSubmit={handleSaveUser}>
-            <div className="grid gap-4 py-4">
+          <div className="flex-grow overflow-y-auto -mx-6 px-6">
+            <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4">
               <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
                     {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
@@ -239,12 +239,12 @@ export default function UsersPage() {
                 <Label htmlFor="squad">Equipe</Label>
                 <Input id="squad" name="squad" value={formData.squad} onChange={handleInputChange} placeholder="Opcional para técnicos" />
               </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-              <Button type="submit">Salvar</Button>
-            </DialogFooter>
-          </form>
+            </form>
+          </div>
+          <DialogFooter className="pt-4 mt-auto border-t bg-background">
+            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
+            <Button type="submit" form="user-form">Salvar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
