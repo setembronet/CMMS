@@ -1,3 +1,4 @@
+
 import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -7,6 +8,7 @@ export const plans: Plan[] = [
   {
     id: 'plan_free',
     name: 'Free',
+    price: 0,
     assetLimit: 5,
     technicianUserLimit: 1,
     hasMultiModuleAccess: false,
@@ -17,6 +19,7 @@ export const plans: Plan[] = [
   {
     id: 'plan_pro',
     name: 'Pró',
+    price: 249,
     assetLimit: 50,
     technicianUserLimit: -1, // Unlimited
     hasMultiModuleAccess: true,
@@ -27,6 +30,7 @@ export const plans: Plan[] = [
   {
     id: 'plan_enterprise',
     name: 'Enterprise',
+    price: 999,
     assetLimit: 500,
     technicianUserLimit: -1, // Unlimited
     hasMultiModuleAccess: true,

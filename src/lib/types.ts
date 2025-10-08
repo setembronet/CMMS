@@ -1,3 +1,4 @@
+
 export type UserRole = string;
 export type CompanySegment = string;
 export type CompanyStatus = 'active' | 'inactive';
@@ -24,6 +25,7 @@ export type User = {
 export type Plan = {
   id: string;
   name: string;
+  price: number;
   assetLimit: number;
   technicianUserLimit: number; // -1 for unlimited
   hasMultiModuleAccess: boolean;

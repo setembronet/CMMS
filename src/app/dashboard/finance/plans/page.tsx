@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -36,6 +37,7 @@ import { Separator } from '@/components/ui/separator';
 const emptyPlan: Plan = {
   id: '',
   name: '',
+  price: 0,
   assetLimit: 0,
   technicianUserLimit: 0,
   hasMultiModuleAccess: false,
@@ -103,6 +105,7 @@ export default function PlansPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome do Plano</TableHead>
+              <TableHead>Valor Mensal</TableHead>
               <TableHead>Limite de Ativos</TableHead>
               <TableHead>Limite de Técnicos</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -112,6 +115,7 @@ export default function PlansPage() {
             {plans.map(plan => (
               <TableRow key={plan.id}>
                 <TableCell className="font-medium">{plan.name}</TableCell>
+                <TableCell>R$ {plan.price.toLocaleString('pt-BR')}</TableCell>
                 <TableCell>{plan.assetLimit === -1 ? 'Ilimitado' : plan.assetLimit}</TableCell>
                 <TableCell>{plan.technicianUserLimit === -1 ? 'Ilimitado' : plan.technicianUserLimit}</TableCell>
                 <TableCell className="text-right">
@@ -145,9 +149,15 @@ export default function PlansPage() {
           </DialogHeader>
           <div className='flex-grow overflow-y-auto -mx-6 px-6'>
             <form onSubmit={handleSavePlan} id="plan-form" className="space-y-6 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome do Plano</Label>
-                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="name">Nome do Plano</Label>
+                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="price">Valor Mensal (R$)</Label>
+                    <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} required />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
