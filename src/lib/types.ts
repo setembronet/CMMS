@@ -1,10 +1,17 @@
 
-export type UserRole = string;
 export type CompanySegment = string;
 export type CompanyStatus = 'active' | 'inactive';
 export type OrderStatus = 'ABERTO' | 'FECHADO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta';
-export type CoreUserRole = 'ADMIN' | 'OPERATOR' | 'VIEWER';
+
+// Roles for SaaS management (internal users)
+export type SaaSUserRole = 'ADMIN' | 'FINANCEIRO' | 'SUPORTE' | 'VIEWER';
+
+// Roles for CMMS client users (external users)
+export type CMMSUserRole = 'GESTOR' | 'TECNICO' | 'TECNICO_TERCERIZADO' | 'SINDICO' | string;
+
+export type UserRole = SaaSUserRole | CMMSUserRole;
+
 export type SubscriptionStatus = 'ATIVA' | 'CANCELADA' | 'PAUSADA';
 export type BillingPeriod = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'ANNUALLY';
 export type InvoiceStatus = 'PENDENTE' | 'PAGO' | 'CANCELADO' | 'ATRASADO';
@@ -15,7 +22,8 @@ export type User = {
   name: string;
   email: string;
   role: UserRole;
-  coreRole: CoreUserRole;
+  saasRole: SaaSUserRole;
+  cmmsRole: CMMSUserRole | null;
   clientId: string | null;
   clientName?: string; 
   squad?: string;

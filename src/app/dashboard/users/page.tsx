@@ -34,33 +34,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { users as initialUsers, companies } from '@/lib/data';
-import type { User, UserRole, CoreUserRole } from '@/lib/types';
+import { users as initialUsers } from '@/lib/data';
+import type { User, SaaSUserRole } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const initialRoles: UserRole[] = ['Gestor de Empresa', 'Técnico'];
-const coreRoles: CoreUserRole[] = ['ADMIN', 'OPERATOR', 'VIEWER'];
+const saasRoles: SaaSUserRole[] = ['ADMIN', 'FINANCEIRO', 'SUPORTE'];
 
 const emptyUser: User = {
     id: '',
     name: '',
     email: '',
     role: '',
-    coreRole: 'VIEWER',
+    saasRole: 'SUPORTE',
     clientId: null,
     clientName: '',
     squad: '',
     avatarUrl: ''
 };
 
-export default function UsersPage() {
-  const [users, setUsers] = React.useState<User[]>(initialUsers);
+export default function SaaSUsersPage() {
+  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => saasRoles.includes(u.saasRole as SaaSUserRole)));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
-  const [roles, setRoles] = React.useState<UserRole[]>(initialRoles);
-  const [newRole, setNewRole] = React.useState('');
   const [formData, setFormData] = React.useState<User>(emptyUser);
 
 
@@ -73,7 +70,6 @@ export default function UsersPage() {
   const closeDialog = () => {
     setEditingUser(null);
     setIsDialogOpen(false);
-    setNewRole('');
     setFormData(emptyUser);
   };
 
@@ -85,24 +81,14 @@ export default function UsersPage() {
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleAddNewRole = () => {
-    if (newRole && !roles.includes(newRole)) {
-      const formattedRole = newRole.trim();
-      setRoles([...roles, formattedRole]);
-      setFormData(prev => ({...prev, role: formattedRole}));
-      setNewRole('');
-    }
-  };
   
   const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const client = companies.find(c => c.id === formData.clientId);
 
     const newUser: User = {
       ...formData,
       id: editingUser?.id || `user-0${users.length + 1}`,
-      clientName: client?.name,
+      role: formData.saasRole, // Role is the saasRole for these users
     };
 
     if (editingUser) {
@@ -116,7 +102,7 @@ export default function UsersPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Gestão de Usuários</h1>
+        <h1 className="text-3xl font-bold font-headline">Usuários do SaaS</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Novo Usuário
@@ -128,13 +114,11 @@ export default function UsersPage() {
             <TableRow>
               <TableHead>Usuário</TableHead>
               <TableHead>Função</TableHead>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Equipe</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.filter(u => u.coreRole !== 'ADMIN').map((user) => (
+            {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-3">
@@ -148,9 +132,7 @@ export default function UsersPage() {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell><Badge variant="secondary">{user.role}</Badge></TableCell>
-                <TableCell>{user.clientName}</TableCell>
-                <TableCell>{user.squad || 'N/A'}</TableCell>
+                <TableCell><Badge variant="secondary">{user.saasRole}</Badge></TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -173,95 +155,48 @@ export default function UsersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <div className="flex-grow overflow-y-auto -mx-6 px-6">
-            <ScrollArea className="h-full pr-6">
-              <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                      {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
-                      <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="w-full space-y-2">
-                      <Label htmlFor="avatarUrl">URL do Avatar</Label>
-                      <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="coreRole">Nível de Acesso (Segurança)</Label>
-                  <Select name="coreRole" value={formData.coreRole} onValueChange={(value) => handleSelectChange('coreRole', value as CoreUserRole)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o nível de acesso" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {coreRoles.map(role => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="role">Função (Exibição)</Label>
-                  <Select name="role" value={formData.role} onValueChange={(value) => handleSelectChange('role', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma função" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map(role => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Nova Função (Exibição)</Label>
-                  <div className="flex gap-2">
-                      <Input 
-                          id="new-role"
-                          placeholder="Ex: Supervisor" 
-                          value={newRole}
-                          onChange={(e) => setNewRole(e.target.value)}
-                      />
-                      <Button type="button" variant="secondary" onClick={handleAddNewRole}>
-                          Adicionar
-                      </Button>
+          <div className='flex-grow overflow-y-auto -mx-6 px-6'>
+            <form id="user-form" onSubmit={handleSaveUser} className="space-y-4 py-4">
+              <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
+                    <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="w-full space-y-2">
+                    <Label htmlFor="avatarUrl">URL do Avatar</Label>
+                    <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="clientId">Empresa</Label>
-                  <Select name="clientId" value={formData.clientId || undefined} onValueChange={(value) => handleSelectChange('clientId', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma empresa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="squad">Equipe</Label>
-                  <Input id="squad" name="squad" value={formData.squad} onChange={handleInputChange} placeholder="Opcional para técnicos" />
-                </div>
-              </form>
-            </ScrollArea>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="saasRole">Função SaaS</Label>
+                <Select name="saasRole" value={formData.saasRole} onValueChange={(value) => handleSelectChange('saasRole', value as SaaSUserRole)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a função" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {saasRoles.map(role => (
+                      <SelectItem key={role} value={role}>{role}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </form>
           </div>
-          <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6">
+          <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6 sticky bottom-0">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="user-form">Salvar</Button>
           </DialogFooter>

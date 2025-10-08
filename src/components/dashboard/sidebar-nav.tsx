@@ -14,6 +14,7 @@ import {
   LayoutGrid,
   Package,
   Puzzle,
+  UserCog,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -33,7 +34,7 @@ import React from 'react';
 const mainLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/dashboard/companies', label: 'Empresas', icon: Building2 },
-  { href: '/dashboard/users', label: 'Usuários', icon: Users },
+  { href: '/dashboard/users', label: 'Usuários do SaaS', icon: Users },
   { href: '/dashboard/assets', label: 'Ativos', icon: Wrench },
   { href: '/dashboard/orders', label: 'Ordens de Serviço', icon: ClipboardList },
 ];
@@ -44,19 +45,25 @@ const financeLinks = [
     { href: '/dashboard/finance/addons', label: 'Add-ons', icon: Puzzle },
 ];
 
+const cmmsSettingsLinks = [
+    { href: '/dashboard/cmms-users', label: 'Usuários CMMS', icon: UserCog },
+];
+
 const bottomLinks = [{ href: '/dashboard/settings', label: 'Configurações', icon: Settings }];
 
 export function SidebarNav() {
   const pathname = usePathname();
 
   const isActive = (href: string, isSubItem: boolean = false) => {
-    if (isSubItem) {
+    // Exact match for sub-items or dashboard, startsWith for others
+    if (isSubItem || href === '/dashboard') {
         return pathname === href;
     }
-    return pathname.startsWith(href) && (pathname === href || href !== '/dashboard');
+    return pathname.startsWith(href);
   };
 
   const isFinanceActive = financeLinks.some(link => isActive(link.href, true));
+  const isCmmsSettingsActive = cmmsSettingsLinks.some(link => isActive(link.href, true));
 
   return (
     <>
@@ -111,11 +118,41 @@ export function SidebarNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
-
         </SidebarMenu>
       </SidebarContent>
       <SidebarContent className="p-2 mt-auto">
         <SidebarMenu>
+          <Collapsible asChild defaultOpen={isCmmsSettingsActive}>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                         <SidebarMenuButton
+                            isActive={isCmmsSettingsActive}
+                            className="justify-between"
+                            tooltip={{ children: 'Configurações do CMMS' }}
+                         >
+                            <div className="flex items-center gap-2">
+                                <Settings />
+                                <span>Config. CMMS</span>
+                            </div>
+                            <ChevronDown className={cn("transition-transform duration-200", isCmmsSettingsActive && "rotate-180")} />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {cmmsSettingsLinks.map(link => (
+                                 <SidebarMenuSubItem key={link.href}>
+                                     <SidebarMenuSubButton asChild isActive={isActive(link.href, true)}>
+                                        <Link href={link.href}>
+                                            <link.icon />
+                                            <span>{link.label}</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                 </SidebarMenuSubItem>
+                            ))}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+           </Collapsible>
           {bottomLinks.map((link) => (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
