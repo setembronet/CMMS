@@ -30,6 +30,13 @@ import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { assets as initialAssets, companies, segments } from '@/lib/data';
 import type { Asset } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const emptyAsset: Asset = {
   id: '',
@@ -56,7 +63,7 @@ export default function AssetsPage() {
 
   const openDialog = (asset: Asset | null = null) => {
     setEditingAsset(asset);
-    setFormData(asset || emptyAsset);
+    setFormData(asset || {...emptyAsset, id: `asset-${Date.now()}`});
     setIsDialogOpen(true);
   };
 
@@ -65,9 +72,22 @@ export default function AssetsPage() {
     setIsDialogOpen(false);
   };
   
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: keyof Asset, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic for saving will be added here
+    if (editingAsset) {
+        setAssets(assets.map(asset => asset.id === formData.id ? formData : asset));
+    } else {
+        setAssets([formData, ...assets]);
+    }
     console.log('Saving asset:', formData);
     closeDialog();
   };
@@ -131,11 +151,29 @@ export default function AssetsPage() {
           <form id="asset-form" onSubmit={handleSave} className="space-y-4 py-4">
               <div className="space-y-2">
                   <Label htmlFor="name">Nome do Ativo</Label>
-                  <Input id="name" name="name" value={formData.name} required />
+                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
               </div>
                <div className="space-y-2">
                   <Label htmlFor="serialNumber">Número de Série</Label>
-                  <Input id="serialNumber" name="serialNumber" value={formData.serialNumber} required />
+                  <Input id="serialNumber" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="clientId">Empresa</Label>
+                <Select name="clientId" value={formData.clientId} onValueChange={(value) => handleSelectChange('clientId', value)} required>
+                    <SelectTrigger><SelectValue placeholder="Selecione uma empresa" /></SelectTrigger>
+                    <SelectContent>
+                        {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="activeSegment">Segmento</Label>
+                <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)} required>
+                    <SelectTrigger><SelectValue placeholder="Selecione um segmento" /></SelectTrigger>
+                    <SelectContent>
+                        {segments.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
               </div>
           </form>
           <DialogFooter>
