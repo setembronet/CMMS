@@ -39,20 +39,40 @@ import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { companies as initialCompanies } from '@/lib/data';
 import type { Company } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialSegments = ['ELEVADOR', 'ESCADA_ROLANTE'];
+
+const emptyCompany: Company = {
+  id: '',
+  name: '',
+  cnpj: '',
+  email: '',
+  phone: '',
+  status: 'active',
+  activeSegment: '',
+  assetLimit: 0,
+  address: {
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    zipCode: '',
+  },
+};
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
+  const [formData, setFormData] = React.useState<Company>(emptyCompany);
   const [segments, setSegments] = React.useState<string[]>(initialSegments);
   const [newSegment, setNewSegment] = React.useState('');
 
-
   const openDialog = (company: Company | null = null) => {
     setEditingCompany(company);
+    setFormData(company || emptyCompany);
     setIsDialogOpen(true);
   };
 
@@ -60,36 +80,72 @@ export default function CompaniesPage() {
     setEditingCompany(null);
     setIsDialogOpen(false);
     setNewSegment('');
+    setFormData(emptyCompany);
   };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          // @ts-ignore
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
+     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, '');
+    if (cep.length !== 8) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await response.json();
+      if (!data.erro) {
+        setFormData(prev => ({
+          ...prev,
+          address: {
+            ...prev.address,
+            street: data.logradouro,
+            neighborhood: data.bairro,
+            city: data.localidade,
+            state: data.uf,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error("Falha ao buscar CEP:", error);
+    }
+  };
+
 
   const handleAddNewSegment = () => {
     if (newSegment && !segments.includes(newSegment.toUpperCase().replace(/\s/g, '_'))) {
-      setSegments([...segments, newSegment.toUpperCase().replace(/\s/g, '_')]);
+      const formattedSegment = newSegment.toUpperCase().replace(/\s/g, '_');
+      setSegments([...segments, formattedSegment]);
+      setFormData(prev => ({ ...prev, activeSegment: formattedSegment }));
       setNewSegment('');
     }
   };
 
   const handleSaveCompany = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
     const newCompany: Company = {
+      ...formData,
       id: editingCompany?.id || `client-0${companies.length + 1}`,
-      name: formData.get('name') as string,
-      cnpj: formData.get('cnpj') as string,
-      email: formData.get('email') as string,
-      status: editingCompany?.status || 'active',
-      activeSegment: formData.get('segment') as string,
-      assetLimit: parseInt(formData.get('assetLimit') as string),
-      phone: formData.get('phone') as string,
-      address: {
-        street: formData.get('street') as string,
-        number: formData.get('number') as string,
-        complement: formData.get('complement') as string,
-        neighborhood: formData.get('neighborhood') as string,
-        city: formData.get('city') as string,
-        state: formData.get('state') as string,
-        zipCode: formData.get('zipCode') as string,
-      }
+      assetLimit: Number(formData.assetLimit)
     };
 
     if (editingCompany) {
@@ -175,19 +231,19 @@ export default function CompaniesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="name">Nome da Empresa</Label>
-                      <Input id="name" name="name" defaultValue={editingCompany?.name} required />
+                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="cnpj">CNPJ</Label>
-                      <Input id="cnpj" name="cnpj" defaultValue={editingCompany?.cnpj} required />
+                      <Input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleInputChange} required />
                   </div>
                    <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" name="email" type="email" defaultValue={editingCompany?.email} required />
+                      <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
                   </div>
                    <div className="space-y-2">
                       <Label htmlFor="phone">Telefone</Label>
-                      <Input id="phone" name="phone" defaultValue={editingCompany?.phone} required />
+                      <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} required />
                   </div>
               </div>
 
@@ -196,31 +252,31 @@ export default function CompaniesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="zipCode">CEP</Label>
-                      <Input id="zipCode" name="zipCode" defaultValue={editingCompany?.address?.zipCode} />
+                      <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode} onChange={handleInputChange} onBlur={handleCepBlur} />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="street">Rua</Label>
-                      <Input id="street" name="street" defaultValue={editingCompany?.address?.street} />
+                      <Input id="street" name="address.street" value={formData.address?.street} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="number">Número</Label>
-                      <Input id="number" name="number" defaultValue={editingCompany?.address?.number} />
+                      <Input id="number" name="address.number" value={formData.address?.number} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="complement">Complemento</Label>
-                      <Input id="complement" name="complement" defaultValue={editingCompany?.address?.complement} />
+                      <Input id="complement" name="address.complement" value={formData.address?.complement} onChange={handleInputChange} />
                   </div>
                    <div className="space-y-2">
                       <Label htmlFor="neighborhood">Bairro</Label>
-                      <Input id="neighborhood" name="neighborhood" defaultValue={editingCompany?.address?.neighborhood} />
+                      <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="city">Cidade</Label>
-                      <Input id="city" name="city" defaultValue={editingCompany?.address?.city} />
+                      <Input id="city" name="address.city" value={formData.address?.city} onChange={handleInputChange} />
                   </div>
                    <div className="space-y-2">
                       <Label htmlFor="state">Estado</Label>
-                      <Input id="state" name="state" defaultValue={editingCompany?.address?.state} />
+                      <Input id="state" name="address.state" value={formData.address?.state} onChange={handleInputChange} />
                   </div>
               </div>
               
@@ -229,11 +285,11 @@ export default function CompaniesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="assetLimit">Limite de Ativos</Label>
-                  <Input id="assetLimit" name="assetLimit" type="number" defaultValue={editingCompany?.assetLimit} required />
+                  <Input id="assetLimit" name="assetLimit" type="number" value={String(formData.assetLimit)} onChange={handleInputChange} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="segment">Segmento</Label>
-                  <Select name="segment" defaultValue={editingCompany?.activeSegment}>
+                  <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um segmento" />
                     </SelectTrigger>
@@ -262,7 +318,7 @@ export default function CompaniesPage() {
               </div>
             </form>
           </div>
-          <DialogFooter className="pt-4 -mx-6 px-6 pb-6 border-t">
+          <DialogFooter className="pt-4 mt-4 -mx-6 px-6 pb-6 border-t bg-background">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="company-form">Salvar</Button>
           </DialogFooter>
