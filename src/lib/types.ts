@@ -56,7 +56,7 @@ export type Company = {
   email: string;
   phone?: string;
   status: CompanyStatus;
-  activeSegment: CompanySegment;
+  activeSegments: CompanySegment[];
   address?: {
     street?: string;
     number?: string;

@@ -42,8 +42,9 @@ import type { Company, Plan } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 
-const initialSegments = ['ELEVADOR', 'ESCADA_ROLANTE'];
+const initialSegments = ['ELEVADOR', 'ESCADA_ROLANTE', 'AR_CONDICIONADO'];
 
 const emptyCompany: Company = {
   id: '',
@@ -52,7 +53,7 @@ const emptyCompany: Company = {
   email: '',
   phone: '',
   status: 'active',
-  activeSegment: '',
+  activeSegments: [],
   assetLimit: 0,
   address: {
     street: '',
@@ -112,6 +113,17 @@ export default function CompaniesPage() {
      setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSegmentChange = (segment: string, checked: boolean) => {
+    setFormData(prev => {
+      const currentSegments = prev.activeSegments || [];
+      if (checked) {
+        return { ...prev, activeSegments: [...currentSegments, segment] };
+      } else {
+        return { ...prev, activeSegments: currentSegments.filter(s => s !== segment) };
+      }
+    });
+  };
+
   const handleAddonSwitchChange = (addonId: string, checked: boolean) => {
     const fieldMap: { [key: string]: keyof Company } = {
         'ia-addon': 'iaAddonActive',
@@ -164,7 +176,7 @@ export default function CompaniesPage() {
     if (newSegment && !segments.includes(newSegment.toUpperCase().replace(/\s/g, '_'))) {
       const formattedSegment = newSegment.toUpperCase().replace(/\s/g, '_');
       setSegments([...segments, formattedSegment]);
-      setFormData(prev => ({ ...prev, activeSegment: formattedSegment }));
+      handleSegmentChange(formattedSegment, true);
       setNewSegment('');
     }
   };
@@ -380,19 +392,23 @@ export default function CompaniesPage() {
                 <Separator />
 
                 <h3 className="text-lg font-medium">Configuração Operacional</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="segment">Segmento</Label>
-                    <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um segmento" />
-                      </SelectTrigger>
-                      <SelectContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Segmentos de Atuação</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4 mt-2">
                         {segments.map(segment => (
-                          <SelectItem key={segment} value={segment}>{segment.replace(/_/g, ' ')}</SelectItem>
+                          <div key={segment} className="flex items-center gap-2">
+                              <Checkbox 
+                                id={`segment-${segment}`}
+                                checked={(formData.activeSegments || []).includes(segment)}
+                                onCheckedChange={(checked) => handleSegmentChange(segment, !!checked)}
+                              />
+                              <Label htmlFor={`segment-${segment}`} className="font-normal capitalize">
+                                {segment.replace(/_/g, ' ').toLowerCase()}
+                              </Label>
+                          </div>
                         ))}
-                      </SelectContent>
-                    </Select>
+                    </div>
                   </div>
                   <div className="space-y-2">
                         <Label>Novo Segmento</Label>
