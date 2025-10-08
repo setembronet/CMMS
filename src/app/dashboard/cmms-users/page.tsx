@@ -35,23 +35,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { users as initialUsers, companies } from '@/lib/data';
-import type { User, CMMSUserRole } from '@/lib/types';
+import { users as initialUsers } from '@/lib/data';
+import type { User, SaaSUserRole } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
-const cmmsRoles: CMMSUserRole[] = ['GESTOR', 'TECNICO', 'TECNICO_TERCERIZADO', 'SINDICO'];
+const saasRoles: SaaSUserRole[] = ['ADMIN', 'FINANCEIRO', 'SUPORTE'];
 
 const emptyUser: User & { password?: string, confirmPassword?: string } = {
     id: '',
     name: '',
     email: '',
     role: '',
-    cmmsRole: 'GESTOR',
-    saasRole: 'VIEWER', // Default non-SaaS user
+    saasRole: 'SUPORTE',
+    cmmsRole: null,
     clientId: null,
     clientName: '',
     squad: '',
@@ -66,13 +66,10 @@ type PasswordStrength = {
   color: string;
 };
 
-
-export default function CMMSUsersPage() {
-  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => cmmsRoles.includes(u.cmmsRole as CMMSUserRole)));
+export default function SaaSUsersPage() {
+  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => saasRoles.includes(u.saasRole as SaaSUserRole)));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
-  const [roles, setRoles] = React.useState<CMMSUserRole[]>(cmmsRoles);
-  const [newRole, setNewRole] = React.useState('');
   const [formData, setFormData] = React.useState(emptyUser);
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
 
@@ -95,14 +92,12 @@ export default function CMMSUsersPage() {
     const userData = user ? { ...user, password: '', confirmPassword: '' } : emptyUser;
     setFormData(userData);
     setPasswordStrength(null);
-    setNewRole('');
     setIsDialogOpen(true);
   };
 
   const closeDialog = () => {
     setEditingUser(null);
     setIsDialogOpen(false);
-    setNewRole('');
     setFormData(emptyUser);
   };
 
@@ -120,28 +115,18 @@ export default function CMMSUsersPage() {
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleAddNewRole = () => {
-    const formattedRole = newRole.trim().toUpperCase().replace(/\s/g, '_') as CMMSUserRole;
-    if (newRole && !roles.includes(formattedRole)) {
-      setRoles([...roles, formattedRole]);
-      setFormData(prev => ({...prev, cmmsRole: formattedRole}));
-      setNewRole('');
-    }
-  };
   
   const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (isSaveDisabled) return;
-
-    const client = companies.find(c => c.id === formData.clientId);
+    if (isSaveDisabled) {
+        return;
+    }
 
     const newUser: User = {
       ...formData,
       id: editingUser?.id || `user-0${users.length + 1}`,
-      clientName: client?.name,
-      role: formData.cmmsRole ?? '',
+      role: formData.saasRole, // Role is the saasRole for these users
     };
 
     if (editingUser) {
@@ -151,15 +136,15 @@ export default function CMMSUsersPage() {
     }
     closeDialog();
   };
-  
+
   const isSaveDisabled = 
     (!!formData.password && passwordStrength?.level === 'Fraca') ||
     (formData.password !== formData.confirmPassword);
-
+  
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Usuários</h1>
+        <h1 className="text-3xl font-bold font-headline">Usuários do SaaS</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Novo Usuário
@@ -171,8 +156,6 @@ export default function CMMSUsersPage() {
             <TableRow>
               <TableHead>Usuário</TableHead>
               <TableHead>Função</TableHead>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Equipe</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -191,9 +174,7 @@ export default function CMMSUsersPage() {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell><Badge variant="secondary">{user.cmmsRole?.replace(/_/g, ' ') ?? user.role}</Badge></TableCell>
-                <TableCell>{user.clientName}</TableCell>
-                <TableCell>{user.squad || 'N/A'}</TableCell>
+                <TableCell><Badge variant="secondary">{user.saasRole}</Badge></TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -216,13 +197,13 @@ export default function CMMSUsersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[480px] max-h-[90vh]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário CMMS'}</DialogTitle>
+            <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <div className="overflow-y-auto -mx-6 px-6" style={{ maxHeight: 'calc(80vh - 150px)' }}>
-            <ScrollArea className="h-full pr-6">
-              <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
+           <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 150px)' }}>
+            <ScrollArea className="h-full pr-6 -mx-6 px-6">
+              <form id="user-form" onSubmit={handleSaveUser} className="space-y-4 py-4">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16">
                       {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
@@ -242,10 +223,10 @@ export default function CMMSUsersPage() {
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="password">Senha</Label>
-                  <Input id="password" name="password" type="password" value={formData.password} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? 'Deixe em branco para não alterar' : ''} />
+                  <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? 'Deixe em branco para não alterar' : ''} />
                 </div>
                 
                 {passwordStrength && (
@@ -259,7 +240,7 @@ export default function CMMSUsersPage() {
                             )}>{passwordStrength.level}</span>
                         </div>
                         <Progress value={passwordStrength.value} className={cn("h-2", passwordStrength.color)} />
-                         <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                             Use 8+ caracteres com letras, números e símbolos.
                         </p>
                     </div>
@@ -267,60 +248,30 @@ export default function CMMSUsersPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                  <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleInputChange} required={!!formData.password} />
+                  <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword || ''} onChange={handleInputChange} required={!!formData.password} />
                    {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
                     <p className="text-sm text-destructive">As senhas não coincidem.</p>
                   )}
                 </div>
 
+
                 <div className="space-y-2">
-                  <Label htmlFor="cmmsRole">Função CMMS</Label>
-                  <Select name="cmmsRole" value={formData.cmmsRole} onValueChange={(value) => handleSelectChange('cmmsRole', value)}>
+                  <Label htmlFor="saasRole">Função SaaS</Label>
+                  <Select name="saasRole" value={formData.saasRole || ''} onValueChange={(value) => handleSelectChange('saasRole', value as SaaSUserRole)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma função" />
+                      <SelectValue placeholder="Selecione a função" />
                     </SelectTrigger>
                     <SelectContent>
-                      {roles.map(role => (
-                        <SelectItem key={role} value={role}>{role.replace(/_/g, ' ')}</SelectItem>
+                      {saasRoles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Nova Função CMMS</Label>
-                  <div className="flex gap-2">
-                      <Input 
-                          id="new-role"
-                          placeholder="Ex: Supervisor" 
-                          value={newRole}
-                          onChange={(e) => setNewRole(e.target.value)}
-                      />
-                      <Button type="button" variant="secondary" onClick={handleAddNewRole}>
-                          Adicionar
-                      </Button>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="clientId">Empresa</Label>
-                  <Select name="clientId" value={formData.clientId || undefined} onValueChange={(value) => handleSelectChange('clientId', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma empresa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="squad">Equipe</Label>
-                  <Input id="squad" name="squad" value={formData.squad} onChange={handleInputChange} placeholder="Opcional para técnicos" />
-                </div>
               </form>
             </ScrollArea>
           </div>
-          <DialogFooter className="pt-4 mt-4 border-t">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="user-form" disabled={isSaveDisabled}>Salvar</Button>
           </DialogFooter>
