@@ -170,8 +170,8 @@ export default function CompaniesPage() {
               {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="pr-6 -mr-6 flex-grow">
-            <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6 pl-1 pr-1">
+          <div className="flex-grow overflow-y-auto -mx-6 px-6">
+            <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="name">Nome da Empresa</Label>
@@ -261,8 +261,8 @@ export default function CompaniesPage() {
                 <p className="text-xs text-muted-foreground">Adicione um novo segmento de atuação para as empresas.</p>
               </div>
             </form>
-          </ScrollArea>
-          <DialogFooter className="pt-4">
+          </div>
+          <DialogFooter className="pt-4 -mx-6 px-6 pb-6 border-t">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="company-form">Salvar</Button>
           </DialogFooter>
