@@ -35,11 +35,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { companies as initialCompanies } from '@/lib/data';
-import type { Company } from '@/lib/types';
+import { PlusCircle, MoreHorizontal, Sparkles, AlertTriangle } from 'lucide-react';
+import { companies as initialCompanies, plans } from '@/lib/data';
+import type { Company, Plan } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 
 const initialSegments = ['ELEVADOR', 'ESCADA_ROLANTE'];
 
@@ -61,6 +62,10 @@ const emptyCompany: Company = {
     state: '',
     zipCode: '',
   },
+  planId: 'plan_free',
+  iaAddonActive: false,
+  iotAddonActive: false,
+  currentAssets: 0,
 };
 
 export default function CompaniesPage() {
@@ -85,7 +90,8 @@ export default function CompaniesPage() {
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+    
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData(prev => ({
@@ -97,7 +103,7 @@ export default function CompaniesPage() {
         }
       }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     }
   };
   
@@ -143,10 +149,13 @@ export default function CompaniesPage() {
 
   const handleSaveCompany = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const plan = plans.find(p => p.id === formData.planId);
+    
     const newCompany: Company = {
       ...formData,
       id: editingCompany?.id || `client-0${companies.length + 1}`,
-      assetLimit: Number(formData.assetLimit)
+      assetLimit: plan?.assetLimit ?? 0, // Set assetLimit based on plan
+      currentAssets: Number(formData.currentAssets)
     };
 
     if (editingCompany) {
@@ -159,6 +168,23 @@ export default function CompaniesPage() {
 
   const toggleCompanyStatus = (companyId: string, status: boolean) => {
     setCompanies(companies.map(c => c.id === companyId ? { ...c, status: status ? 'active' : 'inactive' } : c));
+  };
+  
+  const getPlanById = (planId: string) => plans.find(p => p.id === planId);
+
+  const renderAssetUsage = (company: Company) => {
+    const plan = getPlanById(company.planId);
+    if (!plan) return null;
+    const usage = (company.currentAssets / plan.assetLimit) * 100;
+    
+    return (
+        <div className="w-24">
+            <Progress value={usage > 100 ? 100 : usage} className="h-2" />
+            <div className="text-xs text-muted-foreground mt-1">
+                {company.currentAssets} / {plan.assetLimit === -1 ? '∞' : plan.assetLimit}
+            </div>
+        </div>
+    );
   };
   
   return (
@@ -175,46 +201,54 @@ export default function CompaniesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>CNPJ</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Segmento</TableHead>
-              <TableHead>Limite de Ativos</TableHead>
+              <TableHead>Plano</TableHead>
+              <TableHead>Uso de Ativos</TableHead>
+              <TableHead>Add-ons</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companies.map((company) => (
-              <TableRow key={company.id}>
-                <TableCell className="font-medium">{company.name}</TableCell>
-                <TableCell>{company.cnpj}</TableCell>
-                <TableCell>{company.email}</TableCell>
-                <TableCell><Badge variant="outline">{company.activeSegment}</Badge></TableCell>
-                <TableCell>{company.assetLimit}</TableCell>
-                <TableCell>
-                    <Switch
-                        checked={company.status === 'active'}
-                        onCheckedChange={(checked) => toggleCompanyStatus(company.id, checked)}
-                        aria-label="Toggle company status"
-                    />
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openDialog(company)}>
-                        Editar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+            {companies.map((company) => {
+                const plan = getPlanById(company.planId);
+                return (
+                  <TableRow key={company.id}>
+                    <TableCell className="font-medium">{company.name}</TableCell>
+                    <TableCell>
+                        <Badge variant={plan?.id === 'plan_free' ? 'secondary' : 'default'}>
+                            {plan?.name ?? 'N/A'}
+                        </Badge>
+                    </TableCell>
+                    <TableCell>{renderAssetUsage(company)}</TableCell>
+                    <TableCell className="flex gap-2 items-center">
+                        {company.iaAddonActive && <Badge variant="outline"><Sparkles className="h-3 w-3 mr-1" /> IA</Badge>}
+                        {company.iotAddonActive && <Badge variant="outline"><AlertTriangle className="h-3 w-3 mr-1" /> IoT</Badge>}
+                    </TableCell>
+                    <TableCell>
+                        <Switch
+                            checked={company.status === 'active'}
+                            onCheckedChange={(checked) => toggleCompanyStatus(company.id, checked)}
+                            aria-label="Toggle company status"
+                        />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openDialog(company)}>
+                            Editar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+            })}
           </TableBody>
         </Table>
       </div>
@@ -227,9 +261,9 @@ export default function CompaniesPage() {
               {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-grow overflow-y-auto -mx-6 px-6">
-            <ScrollArea className="h-full pr-6">
-              <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6">
+          <div className="flex-grow overflow-hidden">
+            <ScrollArea className="h-full pr-2">
+              <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Nome da Empresa</Label>
@@ -251,12 +285,13 @@ export default function CompaniesPage() {
 
                 <Separator />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                <h3 className="text-lg font-medium">Endereço</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2 md:col-span-1">
                         <Label htmlFor="zipCode">CEP</Label>
                         <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode} onChange={handleInputChange} onBlur={handleCepBlur} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="street">Rua</Label>
                         <Input id="street" name="address.street" value={formData.address?.street} onChange={handleInputChange} />
                     </div>
@@ -283,12 +318,45 @@ export default function CompaniesPage() {
                 </div>
                 
                 <Separator />
-
+                
+                <h3 className="text-lg font-medium">Plano e Faturamento</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="assetLimit">Limite de Ativos</Label>
-                    <Input id="assetLimit" name="assetLimit" type="number" value={String(formData.assetLimit)} onChange={handleInputChange} required />
+                    <Label htmlFor="planId">Plano</Label>
+                    <Select name="planId" value={formData.planId} onValueChange={(value) => handleSelectChange('planId', value)}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione um plano" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {plans.map(plan => (
+                                <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                   </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="currentAssets">Ativos Atuais (Contador)</Label>
+                    <Input id="currentAssets" name="currentAssets" type="number" value={String(formData.currentAssets)} onChange={handleInputChange} required />
+                  </div>
+                  <div className="space-y-2 col-span-full">
+                     <Label>Add-ons</Label>
+                     <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Switch id="iaAddonActive" name="iaAddonActive" checked={formData.iaAddonActive} onCheckedChange={(checked) => setFormData(prev => ({...prev, iaAddonActive: checked}))} />
+                            <Label htmlFor="iaAddonActive">IA Add-on</Label>
+                        </div>
+                         <div className="flex items-center gap-2">
+                            <Switch id="iotAddonActive" name="iotAddonActive" checked={formData.iotAddonActive} onCheckedChange={(checked) => setFormData(prev => ({...prev, iotAddonActive: checked}))} />
+                            <Label htmlFor="iotAddonActive">IoT Add-on</Label>
+                        </div>
+                     </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <h3 className="text-lg font-medium">Configuração Operacional</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="segment">Segmento</Label>
                     <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)}>
@@ -302,26 +370,24 @@ export default function CompaniesPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Novo Segmento</Label>
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="Ex: PLATAFORMA ELEVATORIA" 
-                      value={newSegment}
-                      onChange={(e) => setNewSegment(e.target.value)}
-                    />
-                    <Button type="button" variant="secondary" onClick={handleAddNewSegment}>
-                      Adicionar
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Adicione um novo segmento de atuação para as empresas.</p>
+                   <div className="space-y-2">
+                        <Label>Novo Segmento</Label>
+                        <div className="flex gap-2">
+                            <Input 
+                            placeholder="Ex: PLATAFORMA ELEVATORIA" 
+                            value={newSegment}
+                            onChange={(e) => setNewSegment(e.target.value)}
+                            />
+                            <Button type="button" variant="secondary" onClick={handleAddNewSegment}>
+                            Adicionar
+                            </Button>
+                        </div>
+                    </div>
                 </div>
               </form>
             </ScrollArea>
           </div>
-          <DialogFooter className="pt-4 mt-4 -mx-6 px-6 pb-6 border-t bg-background">
+          <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="company-form">Salvar</Button>
           </DialogFooter>

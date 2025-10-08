@@ -1,13 +1,94 @@
-import type { Company, User, Asset, WorkOrder } from './types';
+import type { Company, User, Asset, WorkOrder, Plan } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
 
+export const plans: Plan[] = [
+  {
+    id: 'plan_free',
+    name: 'Free',
+    assetLimit: 5,
+    technicianUserLimit: 1,
+    hasMultiModuleAccess: false,
+    hasBasicBigQueryAccess: false,
+    hasIaAddonAccess: false,
+    hasIotAddonAccess: false,
+  },
+  {
+    id: 'plan_pro',
+    name: 'Pró',
+    assetLimit: 50,
+    technicianUserLimit: -1, // Unlimited
+    hasMultiModuleAccess: true,
+    hasBasicBigQueryAccess: true,
+    hasIaAddonAccess: false,
+    hasIotAddonAccess: false,
+  },
+  {
+    id: 'plan_enterprise',
+    name: 'Enterprise',
+    assetLimit: 500,
+    technicianUserLimit: -1, // Unlimited
+    hasMultiModuleAccess: true,
+    hasBasicBigQueryAccess: true,
+    hasIaAddonAccess: false,
+    hasIotAddonAccess: false,
+  },
+];
+
 export const companies: Company[] = [
-  { id: 'client-01', name: 'Elevadores Atlas', cnpj: '12.345.678/0001-90', email: 'contato@atlas.com', status: 'active', activeSegment: 'ELEVADOR', assetLimit: 25 },
-  { id: 'client-02', name: 'Escadas Brasil', cnpj: '98.765.432/0001-10', email: 'contato@escadasbr.com', status: 'active', activeSegment: 'ESCADA_ROLANTE', assetLimit: 50 },
-  { id: 'client-03', name: 'Manutenção Predial XYZ', cnpj: '55.555.555/0001-55', email: 'suporte@xyz.com', status: 'inactive', activeSegment: 'ELEVADOR', assetLimit: 5 },
-  { id: 'client-04', name: 'Tecno-Lift', cnpj: '33.333.333/0001-33', email: 'vendas@tecnolift.com.br', status: 'active', activeSegment: 'ELEVADOR', assetLimit: 25 },
+  { 
+    id: 'client-01', 
+    name: 'Elevadores Atlas', 
+    cnpj: '12.345.678/0001-90', 
+    email: 'contato@atlas.com', 
+    status: 'active', 
+    activeSegment: 'ELEVADOR', 
+    assetLimit: 25, // Legacy, will be derived from plan
+    planId: 'plan_pro',
+    iaAddonActive: true,
+    iotAddonActive: false,
+    currentAssets: 18,
+  },
+  { 
+    id: 'client-02', 
+    name: 'Escadas Brasil', 
+    cnpj: '98.765.432/0001-10', 
+    email: 'contato@escadasbr.com', 
+    status: 'active', 
+    activeSegment: 'ESCADA_ROLANTE', 
+    assetLimit: 50, // Legacy
+    planId: 'plan_pro',
+    iaAddonActive: false,
+    iotAddonActive: false,
+    currentAssets: 45,
+  },
+  { 
+    id: 'client-03', 
+    name: 'Manutenção Predial XYZ', 
+    cnpj: '55.555.555/0001-55', 
+    email: 'suporte@xyz.com', 
+    status: 'inactive', 
+    activeSegment: 'ELEVADOR', 
+    assetLimit: 5, // Legacy
+    planId: 'plan_free',
+    iaAddonActive: false,
+    iotAddonActive: false,
+    currentAssets: 4,
+  },
+  { 
+    id: 'client-04', 
+    name: 'Tecno-Lift', 
+    cnpj: '33.333.333/0001-33', 
+    email: 'vendas@tecnolift.com.br', 
+    status: 'active', 
+    activeSegment: 'ELEVADOR', 
+    assetLimit: 25, // Legacy
+    planId: 'plan_enterprise',
+    iaAddonActive: true,
+    iotAddonActive: true,
+    currentAssets: 150,
+  },
 ];
 
 export const users: User[] = [
@@ -33,9 +114,11 @@ export const kpis = {
     activeUsers: users.length,
     mockMrr: companies.reduce((total, company) => {
         if (company.status === 'active') {
-            if (company.assetLimit <= 5) return total + 0;
-            if (company.assetLimit <= 25) return total + 99;
-            return total + 249;
+            const plan = plans.find(p => p.id === company.planId);
+            if (!plan) return total;
+            if (plan.id === 'plan_free') return total + 0;
+            if (plan.id === 'plan_pro') return total + 99;
+            if (plan.id === 'plan_enterprise') return total + 249;
         }
         return total;
     }, 0),

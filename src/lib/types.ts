@@ -18,6 +18,17 @@ export type User = {
   avatarUrl: string;
 };
 
+export type Plan = {
+  id: string;
+  name: string;
+  assetLimit: number;
+  technicianUserLimit: number; // -1 for unlimited
+  hasMultiModuleAccess: boolean;
+  hasBasicBigQueryAccess: boolean;
+  hasIaAddonAccess: boolean;
+  hasIotAddonAccess: boolean;
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -26,7 +37,7 @@ export type Company = {
   phone?: string;
   status: CompanyStatus;
   activeSegment: CompanySegment;
-  assetLimit: number;
+  assetLimit: number; // This will now come from the plan
   address?: {
     street?: string;
     number?: string;
@@ -36,6 +47,10 @@ export type Company = {
     state?: string;
     zipCode?: string;
   };
+  planId: string;
+  iaAddonActive: boolean;
+  iotAddonActive: boolean;
+  currentAssets: number;
 };
 
 export type Asset = {
