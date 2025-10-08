@@ -177,9 +177,9 @@ export default function UsersPage() {
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <div className="flex-grow overflow-hidden -mx-6 px-6">
-            <ScrollArea className="h-full">
-              <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full pr-4">
+          <div className="flex-grow overflow-y-auto -mx-6 px-6">
+            <ScrollArea className="h-full pr-6">
+              <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16">
                       {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
