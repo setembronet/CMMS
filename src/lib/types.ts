@@ -1,4 +1,4 @@
-export type UserRole = 'Admin Master' | 'Gestor de Empresa' | 'Técnico';
+export type UserRole = string;
 export type CompanySegment = string;
 export type CompanyStatus = 'active' | 'inactive';
 export type OrderStatus = 'ABERTO' | 'FECHADO';

@@ -20,7 +20,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -40,10 +39,14 @@ import type { User, UserRole } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 
+const initialRoles: UserRole[] = ['Gestor de Empresa', 'Técnico'];
+
 export default function UsersPage() {
   const [users, setUsers] = React.useState<User[]>(initialUsers);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
+  const [roles, setRoles] = React.useState<UserRole[]>(initialRoles);
+  const [newRole, setNewRole] = React.useState('');
 
   const openDialog = (user: User | null = null) => {
     setEditingUser(user);
@@ -53,6 +56,32 @@ export default function UsersPage() {
   const closeDialog = () => {
     setEditingUser(null);
     setIsDialogOpen(false);
+    setNewRole('');
+  };
+
+  const handleAddNewRole = () => {
+    if (newRole && !roles.includes(newRole)) {
+      setRoles([...roles, newRole]);
+      
+      // We also need to update the form data if the dialog is open
+      const form = document.getElementById('user-form') as HTMLFormElement;
+      if(form) {
+          const roleSelect = form.elements.namedItem('role') as HTMLSelectElement;
+          // This is a workaround to set the value in the Select component
+          // because it is not fully controlled in this form version.
+          // A better approach would be to use a controlled component for the form.
+          setTimeout(() => {
+            const hiddenInput = document.querySelector('input[name="role"]');
+            if (hiddenInput) {
+                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+                nativeInputValueSetter?.call(hiddenInput, newRole);
+                const ev2 = new Event('input', { bubbles: true });
+                hiddenInput.dispatchEvent(ev2);
+            }
+          }, 0);
+      }
+      setNewRole('');
+    }
   };
   
   const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
@@ -139,11 +168,11 @@ export default function UsersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSaveUser}>
+          <form id="user-form" onSubmit={handleSaveUser}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">Nome</Label>
@@ -160,11 +189,29 @@ export default function UsersPage() {
                     <SelectValue placeholder="Selecione uma função" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Gestor de Empresa">Gestor de Empresa</SelectItem>
-                    <SelectItem value="Técnico">Técnico</SelectItem>
+                    {roles.map(role => (
+                      <SelectItem key={role} value={role}>{role}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="new-role" className="text-right">Nova Função</Label>
+                <div className="col-span-3 flex gap-2">
+                    <Input 
+                        id="new-role"
+                        placeholder="Ex: Supervisor" 
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value)}
+                    />
+                    <Button type="button" variant="secondary" onClick={handleAddNewRole}>
+                        Adicionar
+                    </Button>
+                </div>
+              </div>
+
+
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="clientId" className="text-right">Empresa</Label>
                 <Select name="clientId" defaultValue={editingUser?.clientId || undefined}>
