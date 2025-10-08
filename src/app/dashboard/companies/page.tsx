@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal, Sparkles, AlertTriangle } from 'lucide-react';
-import { companies as initialCompanies, plans } from '@/lib/data';
+import { companies as initialCompanies, plans, addons } from '@/lib/data';
 import type { Company, Plan } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -110,6 +110,27 @@ export default function CompaniesPage() {
   const handleSelectChange = (name: string, value: string) => {
      setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const handleAddonSwitchChange = (addonId: string, checked: boolean) => {
+    const fieldMap: { [key: string]: keyof Company } = {
+        'ia-addon': 'iaAddonActive',
+        'iot-addon': 'iotAddonActive',
+    };
+    const fieldToUpdate = fieldMap[addonId];
+    if (fieldToUpdate) {
+        setFormData(prev => ({...prev, [fieldToUpdate]: checked}));
+    }
+  }
+
+  const isAddonActive = (addonId: string) => {
+    const fieldMap: { [key: string]: keyof Company } = {
+        'ia-addon': 'iaAddonActive',
+        'iot-addon': 'iotAddonActive',
+    };
+    const field = fieldMap[addonId];
+    // @ts-ignore
+    return field ? !!formData[field] : false;
+  }
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
@@ -254,136 +275,140 @@ export default function CompaniesPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             <DialogDescription>
               {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="name">Nome da Empresa</Label>
-                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="cnpj">CNPJ</Label>
-                    <Input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleInputChange} required />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} required />
-                </div>
-            </div>
+          <div className='flex-grow overflow-y-auto -mx-6 px-6'>
+            <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="name">Nome da Empresa</Label>
+                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="cnpj">CNPJ</Label>
+                      <Input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleInputChange} required />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="phone">Telefone</Label>
+                      <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} required />
+                  </div>
+              </div>
 
-            <Separator />
+              <Separator />
 
-            <h3 className="text-lg font-medium">Endereço</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2 md:col-span-1">
-                    <Label htmlFor="zipCode">CEP</Label>
-                    <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode} onChange={handleInputChange} onBlur={handleCepBlur} />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="street">Rua</Label>
-                    <Input id="street" name="address.street" value={formData.address?.street} onChange={handleInputChange} />
+              <h3 className="text-lg font-medium">Endereço</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2 md:col-span-1">
+                      <Label htmlFor="zipCode">CEP</Label>
+                      <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode} onChange={handleInputChange} onBlur={handleCepBlur} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="street">Rua</Label>
+                      <Input id="street" name="address.street" value={formData.address?.street} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="number">Número</Label>
+                      <Input id="number" name="address.number" value={formData.address?.number} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="complement">Complemento</Label>
+                      <Input id="complement" name="address.complement" value={formData.address?.complement} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="neighborhood">Bairro</Label>
+                      <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="city">Cidade</Label>
+                      <Input id="city" name="address.city" value={formData.address?.city} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="state">Estado</Label>
+                      <Input id="state" name="address.state" value={formData.address?.state} onChange={handleInputChange} />
+                  </div>
+              </div>
+              
+              <Separator />
+              
+              <h3 className="text-lg font-medium">Plano e Faturamento</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="planId">Plano</Label>
+                  <Select name="planId" value={formData.planId} onValueChange={(value) => handleSelectChange('planId', value)}>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Selecione um plano" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {plans.map(plan => (
+                              <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="number">Número</Label>
-                    <Input id="number" name="address.number" value={formData.address?.number} onChange={handleInputChange} />
+                  <Label htmlFor="currentAssets">Ativos Atuais (Contador)</Label>
+                  <Input id="currentAssets" name="currentAssets" type="number" value={String(formData.currentAssets)} onChange={handleInputChange} required />
                 </div>
+                <div className="space-y-2 col-span-full">
+                  <Label>Add-ons</Label>
+                  <div className="flex items-center gap-4">
+                      {addons.map(addon => (
+                        <div className="flex items-center gap-2" key={addon.id}>
+                            <Switch 
+                                id={addon.id} 
+                                checked={isAddonActive(addon.id)}
+                                onCheckedChange={(checked) => handleAddonSwitchChange(addon.id, checked)} 
+                            />
+                            <Label htmlFor={addon.id}>{addon.name}</Label>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <h3 className="text-lg font-medium">Configuração Operacional</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="complement">Complemento</Label>
-                    <Input id="complement" name="address.complement" value={formData.address?.complement} onChange={handleInputChange} />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="neighborhood">Bairro</Label>
-                    <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood} onChange={handleInputChange} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="city">Cidade</Label>
-                    <Input id="city" name="address.city" value={formData.address?.city} onChange={handleInputChange} />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="state">Estado</Label>
-                    <Input id="state" name="address.state" value={formData.address?.state} onChange={handleInputChange} />
-                </div>
-            </div>
-            
-            <Separator />
-            
-            <h3 className="text-lg font-medium">Plano e Faturamento</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="planId">Plano</Label>
-                <Select name="planId" value={formData.planId} onValueChange={(value) => handleSelectChange('planId', value)}>
+                  <Label htmlFor="segment">Segmento</Label>
+                  <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)}>
                     <SelectTrigger>
-                        <SelectValue placeholder="Selecione um plano" />
+                      <SelectValue placeholder="Selecione um segmento" />
                     </SelectTrigger>
                     <SelectContent>
-                        {plans.map(plan => (
-                            <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
-                        ))}
+                      {segments.map(segment => (
+                        <SelectItem key={segment} value={segment}>{segment.replace(/_/g, ' ')}</SelectItem>
+                      ))}
                     </SelectContent>
-                </Select>
-              </div>
-               <div className="space-y-2">
-                <Label htmlFor="currentAssets">Ativos Atuais (Contador)</Label>
-                <Input id="currentAssets" name="currentAssets" type="number" value={String(formData.currentAssets)} onChange={handleInputChange} required />
-              </div>
-              <div className="space-y-2 col-span-full">
-                 <Label>Add-ons</Label>
-                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Switch id="iaAddonActive" name="iaAddonActive" checked={formData.iaAddonActive} onCheckedChange={(checked) => setFormData(prev => ({...prev, iaAddonActive: checked}))} />
-                        <Label htmlFor="iaAddonActive">IA Add-on</Label>
-                    </div>
-                     <div className="flex items-center gap-2">
-                        <Switch id="iotAddonActive" name="iotAddonActive" checked={formData.iotAddonActive} onCheckedChange={(checked) => setFormData(prev => ({...prev, iotAddonActive: checked}))} />
-                        <Label htmlFor="iotAddonActive">IoT Add-on</Label>
-                    </div>
-                 </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <h3 className="text-lg font-medium">Configuração Operacional</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="segment">Segmento</Label>
-                <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um segmento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {segments.map(segment => (
-                      <SelectItem key={segment} value={segment}>{segment.replace(/_/g, ' ')}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-               <div className="space-y-2">
-                    <Label>Novo Segmento</Label>
-                    <div className="flex gap-2">
-                        <Input 
-                        placeholder="Ex: PLATAFORMA ELEVATORIA" 
-                        value={newSegment}
-                        onChange={(e) => setNewSegment(e.target.value)}
-                        />
-                        <Button type="button" variant="secondary" onClick={handleAddNewSegment}>
-                        Adicionar
-                        </Button>
-                    </div>
+                  </Select>
                 </div>
-            </div>
-          </form>
-          <DialogFooter className="pt-4">
+                <div className="space-y-2">
+                      <Label>Novo Segmento</Label>
+                      <div className="flex gap-2">
+                          <Input 
+                          placeholder="Ex: PLATAFORMA ELEVATORIA" 
+                          value={newSegment}
+                          onChange={(e) => setNewSegment(e.target.value)}
+                          />
+                          <Button type="button" variant="secondary" onClick={handleAddNewSegment}>
+                          Adicionar
+                          </Button>
+                      </div>
+                  </div>
+              </div>
+            </form>
+          </div>
+          <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6 sticky bottom-0">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="company-form">Salvar</Button>
           </DialogFooter>
