@@ -29,13 +29,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { segments as initialSegments } from '@/lib/data';
-import type { CompanySegment } from '@/lib/types';
+import { segments as initialSegments, cmmsRoles, setSegments as setGlobalSegments } from '@/lib/data';
+import type { CompanySegment, CMMSRole } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const emptySegment: CompanySegment = {
   id: '',
   name: '',
   customFields: [],
+  applicableRoles: [],
 };
 
 export default function SegmentsPage() {
@@ -46,7 +50,7 @@ export default function SegmentsPage() {
 
   const openDialog = (segment: CompanySegment | null = null) => {
     setEditingSegment(segment);
-    setFormData(segment ? {...segment} : emptySegment);
+    setFormData(segment ? {...segment, applicableRoles: segment.applicableRoles || []} : emptySegment);
     setIsDialogOpen(true);
   };
 
@@ -61,19 +65,34 @@ export default function SegmentsPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleRoleChange = (roleId: string, checked: boolean) => {
+    setFormData(prev => {
+      const currentRoles = prev.applicableRoles || [];
+      if (checked) {
+        return { ...prev, applicableRoles: [...currentRoles, roleId] };
+      } else {
+        return { ...prev, applicableRoles: currentRoles.filter(id => id !== roleId) };
+      }
+    });
+  };
+
   const handleSaveSegment = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newSegment: CompanySegment = {
       ...formData,
       id: editingSegment?.id || formData.name.toUpperCase().replace(/\s/g, '_'),
       customFields: formData.customFields || [],
+      applicableRoles: formData.applicableRoles || [],
     };
 
+    let updatedSegments;
     if (editingSegment) {
-      setSegments(segments.map(s => (s.id === newSegment.id ? newSegment : s)));
+      updatedSegments = segments.map(s => (s.id === newSegment.id ? newSegment : s));
     } else {
-      setSegments([newSegment, ...segments]);
+      updatedSegments = [newSegment, ...segments];
     }
+    setSegments(updatedSegments);
+    setGlobalSegments(updatedSegments);
     closeDialog();
   };
 
@@ -91,7 +110,7 @@ export default function SegmentsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome do Segmento</TableHead>
-              <TableHead>Campos Personalizados</TableHead>
+              <TableHead>Funções Aplicáveis</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -100,7 +119,7 @@ export default function SegmentsPage() {
               <TableRow key={segment.id}>
                 <TableCell className="font-medium">{segment.name}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{segment.customFields?.length || 0} campos</Badge>
+                  <Badge variant="secondary">{(segment.applicableRoles || []).length} funções</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -127,19 +146,41 @@ export default function SegmentsPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingSegment ? 'Editar Segmento' : 'Novo Segmento'}</DialogTitle>
             <DialogDescription>
               {editingSegment ? 'Atualize os detalhes do segmento.' : 'Defina um novo segmento de atuação para o CMMS.'}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveSegment} id="segment-form" className="space-y-4 py-4">
-              <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Segmento</Label>
-                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Ar Condicionado Central"/>
-              </div>
-          </form>
+          <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+            <form onSubmit={handleSaveSegment} id="segment-form" className="space-y-4 py-4">
+                <div className="space-y-2 px-1">
+                    <Label htmlFor="name">Nome do Segmento</Label>
+                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Ar Condicionado Central"/>
+                </div>
+                
+                <Separator />
+
+                <div className="space-y-4 px-1">
+                  <h3 className="font-medium">Funções Aplicáveis</h3>
+                  <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
+                      {cmmsRoles.map(role => (
+                        <div key={role.id} className="flex items-center gap-2">
+                            <Checkbox 
+                              id={`role-${role.id}`}
+                              checked={(formData.applicableRoles || []).includes(role.id)}
+                              onCheckedChange={(checked) => handleRoleChange(role.id, !!checked)}
+                            />
+                            <Label htmlFor={`role-${role.id}`} className="font-normal">
+                              {role.name}
+                            </Label>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+            </form>
+          </ScrollArea>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="segment-form">Salvar</Button>

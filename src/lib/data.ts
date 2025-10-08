@@ -1,21 +1,22 @@
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
-
-export let segments: CompanySegment[] = [
-  { id: 'ELEVADOR', name: 'Elevador', customFields: [] },
-  { id: 'ESCADA_ROLANTE', name: 'Escada Rolante', customFields: [] },
-  { id: 'AR_CONDICIONADO', name: 'Ar Condicionado', customFields: [] },
-];
 
 export let cmmsRoles: CMMSRole[] = [
   { id: 'GESTOR', name: 'Gestor' },
   { id: 'TECNICO', name: 'Técnico' },
   { id: 'TECNICO_TERCERIZADO', name: 'Técnico Terceirizado' },
   { id: 'SINDICO', name: 'Síndico' },
+];
+
+export let segments: CompanySegment[] = [
+  { id: 'ELEVADOR', name: 'Elevador', customFields: [], applicableRoles: ['GESTOR', 'TECNICO', 'SINDICO'] },
+  { id: 'ESCADA_ROLANTE', name: 'Escada Rolante', customFields: [], applicableRoles: ['GESTOR', 'TECNICO'] },
+  { id: 'AR_CONDICIONADO', name: 'Ar Condicionado', customFields: [], applicableRoles: ['GESTOR', 'TECNICO', 'TECNICO_TERCERIZADO'] },
 ];
 
 export let plans: Plan[] = [

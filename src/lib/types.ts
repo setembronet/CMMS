@@ -1,9 +1,11 @@
 
 
+
 export type CompanySegment = {
   id: string;
   name: string;
   customFields?: { id: string; name: string; type: 'text' | 'number' | 'date' }[];
+  applicableRoles?: string[]; // IDs of CMMSRole that apply
 };
 
 export type CompanyStatus = 'active' | 'inactive';
