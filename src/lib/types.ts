@@ -1,5 +1,5 @@
 export type UserRole = 'Admin Master' | 'Gestor de Empresa' | 'Técnico';
-export type CompanySegment = 'ELEVADOR' | 'ESCADA_ROLANTE';
+export type CompanySegment = string;
 export type CompanyStatus = 'active' | 'inactive';
 export type OrderStatus = 'ABERTO' | 'FECHADO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta';
@@ -20,9 +20,19 @@ export type Company = {
   name: string;
   cnpj: string;
   email: string;
+  phone?: string;
   status: CompanyStatus;
   activeSegment: CompanySegment;
   assetLimit: number;
+  address?: {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
 };
 
 export type Asset = {

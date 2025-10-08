@@ -37,12 +37,18 @@ import {
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { companies as initialCompanies } from '@/lib/data';
-import type { Company, CompanySegment } from '@/lib/types';
+import type { Company } from '@/lib/types';
+import { Separator } from '@/components/ui/separator';
+
+const initialSegments = ['ELEVADOR', 'ESCADA_ROLANTE'];
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
+  const [segments, setSegments] = React.useState<string[]>(initialSegments);
+  const [newSegment, setNewSegment] = React.useState('');
+
 
   const openDialog = (company: Company | null = null) => {
     setEditingCompany(company);
@@ -52,6 +58,14 @@ export default function CompaniesPage() {
   const closeDialog = () => {
     setEditingCompany(null);
     setIsDialogOpen(false);
+    setNewSegment('');
+  };
+
+  const handleAddNewSegment = () => {
+    if (newSegment && !segments.includes(newSegment.toUpperCase())) {
+      setSegments([...segments, newSegment.toUpperCase()]);
+      setNewSegment('');
+    }
   };
 
   const handleSaveCompany = (e: React.FormEvent<HTMLFormElement>) => {
@@ -63,8 +77,18 @@ export default function CompaniesPage() {
       cnpj: formData.get('cnpj') as string,
       email: formData.get('email') as string,
       status: editingCompany?.status || 'active',
-      activeSegment: formData.get('segment') as CompanySegment,
+      activeSegment: formData.get('segment') as string,
       assetLimit: parseInt(formData.get('assetLimit') as string),
+      phone: formData.get('phone') as string,
+      address: {
+        street: formData.get('street') as string,
+        number: formData.get('number') as string,
+        complement: formData.get('complement') as string,
+        neighborhood: formData.get('neighborhood') as string,
+        city: formData.get('city') as string,
+        state: formData.get('state') as string,
+        zipCode: formData.get('zipCode') as string,
+      }
     };
 
     if (editingCompany) {
@@ -138,7 +162,7 @@ export default function CompaniesPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             <DialogDescription>
@@ -146,35 +170,96 @@ export default function CompaniesPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveCompany}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Nome</Label>
-                <Input id="name" name="name" defaultValue={editingCompany?.name} className="col-span-3" required />
+            <div className="grid gap-6 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="name">Nome da Empresa</Label>
+                      <Input id="name" name="name" defaultValue={editingCompany?.name} required />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="cnpj">CNPJ</Label>
+                      <Input id="cnpj" name="cnpj" defaultValue={editingCompany?.cnpj} required />
+                  </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" name="email" type="email" defaultValue={editingCompany?.email} required />
+                  </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="phone">Telefone</Label>
+                      <Input id="phone" name="phone" defaultValue={editingCompany?.phone} required />
+                  </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cnpj" className="text-right">CNPJ</Label>
-                <Input id="cnpj" name="cnpj" defaultValue={editingCompany?.cnpj} className="col-span-3" required />
+
+              <Separator />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="zipCode">CEP</Label>
+                      <Input id="zipCode" name="zipCode" defaultValue={editingCompany?.address?.zipCode} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="street">Rua</Label>
+                      <Input id="street" name="street" defaultValue={editingCompany?.address?.street} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="number">Número</Label>
+                      <Input id="number" name="number" defaultValue={editingCompany?.address?.number} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="complement">Complemento</Label>
+                      <Input id="complement" name="complement" defaultValue={editingCompany?.address?.complement} />
+                  </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="neighborhood">Bairro</Label>
+                      <Input id="neighborhood" name="neighborhood" defaultValue={editingCompany?.address?.neighborhood} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="city">Cidade</Label>
+                      <Input id="city" name="city" defaultValue={editingCompany?.address?.city} />
+                  </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="state">Estado</Label>
+                      <Input id="state" name="state" defaultValue={editingCompany?.address?.state} />
+                  </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">Email</Label>
-                <Input id="email" name="email" type="email" defaultValue={editingCompany?.email} className="col-span-3" required />
+              
+              <Separator />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="assetLimit">Limite de Ativos</Label>
+                  <Input id="assetLimit" name="assetLimit" type="number" defaultValue={editingCompany?.assetLimit} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="segment">Segmento</Label>
+                  <Select name="segment" defaultValue={editingCompany?.activeSegment}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um segmento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {segments.map(segment => (
+                        <SelectItem key={segment} value={segment}>{segment}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="segment" className="text-right">Segmento</Label>
-                <Select name="segment" defaultValue={editingCompany?.activeSegment}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecione um segmento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ELEVADOR">Elevador</SelectItem>
-                    <SelectItem value="ESCADA_ROLANTE">Escada Rolante</SelectItem>
-                  </SelectContent>
-                </Select>
+              
+              <div className="space-y-2">
+                <Label>Novo Segmento</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Ex: PLATAFORMA_ELEVATORIA" 
+                    value={newSegment}
+                    onChange={(e) => setNewSegment(e.target.value)}
+                  />
+                  <Button type="button" variant="secondary" onClick={handleAddNewSegment}>
+                    Adicionar
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Adicione um novo segmento de atuação para as empresas.</p>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="assetLimit" className="text-right">Limite de Ativos</Label>
-                <Input id="assetLimit" name="assetLimit" type="number" defaultValue={editingCompany?.assetLimit} className="col-span-3" required />
-              </div>
+
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
