@@ -29,33 +29,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { segments as initialSegments } from '@/lib/data';
+import type { CompanySegment } from '@/lib/types';
 
-type Segment = {
-  id: string;
-  name: string;
-  customFields: { id: string; name: string; type: 'text' | 'number' | 'date' }[];
-};
-
-const initialSegments: Segment[] = [
-  { id: 'seg_elevador', name: 'Elevador', customFields: [] },
-  { id: 'seg_escada_rolante', name: 'Escada Rolante', customFields: [] },
-];
-
-const emptySegment: Segment = {
+const emptySegment: CompanySegment = {
   id: '',
   name: '',
   customFields: [],
 };
 
 export default function SegmentsPage() {
-  const [segments, setSegments] = React.useState<Segment[]>(initialSegments);
+  const [segments, setSegments] = React.useState<CompanySegment[]>(initialSegments);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [editingSegment, setEditingSegment] = React.useState<Segment | null>(null);
-  const [formData, setFormData] = React.useState<Segment>(emptySegment);
+  const [editingSegment, setEditingSegment] = React.useState<CompanySegment | null>(null);
+  const [formData, setFormData] = React.useState<CompanySegment>(emptySegment);
 
-  const openDialog = (segment: Segment | null = null) => {
+  const openDialog = (segment: CompanySegment | null = null) => {
     setEditingSegment(segment);
-    setFormData(segment || emptySegment);
+    setFormData(segment ? {...segment} : emptySegment);
     setIsDialogOpen(true);
   };
 
@@ -72,9 +63,10 @@ export default function SegmentsPage() {
 
   const handleSaveSegment = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newSegment: Segment = {
+    const newSegment: CompanySegment = {
       ...formData,
-      id: editingSegment?.id || `seg_${formData.name.toLowerCase().replace(/\s/g, '_')}`,
+      id: editingSegment?.id || formData.name.toUpperCase().replace(/\s/g, '_'),
+      customFields: formData.customFields || [],
     };
 
     if (editingSegment) {
@@ -108,7 +100,7 @@ export default function SegmentsPage() {
               <TableRow key={segment.id}>
                 <TableCell className="font-medium">{segment.name}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{segment.customFields.length} campos</Badge>
+                  <Badge variant="secondary">{segment.customFields?.length || 0} campos</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

@@ -1,5 +1,11 @@
 
-export type CompanySegment = string;
+
+export type CompanySegment = {
+  id: string;
+  name: string;
+  customFields?: { id: string; name: string; type: 'text' | 'number' | 'date' }[];
+};
+
 export type CompanyStatus = 'active' | 'inactive';
 export type OrderStatus = 'ABERTO' | 'FECHADO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta';
@@ -56,7 +62,7 @@ export type Company = {
   email: string;
   phone?: string;
   status: CompanyStatus;
-  activeSegments: CompanySegment[];
+  activeSegments: string[]; // This will store segment IDs
   address?: {
     street?: string;
     number?: string;
@@ -70,14 +76,14 @@ export type Company = {
   iaAddonActive: boolean;
   iotAddonActive: boolean;
   currentAssets: number;
-  assetLimit?: number; // Added from previous turn, but should be in Company
+  assetLimit?: number; 
 };
 
 export type Asset = {
   id: string;
   name: string;
   clientId: string;
-  activeSegment: CompanySegment;
+  activeSegment: string;
   serialNumber: string;
   location: {
     lat: number;

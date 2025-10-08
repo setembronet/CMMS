@@ -1,8 +1,14 @@
 
-import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
+
+export const segments: CompanySegment[] = [
+  { id: 'ELEVADOR', name: 'Elevador', customFields: [] },
+  { id: 'ESCADA_ROLANTE', name: 'Escada Rolante', customFields: [] },
+  { id: 'AR_CONDICIONADO', name: 'Ar Condicionado', customFields: [] },
+];
 
 export const plans: Plan[] = [
   {

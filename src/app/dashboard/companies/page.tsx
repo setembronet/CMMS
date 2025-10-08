@@ -37,14 +37,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal, Sparkles, AlertTriangle } from 'lucide-react';
-import { companies as initialCompanies, plans, addons } from '@/lib/data';
-import type { Company, Plan } from '@/lib/types';
+import { companies as initialCompanies, plans, addons, segments as initialSegments } from '@/lib/data';
+import type { Company, Plan, CompanySegment } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-
-const initialSegments = ['ELEVADOR', 'ESCADA_ROLANTE', 'AR_CONDICIONADO'];
 
 const emptyCompany: Company = {
   id: '',
@@ -75,7 +73,7 @@ export default function CompaniesPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
   const [formData, setFormData] = React.useState<Company>(emptyCompany);
-  const [segments, setSegments] = React.useState<string[]>(initialSegments);
+  const [segments, setSegments] = React.useState<CompanySegment[]>(initialSegments);
   const [newSegment, setNewSegment] = React.useState('');
 
   const openDialog = (company: Company | null = null) => {
@@ -113,13 +111,13 @@ export default function CompaniesPage() {
      setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSegmentChange = (segment: string, checked: boolean) => {
+  const handleSegmentChange = (segmentId: string, checked: boolean) => {
     setFormData(prev => {
       const currentSegments = prev.activeSegments || [];
       if (checked) {
-        return { ...prev, activeSegments: [...currentSegments, segment] };
+        return { ...prev, activeSegments: [...currentSegments, segmentId] };
       } else {
-        return { ...prev, activeSegments: currentSegments.filter(s => s !== segment) };
+        return { ...prev, activeSegments: currentSegments.filter(s => s !== segmentId) };
       }
     });
   };
@@ -173,10 +171,14 @@ export default function CompaniesPage() {
 
 
   const handleAddNewSegment = () => {
-    if (newSegment && !segments.includes(newSegment.toUpperCase().replace(/\s/g, '_'))) {
-      const formattedSegment = newSegment.toUpperCase().replace(/\s/g, '_');
-      setSegments([...segments, formattedSegment]);
-      handleSegmentChange(formattedSegment, true);
+    if (newSegment && !segments.find(s => s.name.toUpperCase() === newSegment.toUpperCase())) {
+      const formattedSegmentId = newSegment.toUpperCase().replace(/\s/g, '_');
+      const newSegmentObj: CompanySegment = {
+        id: formattedSegmentId,
+        name: newSegment,
+      };
+      setSegments([...segments, newSegmentObj]);
+      handleSegmentChange(newSegmentObj.id, true);
       setNewSegment('');
     }
   };
@@ -295,7 +297,7 @@ export default function CompaniesPage() {
               {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 150px)' }}>
+          <div className="h-[calc(80vh-150px)] overflow-y-auto">
             <ScrollArea className="h-full pr-6 -mx-6 px-6">
               <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -397,14 +399,14 @@ export default function CompaniesPage() {
                     <Label>Segmentos de Atuação</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4 mt-2">
                         {segments.map(segment => (
-                          <div key={segment} className="flex items-center gap-2">
+                          <div key={segment.id} className="flex items-center gap-2">
                               <Checkbox 
-                                id={`segment-${segment}`}
-                                checked={(formData.activeSegments || []).includes(segment)}
-                                onCheckedChange={(checked) => handleSegmentChange(segment, !!checked)}
+                                id={`segment-${segment.id}`}
+                                checked={(formData.activeSegments || []).includes(segment.id)}
+                                onCheckedChange={(checked) => handleSegmentChange(segment.id, !!checked)}
                               />
-                              <Label htmlFor={`segment-${segment}`} className="font-normal capitalize">
-                                {segment.replace(/_/g, ' ').toLowerCase()}
+                              <Label htmlFor={`segment-${segment.id}`} className="font-normal capitalize">
+                                {segment.name.replace(/_/g, ' ').toLowerCase()}
                               </Label>
                           </div>
                         ))}
@@ -427,7 +429,7 @@ export default function CompaniesPage() {
               </form>
             </ScrollArea>
           </div>
-          <DialogFooter className="pt-4 mt-auto border-t">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="company-form">Salvar</Button>
           </DialogFooter>
