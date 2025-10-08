@@ -9,6 +9,7 @@ import {
   Settings,
   Users,
   Wrench,
+  TrendingUp
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -25,6 +26,7 @@ const links = [
   { href: '/dashboard/users', label: 'Usuários', icon: Users },
   { href: '/dashboard/assets', label: 'Ativos', icon: Wrench },
   { href: '/dashboard/orders', label: 'Ordens de Serviço', icon: ClipboardList },
+  { href: '/dashboard/finance', label: 'Financeiro', icon: TrendingUp },
 ];
 
 const bottomLinks = [{ href: '/dashboard/settings', label: 'Configurações', icon: Settings }];

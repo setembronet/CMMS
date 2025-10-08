@@ -4,6 +4,9 @@ export type CompanyStatus = 'active' | 'inactive';
 export type OrderStatus = 'ABERTO' | 'FECHADO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta';
 export type CoreUserRole = 'ADMIN' | 'OPERATOR' | 'VIEWER';
+export type SubscriptionStatus = 'ATIVA' | 'CANCELADA' | 'PAUSADA';
+export type BillingPeriod = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'ANNUALLY';
+export type InvoiceStatus = 'PENDENTE' | 'PAGO' | 'CANCELADO' | 'ATRASADO';
 
 
 export type User = {
@@ -37,7 +40,6 @@ export type Company = {
   phone?: string;
   status: CompanyStatus;
   activeSegment: CompanySegment;
-  assetLimit: number; // This will now come from the plan
   address?: {
     street?: string;
     number?: string;
@@ -72,4 +74,28 @@ export type WorkOrder = {
   assetId: string;
   status: OrderStatus;
   priority: OrderPriority;
+};
+
+export type Subscription = {
+  id: string;
+  clientId: string;
+  status: SubscriptionStatus;
+  period: BillingPeriod;
+  startDate: number; // timestamp
+  nextBillingDate: number; // timestamp
+  basePlanValue: number;
+  valuePerAsset?: number;
+  activeAddons: { id: string; name: string; value: number }[];
+};
+
+export type Invoice = {
+  id: string;
+  clientId: string;
+  subscriptionId: string;
+  issueDate: number; // timestamp
+  dueDate: number; // timestamp
+  totalValue: number;
+  status: InvoiceStatus;
+  billedItems: { description: string; value: number }[];
+  paymentLink?: string;
 };
