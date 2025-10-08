@@ -35,17 +35,20 @@ import {
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { users as initialUsers, companies } from '@/lib/data';
-import type { User, UserRole } from '@/lib/types';
+import type { User, UserRole, CoreUserRole } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialRoles: UserRole[] = ['Gestor de Empresa', 'Técnico'];
+const coreRoles: CoreUserRole[] = ['ADMIN', 'OPERATOR', 'VIEWER'];
 
 const emptyUser: User = {
     id: '',
     name: '',
     email: '',
     role: '',
+    coreRole: 'VIEWER',
     clientId: null,
     clientName: '',
     squad: '',
@@ -131,7 +134,7 @@ export default function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.filter(u => u.role !== 'Admin Master').map((user) => (
+            {users.filter(u => u.coreRole !== 'ADMIN').map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-3">
@@ -174,8 +177,8 @@ export default function UsersPage() {
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <div className="flex-grow overflow-y-auto -mx-6 px-6">
-            <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4">
+          <ScrollArea className="-mx-6 flex-grow">
+            <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 px-6">
               <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
                     {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
@@ -195,8 +198,23 @@ export default function UsersPage() {
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="role">Função</Label>
+                <Label htmlFor="coreRole">Nível de Acesso (Segurança)</Label>
+                <Select name="coreRole" value={formData.coreRole} onValueChange={(value) => handleSelectChange('coreRole', value as CoreUserRole)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o nível de acesso" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coreRoles.map(role => (
+                      <SelectItem key={role} value={role}>{role}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Função (Exibição)</Label>
                 <Select name="role" value={formData.role} onValueChange={(value) => handleSelectChange('role', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma função" />
@@ -210,7 +228,7 @@ export default function UsersPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Nova Função</Label>
+                <Label>Nova Função (Exibição)</Label>
                 <div className="flex gap-2">
                     <Input 
                         id="new-role"
@@ -240,7 +258,7 @@ export default function UsersPage() {
                 <Input id="squad" name="squad" value={formData.squad} onChange={handleInputChange} placeholder="Opcional para técnicos" />
               </div>
             </form>
-          </div>
+          </ScrollArea>
           <DialogFooter className="pt-4 mt-auto border-t bg-background">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="user-form">Salvar</Button>

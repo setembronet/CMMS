@@ -11,12 +11,12 @@ export const companies: Company[] = [
 ];
 
 export const users: User[] = [
-  { id: 'user-01', name: 'Admin Master', email: 'admin@tenantcare.com', role: 'Admin Master', clientId: null, avatarUrl: userAvatar },
-  { id: 'user-02', name: 'João Silva', email: 'joao.silva@atlas.com', role: 'Gestor de Empresa', clientId: 'client-01', clientName: 'Elevadores Atlas', avatarUrl: userAvatar },
-  { id: 'user-03', name: 'Maria Santos', email: 'maria.santos@atlas.com', role: 'Técnico', clientId: 'client-01', clientName: 'Elevadores Atlas', squad: 'Equipe Alpha', avatarUrl: userAvatar },
-  { id: 'user-04', name: 'Carlos Pereira', email: 'carlos@escadasbr.com', role: 'Gestor de Empresa', clientId: 'client-02', clientName: 'Escadas Brasil', avatarUrl: userAvatar },
-  { id: 'user-05', name: 'Ana Costa', email: 'ana.costa@escadasbr.com', role: 'Técnico', clientId: 'client-02', clientName: 'Escadas Brasil', squad: 'Equipe Beta', avatarUrl: userAvatar },
-  { id: 'user-06', name: 'Pedro Lima', email: 'pedro@xyz.com', role: 'Gestor de Empresa', clientId: 'client-03', clientName: 'Manutenção Predial XYZ', avatarUrl: userAvatar },
+  { id: 'user-01', name: 'Admin Master', email: 'admin@tenantcare.com', role: 'Admin Master', coreRole: 'ADMIN', clientId: null, avatarUrl: userAvatar },
+  { id: 'user-02', name: 'João Silva', email: 'joao.silva@atlas.com', role: 'Gestor de Empresa', coreRole: 'OPERATOR', clientId: 'client-01', clientName: 'Elevadores Atlas', avatarUrl: userAvatar },
+  { id: 'user-03', name: 'Maria Santos', email: 'maria.santos@atlas.com', role: 'Técnico', coreRole: 'OPERATOR', clientId: 'client-01', clientName: 'Elevadores Atlas', squad: 'Equipe Alpha', avatarUrl: userAvatar },
+  { id: 'user-04', name: 'Carlos Pereira', email: 'carlos@escadasbr.com', role: 'Gestor de Empresa', coreRole: 'OPERATOR', clientId: 'client-02', clientName: 'Escadas Brasil', avatarUrl: userAvatar },
+  { id: 'user-05', name: 'Ana Costa', email: 'ana.costa@escadasbr.com', role: 'Técnico', coreRole: 'OPERATOR', clientId: 'client-02', clientName: 'Escadas Brasil', squad: 'Equipe Beta', avatarUrl: userAvatar },
+  { id: 'user-06', name: 'Pedro Lima', email: 'pedro@xyz.com', role: 'Gestor de Empresa', coreRole: 'VIEWER', clientId: 'client-03', clientName: 'Manutenção Predial XYZ', avatarUrl: userAvatar },
 ];
 
 export const assets: Asset[] = [

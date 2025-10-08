@@ -3,12 +3,15 @@ export type CompanySegment = string;
 export type CompanyStatus = 'active' | 'inactive';
 export type OrderStatus = 'ABERTO' | 'FECHADO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta';
+export type CoreUserRole = 'ADMIN' | 'OPERATOR' | 'VIEWER';
+
 
 export type User = {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  coreRole: CoreUserRole;
   clientId: string | null;
   clientName?: string; 
   squad?: string;
