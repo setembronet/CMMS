@@ -4,12 +4,14 @@ import * as React from 'react';
 import { Moon, Sun } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function ThemeToggle() {
   const [theme, setTheme] = React.useState<'dark' | 'light'>('light');
+  const [isMounted, setIsMounted] = React.useState(false);
 
   React.useEffect(() => {
-    // This code now runs only on the client, after the initial render.
+    setIsMounted(true);
     const isDark = document.documentElement.classList.contains('dark');
     setTheme(isDark ? 'dark' : 'light');
   }, []);
@@ -23,6 +25,10 @@ export function ThemeToggle() {
       document.documentElement.classList.remove('dark');
     }
   };
+
+  if (!isMounted) {
+    return <Skeleton className="h-10 w-10 rounded-full" />;
+  }
 
   return (
     <Button variant="outline" size="icon" onClick={toggleTheme}>
