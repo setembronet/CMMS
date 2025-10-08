@@ -28,6 +28,7 @@ export type User = {
   clientName?: string; 
   squad?: string;
   avatarUrl: string;
+  password?: string;
 };
 
 export type Plan = {
