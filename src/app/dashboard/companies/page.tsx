@@ -63,8 +63,8 @@ export default function CompaniesPage() {
   };
 
   const handleAddNewSegment = () => {
-    if (newSegment && !segments.includes(newSegment.toUpperCase())) {
-      setSegments([...segments, newSegment.toUpperCase()]);
+    if (newSegment && !segments.includes(newSegment.toUpperCase().replace(/\s/g, '_'))) {
+      setSegments([...segments, newSegment.toUpperCase().replace(/\s/g, '_')]);
       setNewSegment('');
     }
   };
@@ -170,8 +170,8 @@ export default function CompaniesPage() {
               {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="pr-6 -mr-6">
-            <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6">
+          <ScrollArea className="pr-6 -mr-6 flex-grow">
+            <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6 pl-1 pr-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="name">Nome da Empresa</Label>
@@ -239,7 +239,7 @@ export default function CompaniesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {segments.map(segment => (
-                        <SelectItem key={segment} value={segment}>{segment}</SelectItem>
+                        <SelectItem key={segment} value={segment}>{segment.replace(/_/g, ' ')}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -250,7 +250,7 @@ export default function CompaniesPage() {
                 <Label>Novo Segmento</Label>
                 <div className="flex gap-2">
                   <Input 
-                    placeholder="Ex: PLATAFORMA_ELEVATORIA" 
+                    placeholder="Ex: PLATAFORMA ELEVATORIA" 
                     value={newSegment}
                     onChange={(e) => setNewSegment(e.target.value)}
                   />
@@ -262,7 +262,7 @@ export default function CompaniesPage() {
               </div>
             </form>
           </ScrollArea>
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="company-form">Salvar</Button>
           </DialogFooter>
