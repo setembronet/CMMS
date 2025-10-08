@@ -35,15 +35,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { users as initialUsers, companies } from '@/lib/data';
-import type { User, CMMSUserRole } from '@/lib/types';
+import { users as initialUsers, companies, cmmsRoles } from '@/lib/data';
+import type { User, CMMSRole } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-
-const cmmsRoles: CMMSUserRole[] = ['GESTOR', 'TECNICO', 'TECNICO_TERCERIZADO', 'SINDICO'];
 
 const emptyUser: User & { password?: string, confirmPassword?: string } = {
     id: '',
@@ -68,10 +66,10 @@ type PasswordStrength = {
 
 
 export default function CMMSUsersPage() {
-  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => cmmsRoles.includes(u.cmmsRole as CMMSUserRole)));
+  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => cmmsRoles.some(r => r.id === u.cmmsRole)));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
-  const [roles] = React.useState<CMMSUserRole[]>(cmmsRoles);
+  const [roles] = React.useState<CMMSRole[]>(cmmsRoles);
   const [formData, setFormData] = React.useState(emptyUser);
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
 
@@ -143,6 +141,11 @@ export default function CMMSUsersPage() {
   const isSaveDisabled = 
     (!!formData.password && passwordStrength?.level === 'Fraca') ||
     (formData.password !== formData.confirmPassword);
+  
+  const getRoleName = (roleId: string | null) => {
+    if (!roleId) return '';
+    return cmmsRoles.find(r => r.id === roleId)?.name || roleId;
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -179,7 +182,7 @@ export default function CMMSUsersPage() {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell><Badge variant="secondary">{user.cmmsRole?.replace(/_/g, ' ') ?? user.role}</Badge></TableCell>
+                <TableCell><Badge variant="secondary">{getRoleName(user.cmmsRole)}</Badge></TableCell>
                 <TableCell>{user.clientName}</TableCell>
                 <TableCell>{user.squad || 'N/A'}</TableCell>
                 <TableCell className="text-right">
@@ -269,7 +272,7 @@ export default function CMMSUsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {roles.map(role => (
-                        <SelectItem key={role} value={role}>{role.replace(/_/g, ' ')}</SelectItem>
+                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -9,6 +9,13 @@ export let segments: CompanySegment[] = [
   { id: 'ELEVADOR', name: 'Elevador', customFields: [] },
   { id: 'ESCADA_ROLANTE', name: 'Escada Rolante', customFields: [] },
   { id: 'AR_CONDICIONADO', name: 'Ar Condicionado', customFields: [] },
+];
+
+export let cmmsRoles: CMMSRole[] = [
+  { id: 'GESTOR', name: 'Gestor' },
+  { id: 'TECNICO', name: 'Técnico' },
+  { id: 'TECNICO_TERCERIZADO', name: 'Técnico Terceirizado' },
+  { id: 'SINDICO', name: 'Síndico' },
 ];
 
 export let plans: Plan[] = [
@@ -214,6 +221,10 @@ export const setSegments = (newSegments: CompanySegment[]) => {
   segments = newSegments;
 };
 
+export const setCmmsRoles = (newRoles: CMMSRole[]) => {
+  cmmsRoles = newRoles;
+};
+
 export const setSubscriptions = (newSubscriptions: Subscription[]) => {
   subscriptions = newSubscriptions;
 };
@@ -238,6 +249,7 @@ export const getBackupData = () => ({
   subscriptions,
   invoices,
   kpis,
+  cmmsRoles,
 });
 
 // Function to restore all data
@@ -251,6 +263,7 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.users)) setUsers(data.users);
     if (Array.isArray(data.subscriptions)) setSubscriptions(data.subscriptions);
     if (Array.isArray(data.invoices)) setInvoices(data.invoices);
+    if (Array.isArray(data.cmmsRoles)) setCmmsRoles(data.cmmsRoles);
     if (data.kpis) setKpis(data.kpis);
   }
 };

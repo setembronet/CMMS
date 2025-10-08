@@ -14,9 +14,12 @@ export type OrderPriority = 'Baixa' | 'Média' | 'Alta';
 export type SaaSUserRole = 'ADMIN' | 'FINANCEIRO' | 'SUPORTE' | 'VIEWER';
 
 // Roles for CMMS client users (external users)
-export type CMMSUserRole = 'GESTOR' | 'TECNICO' | 'TECNICO_TERCERIZADO' | 'SINDICO' | string;
+export type CMMSRole = {
+  id: string;
+  name: string;
+};
 
-export type UserRole = SaaSUserRole | CMMSUserRole;
+export type UserRole = SaaSUserRole | CMMSRole['name'] | string;
 
 export type SubscriptionStatus = 'ATIVA' | 'CANCELADA' | 'PAUSADA';
 export type BillingPeriod = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'ANNUALLY';
@@ -29,7 +32,7 @@ export type User = {
   email: string;
   role: UserRole;
   saasRole: SaaSUserRole;
-  cmmsRole: CMMSUserRole | null;
+  cmmsRole: CMMSRole['name'] | null;
   clientId: string | null;
   clientName?: string; 
   squad?: string;

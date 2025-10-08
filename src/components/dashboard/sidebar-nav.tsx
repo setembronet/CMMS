@@ -20,6 +20,7 @@ import {
   LogOut,
   FileText,
   History,
+  Briefcase,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -54,6 +55,7 @@ const financeLinks = [
 const settingsLinks = [
     { href: '/dashboard/settings', label: 'Geral', icon: Settings },
     { href: '/dashboard/cmms-users', label: 'Usuários do SaaS', icon: UserSquare },
+    { href: '/dashboard/settings/roles', label: 'Funções', icon: Briefcase },
     { href: '/dashboard/settings/backup', label: 'Backup e Restore', icon: History },
 ];
 
