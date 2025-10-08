@@ -275,14 +275,14 @@ export default function CompaniesPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             <DialogDescription>
               {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto -mx-6 px-6">
+          <div className="overflow-y-auto -mx-6 px-6" style={{ height: 'calc(80vh - 150px)' }}>
             <ScrollArea className="h-full pr-6">
               <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -410,7 +410,7 @@ export default function CompaniesPage() {
               </form>
             </ScrollArea>
           </div>
-          <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6 sticky bottom-0">
+          <DialogFooter className="pt-4 mt-4 border-t bg-background -mx-6 px-6 pb-6">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="company-form">Salvar</Button>
           </DialogFooter>

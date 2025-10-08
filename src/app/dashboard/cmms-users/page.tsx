@@ -174,11 +174,11 @@ export default function CMMSUsersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-[480px] max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário CMMS'}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto -mx-6 px-6">
+          <div className="overflow-y-auto -mx-6 px-6" style={{ height: 'calc(80vh - 150px)' }}>
             <ScrollArea className="h-full pr-6">
               <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
                 <div className="flex items-center gap-4">
@@ -248,7 +248,7 @@ export default function CMMSUsersPage() {
               </form>
             </ScrollArea>
           </div>
-          <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6">
+          <DialogFooter className="pt-4 mt-4 border-t bg-background -mx-6 px-6 pb-6">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="user-form">Salvar</Button>
           </DialogFooter>
