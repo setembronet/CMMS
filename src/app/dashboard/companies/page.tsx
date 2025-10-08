@@ -39,6 +39,7 @@ import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { companies as initialCompanies } from '@/lib/data';
 import type { Company } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialSegments = ['ELEVADOR', 'ESCADA_ROLANTE'];
 
@@ -162,15 +163,15 @@ export default function CompaniesPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             <DialogDescription>
               {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveCompany}>
-            <div className="grid gap-6 py-4">
+          <ScrollArea className="pr-6 -mr-6">
+            <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="name">Nome da Empresa</Label>
@@ -259,13 +260,12 @@ export default function CompaniesPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">Adicione um novo segmento de atuação para as empresas.</p>
               </div>
-
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-              <Button type="submit">Salvar</Button>
-            </DialogFooter>
-          </form>
+            </form>
+          </ScrollArea>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
+            <Button type="submit" form="company-form">Salvar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
