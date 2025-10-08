@@ -63,9 +63,14 @@ export function SidebarNav() {
     if (isSubItem || href === '/dashboard') {
         return pathname === href;
     }
+    // Make company links active only on their specific page
+    if (href.startsWith('/dashboard/companies')) {
+        return pathname === href || pathname.startsWith('/dashboard/companies/segments');
+    }
     return pathname.startsWith(href);
   };
 
+  const isCompaniesActive = mainLinks.some(link => link.href.startsWith('/dashboard/companies') && isActive(link.href));
   const isFinanceActive = financeLinks.some(link => isActive(link.href, true));
   const isSettingsActive = settingsLinks.some(link => isActive(link.href, true));
 
@@ -76,7 +81,58 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {mainLinks.map((link) => (
+          <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive('/dashboard')}
+                tooltip={{ children: 'Dashboard' }}
+              >
+                <Link href="/dashboard">
+                  <Home />
+                  <span>Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <Collapsible asChild defaultOpen={isCompaniesActive}>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                         <SidebarMenuButton
+                            isActive={isCompaniesActive}
+                            className="justify-between"
+                            tooltip={{ children: 'Empresas' }}
+                         >
+                            <div className="flex items-center gap-2">
+                                <Building2 />
+                                <span>Empresas</span>
+                            </div>
+                            <ChevronDown className={cn("transition-transform duration-200", isCompaniesActive && "rotate-180")} />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/companies', true)}>
+                                    <Link href="/dashboard/companies">
+                                        <LayoutGrid />
+                                        <span>Visão Geral</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/companies/segments', true)}>
+                                    <Link href="/dashboard/companies/segments">
+                                        <Puzzle />
+                                        <span>Segmentos</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+           </Collapsible>
+          
+          {mainLinks.filter(link => !link.href.includes('/dashboard/companies') && link.href !== '/dashboard').map((link) => (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
                 asChild
