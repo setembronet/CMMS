@@ -41,15 +41,29 @@ import Image from 'next/image';
 
 const initialRoles: UserRole[] = ['Gestor de Empresa', 'Técnico'];
 
+const emptyUser: User = {
+    id: '',
+    name: '',
+    email: '',
+    role: '',
+    clientId: null,
+    clientName: '',
+    squad: '',
+    avatarUrl: ''
+};
+
 export default function UsersPage() {
   const [users, setUsers] = React.useState<User[]>(initialUsers);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
   const [roles, setRoles] = React.useState<UserRole[]>(initialRoles);
   const [newRole, setNewRole] = React.useState('');
+  const [formData, setFormData] = React.useState<User>(emptyUser);
+
 
   const openDialog = (user: User | null = null) => {
     setEditingUser(user);
+    setFormData(user || emptyUser);
     setIsDialogOpen(true);
   };
 
@@ -57,47 +71,35 @@ export default function UsersPage() {
     setEditingUser(null);
     setIsDialogOpen(false);
     setNewRole('');
+    setFormData(emptyUser);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({...prev, [name]: value}));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAddNewRole = () => {
     if (newRole && !roles.includes(newRole)) {
-      setRoles([...roles, newRole]);
-      
-      // We also need to update the form data if the dialog is open
-      const form = document.getElementById('user-form') as HTMLFormElement;
-      if(form) {
-          const roleSelect = form.elements.namedItem('role') as HTMLSelectElement;
-          // This is a workaround to set the value in the Select component
-          // because it is not fully controlled in this form version.
-          // A better approach would be to use a controlled component for the form.
-          setTimeout(() => {
-            const hiddenInput = document.querySelector('input[name="role"]');
-            if (hiddenInput) {
-                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-                nativeInputValueSetter?.call(hiddenInput, newRole);
-                const ev2 = new Event('input', { bubbles: true });
-                hiddenInput.dispatchEvent(ev2);
-            }
-          }, 0);
-      }
+      const formattedRole = newRole.trim();
+      setRoles([...roles, formattedRole]);
+      setFormData(prev => ({...prev, role: formattedRole}));
       setNewRole('');
     }
   };
   
   const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const client = companies.find(c => c.id === formData.get('clientId'));
+    const client = companies.find(c => c.id === formData.clientId);
 
     const newUser: User = {
+      ...formData,
       id: editingUser?.id || `user-0${users.length + 1}`,
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      role: formData.get('role') as UserRole,
-      clientId: formData.get('clientId') as string,
       clientName: client?.name,
-      squad: formData.get('squad') as string,
-      avatarUrl: editingUser?.avatarUrl || '',
     };
 
     if (editingUser) {
@@ -174,18 +176,29 @@ export default function UsersPage() {
           </DialogHeader>
           <form id="user-form" onSubmit={handleSaveUser}>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Nome</Label>
-                <Input id="name" name="name" defaultValue={editingUser?.name} className="col-span-3" required />
+              <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
+                    <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="w-full space-y-2">
+                    <Label htmlFor="avatarUrl">URL do Avatar</Label>
+                    <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
+                  </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">Email</Label>
-                <Input id="email" name="email" type="email" defaultValue={editingUser?.email} className="col-span-3" required />
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="role" className="text-right">Função</Label>
-                <Select name="role" defaultValue={editingUser?.role}>
-                  <SelectTrigger className="col-span-3">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Função</Label>
+                <Select name="role" value={formData.role} onValueChange={(value) => handleSelectChange('role', value)}>
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione uma função" />
                   </SelectTrigger>
                   <SelectContent>
@@ -196,9 +209,9 @@ export default function UsersPage() {
                 </Select>
               </div>
 
-               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="new-role" className="text-right">Nova Função</Label>
-                <div className="col-span-3 flex gap-2">
+              <div className="space-y-2">
+                <Label>Nova Função</Label>
+                <div className="flex gap-2">
                     <Input 
                         id="new-role"
                         placeholder="Ex: Supervisor" 
@@ -210,12 +223,11 @@ export default function UsersPage() {
                     </Button>
                 </div>
               </div>
-
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="clientId" className="text-right">Empresa</Label>
-                <Select name="clientId" defaultValue={editingUser?.clientId || undefined}>
-                  <SelectTrigger className="col-span-3">
+              
+              <div className="space-y-2">
+                <Label htmlFor="clientId">Empresa</Label>
+                <Select name="clientId" value={formData.clientId || undefined} onValueChange={(value) => handleSelectChange('clientId', value)}>
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione uma empresa" />
                   </SelectTrigger>
                   <SelectContent>
@@ -223,9 +235,9 @@ export default function UsersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="squad" className="text-right">Equipe</Label>
-                <Input id="squad" name="squad" defaultValue={editingUser?.squad} className="col-span-3" placeholder="Opcional para técnicos" />
+              <div className="space-y-2">
+                <Label htmlFor="squad">Equipe</Label>
+                <Input id="squad" name="squad" value={formData.squad} onChange={handleInputChange} placeholder="Opcional para técnicos" />
               </div>
             </div>
             <DialogFooter>
