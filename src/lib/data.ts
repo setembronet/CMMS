@@ -1,5 +1,5 @@
 
-import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -40,6 +40,11 @@ export const plans: Plan[] = [
   },
 ];
 
+export const addons: Addon[] = [
+  { id: 'ia-addon', name: 'Módulo IA', price: 199 },
+  { id: 'iot-addon', name: 'Módulo IoT', price: 299 },
+];
+
 export const companies: Company[] = [
   { 
     id: 'client-01', 
@@ -52,6 +57,7 @@ export const companies: Company[] = [
     iaAddonActive: true,
     iotAddonActive: false,
     currentAssets: 18,
+    assetLimit: 50
   },
   { 
     id: 'client-02', 
@@ -64,6 +70,7 @@ export const companies: Company[] = [
     iaAddonActive: false,
     iotAddonActive: false,
     currentAssets: 45,
+    assetLimit: 50,
   },
   { 
     id: 'client-03', 
@@ -76,6 +83,7 @@ export const companies: Company[] = [
     iaAddonActive: false,
     iotAddonActive: false,
     currentAssets: 4,
+    assetLimit: 5,
   },
   { 
     id: 'client-04', 
@@ -88,6 +96,7 @@ export const companies: Company[] = [
     iaAddonActive: true,
     iotAddonActive: true,
     currentAssets: 150,
+    assetLimit: 500
   },
 ];
 

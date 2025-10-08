@@ -34,6 +34,12 @@ export type Plan = {
   hasIotAddonAccess: boolean;
 };
 
+export type Addon = {
+  id: string;
+  name: string;
+  price: number;
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -55,6 +61,7 @@ export type Company = {
   iaAddonActive: boolean;
   iotAddonActive: boolean;
   currentAssets: number;
+  assetLimit?: number; // Added from previous turn, but should be in Company
 };
 
 export type Asset = {

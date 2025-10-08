@@ -13,6 +13,7 @@ import {
   ChevronDown,
   LayoutGrid,
   Package,
+  Puzzle,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -40,6 +41,7 @@ const mainLinks = [
 const financeLinks = [
     { href: '/dashboard/finance', label: 'Dashboard', icon: LayoutGrid },
     { href: '/dashboard/finance/plans', label: 'Planos', icon: Package },
+    { href: '/dashboard/finance/addons', label: 'Add-ons', icon: Puzzle },
 ];
 
 const bottomLinks = [{ href: '/dashboard/settings', label: 'Configurações', icon: Settings }];
@@ -78,7 +80,7 @@ export function SidebarNav() {
             </SidebarMenuItem>
           ))}
           
-           <Collapsible asChild>
+           <Collapsible asChild defaultOpen={isFinanceActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                          <SidebarMenuButton
