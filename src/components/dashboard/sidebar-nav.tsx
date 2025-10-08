@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import Link from 'next/link';
@@ -36,32 +34,34 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import React from 'react';
-
-const mainLinks = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/dashboard/companies', label: 'Empresas', icon: Building2 },
-  { href: '/dashboard/users', label: 'Usuários', icon: Users },
-  { href: '/dashboard/assets', label: 'Ativos', icon: Wrench },
-  { href: '/dashboard/orders', label: 'Ordens de Serviço', icon: ClipboardList },
-];
-
-const financeLinks = [
-    { href: '/dashboard/finance', label: 'Dashboard', icon: LayoutGrid },
-    { href: '/dashboard/finance/subscriptions', label: 'Assinaturas', icon: FileText },
-    { href: '/dashboard/finance/plans', label: 'Planos', icon: Package },
-    { href: '/dashboard/finance/addons', label: 'Add-ons', icon: Puzzle },
-];
-
-const settingsLinks = [
-    { href: '/dashboard/settings', label: 'Geral', icon: Settings },
-    { href: '/dashboard/cmms-users', label: 'Usuários do SaaS', icon: UserSquare },
-    { href: '/dashboard/settings/roles', label: 'Funções', icon: Briefcase },
-    { href: '/dashboard/settings/backup', label: 'Backup e Restore', icon: History },
-];
-
+import { useI18n } from '@/hooks/use-i18n';
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
+
+  const mainLinks = [
+    { href: '/dashboard', label: t('sidebar.dashboard'), icon: Home },
+    { href: '/dashboard/companies', label: t('sidebar.companies'), icon: Building2 },
+    { href: '/dashboard/users', label: t('sidebar.users'), icon: Users },
+    { href: '/dashboard/assets', label: t('sidebar.assets'), icon: Wrench },
+    { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ClipboardList },
+  ];
+
+  const financeLinks = [
+      { href: '/dashboard/finance', label: t('sidebar.financeDashboard'), icon: LayoutGrid },
+      { href: '/dashboard/finance/subscriptions', label: t('sidebar.subscriptions'), icon: FileText },
+      { href: '/dashboard/finance/plans', label: t('sidebar.plans'), icon: Package },
+      { href: '/dashboard/finance/addons', label: t('sidebar.addons'), icon: Puzzle },
+  ];
+
+  const settingsLinks = [
+      { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
+      { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
+      { href: '/dashboard/settings/roles', label: t('sidebar.roles'), icon: Briefcase },
+      { href: '/dashboard/settings/backup', label: t('sidebar.backupRestore'), icon: History },
+  ];
+
 
   const isActive = (href: string, isSubItem: boolean = false) => {
     // Exact match for sub-items or dashboard, startsWith for others
@@ -90,11 +90,11 @@ export function SidebarNav() {
               <SidebarMenuButton
                 asChild
                 isActive={isActive('/dashboard')}
-                tooltip={{ children: 'Dashboard' }}
+                tooltip={{ children: t('sidebar.dashboard') }}
               >
                 <Link href="/dashboard">
                   <Home />
-                  <span>Dashboard</span>
+                  <span>{t('sidebar.dashboard')}</span>
                 </Link>
               </SidebarMenuButton>
           </SidebarMenuItem>
@@ -105,11 +105,11 @@ export function SidebarNav() {
                          <SidebarMenuButton
                             isActive={isCompaniesActive}
                             className="justify-between"
-                            tooltip={{ children: 'Empresas' }}
+                            tooltip={{ children: t('sidebar.companies') }}
                          >
                             <div className="flex items-center gap-2">
                                 <Building2 />
-                                <span>Empresas</span>
+                                <span>{t('sidebar.companies')}</span>
                             </div>
                             <ChevronDown className={cn("transition-transform duration-200", isCompaniesActive && "rotate-180")} />
                         </SidebarMenuButton>
@@ -120,7 +120,7 @@ export function SidebarNav() {
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/companies', true)}>
                                     <Link href="/dashboard/companies">
                                         <LayoutGrid />
-                                        <span>Visão Geral</span>
+                                        <span>{t('sidebar.overview')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
@@ -128,7 +128,7 @@ export function SidebarNav() {
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/companies/segments', true)}>
                                     <Link href="/dashboard/companies/segments">
                                         <Puzzle />
-                                        <span>Segmentos</span>
+                                        <span>{t('sidebar.segments')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
@@ -158,11 +158,11 @@ export function SidebarNav() {
                          <SidebarMenuButton
                             isActive={isFinanceActive}
                             className="justify-between"
-                            tooltip={{ children: 'Financeiro' }}
+                            tooltip={{ children: t('sidebar.finance') }}
                          >
                             <div className="flex items-center gap-2">
                                 <TrendingUp />
-                                <span>Financeiro</span>
+                                <span>{t('sidebar.finance')}</span>
                             </div>
                             <ChevronDown className={cn("transition-transform duration-200", isFinanceActive && "rotate-180")} />
                         </SidebarMenuButton>
@@ -193,11 +193,11 @@ export function SidebarNav() {
                          <SidebarMenuButton
                             isActive={isSettingsActive}
                             className="justify-between"
-                            tooltip={{ children: 'Configurações' }}
+                            tooltip={{ children: t('sidebar.settings') }}
                          >
                             <div className="flex items-center gap-2">
                                 <Settings />
-                                <span>Configurações</span>
+                                <span>{t('sidebar.settings')}</span>
                             </div>
                             <ChevronDown className={cn("transition-transform duration-200", isSettingsActive && "rotate-180")} />
                         </SidebarMenuButton>
@@ -219,10 +219,10 @@ export function SidebarNav() {
                 </SidebarMenuItem>
            </Collapsible>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: 'Sair' }}>
+                <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
                     <Link href="/login">
                         <LogOut />
-                        <span>Sair</span>
+                        <span>{t('sidebar.logout')}</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>

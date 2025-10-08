@@ -1,0 +1,25 @@
+{
+  "header": {
+    "changeLanguage": "Change language"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "companies": "Companies",
+    "users": "Users",
+    "assets": "Assets",
+    "workOrders": "Work Orders",
+    "finance": "Finance",
+    "financeDashboard": "Dashboard",
+    "subscriptions": "Subscriptions",
+    "plans": "Plans",
+    "addons": "Add-ons",
+    "settings": "Settings",
+    "general": "General",
+    "saasUsers": "SaaS Users",
+    "roles": "Roles",
+    "backupRestore": "Backup & Restore",
+    "logout": "Logout",
+    "overview": "Overview",
+    "segments": "Segments"
+  }
+}
