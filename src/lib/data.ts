@@ -122,15 +122,48 @@ export const workOrders: WorkOrder[] = [
 ];
 
 export const subscriptions: Subscription[] = [
-    { id: 'sub-01', clientId: 'client-01', status: 'ATIVA', period: 'MONTHLY', startDate: new Date(2023, 0, 15).getTime(), nextBillingDate: new Date().getTime(), basePlanValue: 249, activeAddons: [{ id: 'ia-addon', name: 'Módulo IA', value: 50}] },
-    { id: 'sub-02', clientId: 'client-02', status: 'ATIVA', period: 'QUARTERLY', startDate: new Date(2023, 2, 1).getTime(), nextBillingDate: new Date().getTime(), basePlanValue: 99 * 3, activeAddons: [] },
-    { id: 'sub-04', clientId: 'client-04', status: 'CANCELADA', period: 'ANNUALLY', startDate: new Date(2022, 5, 20).getTime(), nextBillingDate: new Date(2023, 5, 20).getTime(), basePlanValue: 5000, activeAddons: [{ id: 'ia-addon', name: 'Módulo IA', value: 500}, {id: 'iot-addon', name: 'Módulo IoT', value: 1000}] },
+    { 
+        id: 'sub-01', 
+        clientId: 'client-01', 
+        planId: 'plan_pro',
+        status: 'ATIVA', 
+        period: 'MONTHLY', 
+        startDate: new Date(2023, 0, 15).getTime(), 
+        nextBillingDate: new Date(2024, 7, 15).getTime(), 
+        basePlanValue: 249, 
+        activeAddons: [{ id: 'ia-addon', name: 'Módulo IA', price: 199 }] 
+    },
+    { 
+        id: 'sub-02', 
+        clientId: 'client-02', 
+        planId: 'plan_pro',
+        status: 'ATIVA', 
+        period: 'QUARTERLY', 
+        startDate: new Date(2023, 2, 1).getTime(), 
+        nextBillingDate: new Date(2024, 8, 1).getTime(), 
+        basePlanValue: 249*3, 
+        activeAddons: [] 
+    },
+    { 
+        id: 'sub-04', 
+        clientId: 'client-04', 
+        planId: 'plan_enterprise',
+        status: 'CANCELADA', 
+        period: 'ANNUALLY', 
+        startDate: new Date(2022, 5, 20).getTime(), 
+        nextBillingDate: new Date(2023, 5, 20).getTime(), 
+        basePlanValue: 999*12, 
+        activeAddons: [
+            { id: 'ia-addon', name: 'Módulo IA', price: 199*12 }, 
+            { id: 'iot-addon', name: 'Módulo IoT', price: 299*12 }
+        ] 
+    },
 ];
 
 export const invoices: Invoice[] = [
-    { id: 'inv-01', clientId: 'client-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 5, 15).getTime(), dueDate: new Date(2024, 5, 22).getTime(), totalValue: 299, status: 'PAGO', billedItems: [{description: 'Plano Enterprise', value: 249}, {description: 'Módulo IA', value: 50}] },
-    { id: 'inv-02', clientId: 'client-02', subscriptionId: 'sub-02', issueDate: new Date(2024, 5, 1).getTime(), dueDate: new Date(2024, 5, 8).getTime(), totalValue: 297, status: 'PENDENTE', billedItems: [{description: 'Plano Pró (Trimestral)', value: 297}] },
-    { id: 'inv-03', clientId: 'client-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 4, 15).getTime(), dueDate: new Date(2024, 4, 22).getTime(), totalValue: 299, status: 'ATRASADO', billedItems: [{description: 'Plano Enterprise', value: 249}, {description: 'Módulo IA', value: 50}] },
+    { id: 'inv-01', clientId: 'client-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 5, 15).getTime(), dueDate: new Date(2024, 5, 22).getTime(), totalValue: 448, status: 'PAGO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
+    { id: 'inv-02', clientId: 'client-02', subscriptionId: 'sub-02', issueDate: new Date(2024, 5, 1).getTime(), dueDate: new Date(2024, 5, 8).getTime(), totalValue: 747, status: 'PENDENTE', billedItems: [{description: 'Plano Pró (Trimestral)', value: 747}] },
+    { id: 'inv-03', clientId: 'client-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 4, 15).getTime(), dueDate: new Date(2024, 4, 22).getTime(), totalValue: 448, status: 'ATRASADO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
 ];
 
 
@@ -143,7 +176,7 @@ export const kpis = {
             if (sub.period === 'SEMIANNUALLY') monthlyValue /= 6;
             if (sub.period === 'ANNUALLY') monthlyValue /= 12;
 
-            const addonsValue = sub.activeAddons.reduce((acc, addon) => acc + addon.value, 0);
+            const addonsValue = sub.activeAddons.reduce((acc, addon) => acc + addon.price, 0);
             return total + monthlyValue + addonsValue;
         }
         return total;

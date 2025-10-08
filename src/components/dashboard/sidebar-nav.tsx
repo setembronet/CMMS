@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -16,6 +17,7 @@ import {
   Puzzle,
   UserSquare,
   LogOut,
+  FileText,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -35,20 +37,21 @@ import React from 'react';
 const mainLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/dashboard/companies', label: 'Empresas', icon: Building2 },
-  { href: '/dashboard/cmms-users', label: 'Usuários', icon: Users },
+  { href: '/dashboard/users', label: 'Usuários', icon: Users },
   { href: '/dashboard/assets', label: 'Ativos', icon: Wrench },
   { href: '/dashboard/orders', label: 'Ordens de Serviço', icon: ClipboardList },
 ];
 
 const financeLinks = [
     { href: '/dashboard/finance', label: 'Dashboard', icon: LayoutGrid },
+    { href: '/dashboard/finance/subscriptions', label: 'Assinaturas', icon: FileText },
     { href: '/dashboard/finance/plans', label: 'Planos', icon: Package },
     { href: '/dashboard/finance/addons', label: 'Add-ons', icon: Puzzle },
 ];
 
 const settingsLinks = [
     { href: '/dashboard/settings', label: 'Geral', icon: Settings },
-    { href: '/dashboard/users', label: 'Usuários do SaaS', icon: UserSquare },
+    { href: '/dashboard/cmms-users', label: 'Usuários do SaaS', icon: UserSquare },
 ];
 
 

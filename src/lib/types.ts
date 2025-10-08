@@ -97,13 +97,14 @@ export type WorkOrder = {
 export type Subscription = {
   id: string;
   clientId: string;
+  planId: string;
   status: SubscriptionStatus;
   period: BillingPeriod;
   startDate: number; // timestamp
   nextBillingDate: number; // timestamp
   basePlanValue: number;
   valuePerAsset?: number;
-  activeAddons: { id: string; name: string; value: number }[];
+  activeAddons: { id: string; name: string; price: number }[];
 };
 
 export type Invoice = {
