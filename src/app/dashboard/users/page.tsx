@@ -177,89 +177,91 @@ export default function UsersPage() {
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="-mx-6 flex-grow">
-            <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 px-6">
-              <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
-                    <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="w-full space-y-2">
-                    <Label htmlFor="avatarUrl">URL do Avatar</Label>
-                    <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
-                  </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome</Label>
-                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="coreRole">Nível de Acesso (Segurança)</Label>
-                <Select name="coreRole" value={formData.coreRole} onValueChange={(value) => handleSelectChange('coreRole', value as CoreUserRole)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o nível de acesso" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {coreRoles.map(role => (
-                      <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">Função (Exibição)</Label>
-                <Select name="role" value={formData.role} onValueChange={(value) => handleSelectChange('role', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma função" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map(role => (
-                      <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Nova Função (Exibição)</Label>
-                <div className="flex gap-2">
-                    <Input 
-                        id="new-role"
-                        placeholder="Ex: Supervisor" 
-                        value={newRole}
-                        onChange={(e) => setNewRole(e.target.value)}
-                    />
-                    <Button type="button" variant="secondary" onClick={handleAddNewRole}>
-                        Adicionar
-                    </Button>
+          <div className="flex-grow overflow-hidden -mx-6 px-6">
+            <ScrollArea className="h-full">
+              <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full pr-4">
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
+                      <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="w-full space-y-2">
+                      <Label htmlFor="avatarUrl">URL do Avatar</Label>
+                      <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
+                    </div>
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="clientId">Empresa</Label>
-                <Select name="clientId" value={formData.clientId || undefined} onValueChange={(value) => handleSelectChange('clientId', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma empresa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="squad">Equipe</Label>
-                <Input id="squad" name="squad" value={formData.squad} onChange={handleInputChange} placeholder="Opcional para técnicos" />
-              </div>
-            </form>
-          </ScrollArea>
-          <DialogFooter className="pt-4 mt-auto border-t bg-background">
+
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome</Label>
+                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="coreRole">Nível de Acesso (Segurança)</Label>
+                  <Select name="coreRole" value={formData.coreRole} onValueChange={(value) => handleSelectChange('coreRole', value as CoreUserRole)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o nível de acesso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {coreRoles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">Função (Exibição)</Label>
+                  <Select name="role" value={formData.role} onValueChange={(value) => handleSelectChange('role', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma função" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Nova Função (Exibição)</Label>
+                  <div className="flex gap-2">
+                      <Input 
+                          id="new-role"
+                          placeholder="Ex: Supervisor" 
+                          value={newRole}
+                          onChange={(e) => setNewRole(e.target.value)}
+                      />
+                      <Button type="button" variant="secondary" onClick={handleAddNewRole}>
+                          Adicionar
+                      </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="clientId">Empresa</Label>
+                  <Select name="clientId" value={formData.clientId || undefined} onValueChange={(value) => handleSelectChange('clientId', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="squad">Equipe</Label>
+                  <Input id="squad" name="squad" value={formData.squad} onChange={handleInputChange} placeholder="Opcional para técnicos" />
+                </div>
+              </form>
+            </ScrollArea>
+          </div>
+          <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
             <Button type="submit" form="user-form">Salvar</Button>
           </DialogFooter>
