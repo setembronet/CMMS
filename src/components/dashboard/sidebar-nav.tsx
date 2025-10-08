@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -18,6 +19,7 @@ import {
   UserSquare,
   LogOut,
   FileText,
+  History,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -52,6 +54,7 @@ const financeLinks = [
 const settingsLinks = [
     { href: '/dashboard/settings', label: 'Geral', icon: Settings },
     { href: '/dashboard/cmms-users', label: 'Usuários do SaaS', icon: UserSquare },
+    { href: '/dashboard/settings/backup', label: 'Backup e Restore', icon: History },
 ];
 
 

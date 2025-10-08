@@ -1,16 +1,17 @@
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
 
-export const segments: CompanySegment[] = [
+export let segments: CompanySegment[] = [
   { id: 'ELEVADOR', name: 'Elevador', customFields: [] },
   { id: 'ESCADA_ROLANTE', name: 'Escada Rolante', customFields: [] },
   { id: 'AR_CONDICIONADO', name: 'Ar Condicionado', customFields: [] },
 ];
 
-export const plans: Plan[] = [
+export let plans: Plan[] = [
   {
     id: 'plan_free',
     name: 'Free',
@@ -46,12 +47,12 @@ export const plans: Plan[] = [
   },
 ];
 
-export const addons: Addon[] = [
+export let addons: Addon[] = [
   { id: 'ia-addon', name: 'Módulo IA', price: 199 },
   { id: 'iot-addon', name: 'Módulo IoT', price: 299 },
 ];
 
-export const companies: Company[] = [
+export let companies: Company[] = [
   { 
     id: 'client-01', 
     name: 'Elevadores Atlas', 
@@ -106,7 +107,7 @@ export const companies: Company[] = [
   },
 ];
 
-export const users: User[] = [
+export let users: User[] = [
   { id: 'user-01', name: 'Admin Master', email: 'admin@tenantcare.com', role: 'ADMIN', saasRole: 'ADMIN', cmmsRole: null, clientId: null, avatarUrl: userAvatar },
   { id: 'user-02', name: 'Financeiro App', email: 'finance@tenantcare.com', role: 'FINANCEIRO', saasRole: 'FINANCEIRO', cmmsRole: null, clientId: null, avatarUrl: userAvatar },
   { id: 'user-03', name: 'Suporte App', email: 'support@tenantcare.com', role: 'SUPORTE', saasRole: 'SUPORTE', cmmsRole: null, clientId: null, avatarUrl: userAvatar },
@@ -117,17 +118,17 @@ export const users: User[] = [
   { id: 'user-08', name: 'Pedro Lima', email: 'pedro@xyz.com', role: 'SINDICO', saasRole: 'VIEWER', cmmsRole: 'SINDICO', clientId: 'client-03', clientName: 'Manutenção Predial XYZ', avatarUrl: userAvatar },
 ];
 
-export const assets: Asset[] = [
+export let assets: Asset[] = [
   { id: 'asset-01', clientId: 'client-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', location: { lat: -23.5505, lng: -46.6333 } },
   { id: 'asset-02', clientId: 'client-02', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', location: { lat: -22.9068, lng: -43.1729 } },
 ];
 
-export const workOrders: WorkOrder[] = [
+export let workOrders: WorkOrder[] = [
   { id: 'os-01', clientId: 'client-01', assetId: 'asset-01', title: 'Verificar ruído no motor', status: 'ABERTO', priority: 'Alta' },
   { id: 'os-02', clientId: 'client-02', assetId: 'asset-02', title: 'Manutenção preventiva mensal', status: 'FECHADO', priority: 'Média' },
 ];
 
-export const subscriptions: Subscription[] = [
+export let subscriptions: Subscription[] = [
     { 
         id: 'sub-01', 
         clientId: 'client-01', 
@@ -166,14 +167,14 @@ export const subscriptions: Subscription[] = [
     },
 ];
 
-export const invoices: Invoice[] = [
+export let invoices: Invoice[] = [
     { id: 'inv-01', clientId: 'client-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 5, 15).getTime(), dueDate: new Date(2024, 5, 22).getTime(), totalValue: 448, status: 'PAGO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
     { id: 'inv-02', clientId: 'client-02', subscriptionId: 'sub-02', issueDate: new Date(2024, 5, 1).getTime(), dueDate: new Date(2024, 5, 8).getTime(), totalValue: 747, status: 'PENDENTE', billedItems: [{description: 'Plano Pró (Trimestral)', value: 747}] },
     { id: 'inv-03', clientId: 'client-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 4, 15).getTime(), dueDate: new Date(2024, 4, 22).getTime(), totalValue: 448, status: 'ATRASADO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
 ];
 
 
-export const kpis = {
+export let kpis = {
     activeUsers: users.length,
     mockMrr: subscriptions.reduce((total, sub) => {
         if (sub.status === 'ATIVA') {
@@ -190,4 +191,66 @@ export const kpis = {
     activeClients: companies.filter(c => c.status === 'active').length,
     inactiveClients: companies.filter(c => c.status === 'inactive').length,
     overdueInvoices: invoices.filter(inv => inv.status === 'ATRASADO'),
+};
+
+// Functions to update data
+export const setCompanies = (newCompanies: Company[]) => {
+  companies = newCompanies;
+};
+
+export const setUsers = (newUsers: User[]) => {
+  users = newUsers;
+};
+
+export const setPlans = (newPlans: Plan[]) => {
+  plans = newPlans;
+};
+
+export const setAddons = (newAddons: Addon[]) => {
+  addons = newAddons;
+};
+
+export const setSegments = (newSegments: CompanySegment[]) => {
+  segments = newSegments;
+};
+
+export const setSubscriptions = (newSubscriptions: Subscription[]) => {
+  subscriptions = newSubscriptions;
+};
+
+export const setInvoices = (newInvoices: Invoice[]) => {
+    invoices = newInvoices;
+};
+
+export const setKpis = (newKpis: typeof kpis) => {
+    kpis = newKpis;
+};
+
+// Function to get all data for backup
+export const getBackupData = () => ({
+  segments,
+  plans,
+  addons,
+  companies,
+  users,
+  assets,
+  workOrders,
+  subscriptions,
+  invoices,
+  kpis,
+});
+
+// Function to restore all data
+export const restoreData = (data: any) => {
+  // Basic validation to ensure we're not restoring junk
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.segments)) setSegments(data.segments);
+    if (Array.isArray(data.plans)) setPlans(data.plans);
+    if (Array.isArray(data.addons)) setAddons(data.addons);
+    if (Array.isArray(data.companies)) setCompanies(data.companies);
+    if (Array.isArray(data.users)) setUsers(data.users);
+    if (Array.isArray(data.subscriptions)) setSubscriptions(data.subscriptions);
+    if (Array.isArray(data.invoices)) setInvoices(data.invoices);
+    if (data.kpis) setKpis(data.kpis);
+  }
 };
