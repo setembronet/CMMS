@@ -74,7 +74,6 @@ export default function CompaniesPage() {
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
   const [formData, setFormData] = React.useState<Company>(emptyCompany);
   const [segments, setSegments] = React.useState<CompanySegment[]>(initialSegments);
-  const [newSegment, setNewSegment] = React.useState('');
 
   const openDialog = (company: Company | null = null) => {
     setEditingCompany(company);
@@ -85,7 +84,6 @@ export default function CompaniesPage() {
   const closeDialog = () => {
     setEditingCompany(null);
     setIsDialogOpen(false);
-    setNewSegment('');
     setFormData(emptyCompany);
   };
   
@@ -166,20 +164,6 @@ export default function CompaniesPage() {
       }
     } catch (error) {
       console.error("Falha ao buscar CEP:", error);
-    }
-  };
-
-
-  const handleAddNewSegment = () => {
-    if (newSegment && !segments.find(s => s.name.toUpperCase() === newSegment.toUpperCase())) {
-      const formattedSegmentId = newSegment.toUpperCase().replace(/\s/g, '_');
-      const newSegmentObj: CompanySegment = {
-        id: formattedSegmentId,
-        name: newSegment,
-      };
-      setSegments([...segments, newSegmentObj]);
-      handleSegmentChange(newSegmentObj.id, true);
-      setNewSegment('');
     }
   };
 
@@ -412,19 +396,6 @@ export default function CompaniesPage() {
                         ))}
                     </div>
                   </div>
-                  <div className="space-y-2">
-                        <Label>Novo Segmento</Label>
-                        <div className="flex gap-2">
-                            <Input 
-                            placeholder="Ex: PLATAFORMA ELEVATORIA" 
-                            value={newSegment}
-                            onChange={(e) => setNewSegment(e.target.value)}
-                            />
-                            <Button type="button" variant="secondary" onClick={handleAddNewSegment}>
-                            Adicionar
-                            </Button>
-                        </div>
-                    </div>
                 </div>
               </form>
             </ScrollArea>
