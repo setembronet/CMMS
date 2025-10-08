@@ -147,65 +147,67 @@ export default function PlansPage() {
               {editingPlan ? 'Atualize os detalhes do plano.' : 'Preencha os detalhes do novo plano.'}
             </DialogDescription>
           </DialogHeader>
-          <div className='flex-grow overflow-y-auto -mx-6 px-6'>
-            <form onSubmit={handleSavePlan} id="plan-form" className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="name">Nome do Plano</Label>
-                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="price">Valor Mensal (R$)</Label>
-                    <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} required />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="assetLimit">Limite de Ativos</Label>
-                  <Input id="assetLimit" name="assetLimit" type="number" value={formData.assetLimit} onChange={handleInputChange} required placeholder="-1 para ilimitado"/>
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="technicianUserLimit">Limite de Técnicos</Label>
-                  <Input id="technicianUserLimit" name="technicianUserLimit" type="number" value={formData.technicianUserLimit} onChange={handleInputChange} required placeholder="-1 para ilimitado"/>
-                </div>
-              </div>
-
-              <Separator />
-
-              <h3 className="text-lg font-medium">Permissões do Plano</h3>
-              <div className="space-y-4">
-                  <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                          <Label>Acesso Multi-Módulo</Label>
-                          <p className="text-xs text-muted-foreground">Permite acesso a diferentes módulos de ativos.</p>
-                      </div>
-                      <Switch name="hasMultiModuleAccess" checked={formData.hasMultiModuleAccess} onCheckedChange={(checked) => handleSwitchChange('hasMultiModuleAccess', checked)} />
+          <div className='flex-1 overflow-y-auto -mx-6 px-6'>
+            <ScrollArea className="h-full pr-6">
+              <form onSubmit={handleSavePlan} id="plan-form" className="space-y-6 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="name">Nome do Plano</Label>
+                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
                   </div>
-                   <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                          <Label>Acesso Básico ao BigQuery</Label>
-                          <p className="text-xs text-muted-foreground">Permite consultas básicas no BigQuery.</p>
-                      </div>
-                      <Switch name="hasBasicBigQueryAccess" checked={formData.hasBasicBigQueryAccess} onCheckedChange={(checked) => handleSwitchChange('hasBasicBigQueryAccess', checked)} />
+                  <div className="space-y-2">
+                      <Label htmlFor="price">Valor Mensal (R$)</Label>
+                      <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} required />
                   </div>
-                   <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                          <Label>Acesso ao Add-on de IA</Label>
-                          <p className="text-xs text-muted-foreground">Habilita as funcionalidades do módulo de IA.</p>
-                      </div>
-                      <Switch name="hasIaAddonAccess" checked={formData.hasIaAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIaAddonAccess', checked)} />
-                  </div>
-                   <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                          <Label>Acesso ao Add-on de IoT</Label>
-                          <p className="text-xs text-muted-foreground">Habilita as funcionalidades do módulo de IoT.</p>
-                      </div>
-                      <Switch name="hasIotAddonAccess" checked={formData.hasIotAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIotAddonAccess', checked)} />
-                  </div>
-              </div>
+                </div>
 
-            </form>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="assetLimit">Limite de Ativos</Label>
+                    <Input id="assetLimit" name="assetLimit" type="number" value={formData.assetLimit} onChange={handleInputChange} required placeholder="-1 para ilimitado"/>
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="technicianUserLimit">Limite de Técnicos</Label>
+                    <Input id="technicianUserLimit" name="technicianUserLimit" type="number" value={formData.technicianUserLimit} onChange={handleInputChange} required placeholder="-1 para ilimitado"/>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <h3 className="text-lg font-medium">Permissões do Plano</h3>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <Label>Acesso Multi-Módulo</Label>
+                            <p className="text-xs text-muted-foreground">Permite acesso a diferentes módulos de ativos.</p>
+                        </div>
+                        <Switch name="hasMultiModuleAccess" checked={formData.hasMultiModuleAccess} onCheckedChange={(checked) => handleSwitchChange('hasMultiModuleAccess', checked)} />
+                    </div>
+                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <Label>Acesso Básico ao BigQuery</Label>
+                            <p className="text-xs text-muted-foreground">Permite consultas básicas no BigQuery.</p>
+                        </div>
+                        <Switch name="hasBasicBigQueryAccess" checked={formData.hasBasicBigQueryAccess} onCheckedChange={(checked) => handleSwitchChange('hasBasicBigQueryAccess', checked)} />
+                    </div>
+                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <Label>Acesso ao Add-on de IA</Label>
+                            <p className="text-xs text-muted-foreground">Habilita as funcionalidades do módulo de IA.</p>
+                        </div>
+                        <Switch name="hasIaAddonAccess" checked={formData.hasIaAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIaAddonAccess', checked)} />
+                    </div>
+                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <Label>Acesso ao Add-on de IoT</Label>
+                            <p className="text-xs text-muted-foreground">Habilita as funcionalidades do módulo de IoT.</p>
+                        </div>
+                        <Switch name="hasIotAddonAccess" checked={formData.hasIotAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIotAddonAccess', checked)} />
+                    </div>
+                </div>
+
+              </form>
+            </ScrollArea>
           </div>
           <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6 sticky bottom-0">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>

@@ -117,7 +117,7 @@ export default function CMMSUsersPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Usuários do CMMS</h1>
+        <h1 className="text-3xl font-bold font-headline">Usuários</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Novo Usuário
@@ -178,7 +178,7 @@ export default function CMMSUsersPage() {
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário CMMS'}</DialogTitle>
           </DialogHeader>
-          <div className="flex-grow overflow-y-auto -mx-6 px-6">
+          <div className="flex-1 overflow-y-auto -mx-6 px-6">
             <ScrollArea className="h-full pr-6">
               <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
                 <div className="flex items-center gap-4">

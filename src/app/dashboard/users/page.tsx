@@ -159,42 +159,44 @@ export default function SaaSUsersPage() {
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <div className='flex-grow overflow-y-auto -mx-6 px-6'>
-            <form id="user-form" onSubmit={handleSaveUser} className="space-y-4 py-4">
-              <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
-                    <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="w-full space-y-2">
-                    <Label htmlFor="avatarUrl">URL do Avatar</Label>
-                    <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
-                  </div>
-              </div>
+          <div className='flex-1 overflow-y-auto -mx-6 px-6'>
+            <ScrollArea className="h-full pr-6">
+              <form id="user-form" onSubmit={handleSaveUser} className="space-y-4 py-4">
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
+                      <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="w-full space-y-2">
+                      <Label htmlFor="avatarUrl">URL do Avatar</Label>
+                      <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
+                    </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome</Label>
-                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome</Label>
+                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="saasRole">Função SaaS</Label>
-                <Select name="saasRole" value={formData.saasRole} onValueChange={(value) => handleSelectChange('saasRole', value as SaaSUserRole)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a função" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {saasRoles.map(role => (
-                      <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </form>
+                <div className="space-y-2">
+                  <Label htmlFor="saasRole">Função SaaS</Label>
+                  <Select name="saasRole" value={formData.saasRole} onValueChange={(value) => handleSelectChange('saasRole', value as SaaSUserRole)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a função" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {saasRoles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </form>
+            </ScrollArea>
           </div>
           <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6 sticky bottom-0">
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
