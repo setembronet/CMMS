@@ -39,47 +39,44 @@ import { assets as initialAssets, companies, segments as allSegments } from '@/l
 import type { Asset, Company, CompanySegment } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+// --- Development Fix: Use a single client for easier debugging ---
+const TEST_CLIENT_ID = 'client-01';
+const testClient = companies.find(c => c.id === TEST_CLIENT_ID);
+
 const emptyAsset: Asset = {
   id: '',
   name: '',
-  clientId: '',
+  clientId: TEST_CLIENT_ID, // Always default to the test client
   activeSegment: '',
   serialNumber: '',
   location: { lat: 0, lng: 0 },
 };
+// ----------------------------------------------------------------
 
 export default function AssetsPage() {
-  const [assets, setAssets] = React.useState<Asset[]>(initialAssets);
+  const [assets, setAssets] = React.useState<Asset[]>(initialAssets.filter(a => a.clientId === TEST_CLIENT_ID));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null);
   const [formData, setFormData] = React.useState<Asset>(emptyAsset);
   const [availableSegments, setAvailableSegments] = React.useState<CompanySegment[]>([]);
 
   React.useEffect(() => {
-    if (formData.clientId) {
-      const company = companies.find(c => c.id === formData.clientId);
-      if (company && company.activeSegments.length > 0) {
-        const companySegments = allSegments.filter(s => company.activeSegments.includes(s.id));
-        setAvailableSegments(companySegments);
-        
-        // If only one segment is available, auto-select it.
-        if (companySegments.length === 1) {
-          handleSelectChange('activeSegment', companySegments[0].id);
-        } else {
-           // If the current segment is not in the new list, clear it
-          if (!companySegments.some(s => s.id === formData.activeSegment)) {
-            handleSelectChange('activeSegment', '');
-          }
-        }
+    if (testClient) {
+      const companySegments = allSegments.filter(s => testClient.activeSegments.includes(s.id));
+      setAvailableSegments(companySegments);
+      
+      if (companySegments.length === 1) {
+        handleSelectChange('activeSegment', companySegments[0].id);
       } else {
-        setAvailableSegments([]);
-        handleSelectChange('activeSegment', '');
+        if (!companySegments.some(s => s.id === formData.activeSegment)) {
+          handleSelectChange('activeSegment', '');
+        }
       }
     } else {
       setAvailableSegments([]);
       handleSelectChange('activeSegment', '');
     }
-  }, [formData.clientId]);
+  }, [formData.activeSegment]); // Simplified dependency
 
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.name || 'N/A';
   const getSegmentName = (id: string) => allSegments.find(s => s.id === id)?.name || 'N/A';
@@ -111,6 +108,7 @@ export default function AssetsPage() {
     
     const newAsset: Asset = {
       ...formData,
+      clientId: TEST_CLIENT_ID, // Ensure it's always the test client
       id: editingAsset?.id || `asset-0${assets.length + 1}`,
     };
 
@@ -175,24 +173,17 @@ export default function AssetsPage() {
           <DialogHeader>
             <DialogTitle>{editingAsset ? 'Editar Ativo' : 'Novo Ativo'}</DialogTitle>
             <DialogDescription>
-              {editingAsset ? 'Atualize os detalhes do ativo.' : 'Preencha os detalhes do novo ativo.'}
+              {editingAsset ? 'Atualize os detalhes do ativo.' : `Preencha os detalhes do novo ativo para ${testClient?.name || 'cliente de teste'}.`}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
             <form onSubmit={handleSaveAsset} id="asset-form" className="space-y-4 py-4 px-1">
               <div className="space-y-2">
                 <Label htmlFor="clientId">Cliente</Label>
-                <Select name="clientId" value={formData.clientId} onValueChange={(value) => handleSelectChange('clientId', value)} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o cliente proprietário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.filter(c => c.status === 'active').map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Input id="clientId" name="clientId" value={testClient?.name || ''} disabled />
               </div>
 
-              {formData.clientId && (
+              {availableSegments.length > 0 && (
                 <>
                    {availableSegments.length > 1 ? (
                     <div className="space-y-2">

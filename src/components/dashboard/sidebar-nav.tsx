@@ -18,6 +18,7 @@ import {
   Briefcase,
   Home,
   ClipboardList,
+  Wrench,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -67,6 +68,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = pathname.startsWith('/dashboard/settings') || pathname === '/dashboard/cmms-users';
+  const isCmmsActive = ['/dashboard/assets', '/dashboard/users', '/dashboard/orders'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -126,44 +128,51 @@ export function SidebarNav() {
                 </SidebarMenuItem>
            </Collapsible>
           
-           <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive('/dashboard/users')}
-                tooltip={{ children: t('sidebar.users') }}
-              >
-                <Link href="/dashboard/users">
-                  <Users />
-                  <span>{t('sidebar.users')}</span>
-                </Link>
-              </SidebarMenuButton>
-           </SidebarMenuItem>
-
-           <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive('/dashboard/assets')}
-                tooltip={{ children: t('sidebar.assets') }}
-              >
-                <Link href="/dashboard/assets">
-                  <Package />
-                  <span>{t('sidebar.assets')}</span>
-                </Link>
-              </SidebarMenuButton>
-           </SidebarMenuItem>
-
-           <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive('/dashboard/orders')}
-                tooltip={{ children: t('sidebar.workOrders') }}
-              >
-                <Link href="/dashboard/orders">
-                  <ClipboardList />
-                  <span>{t('sidebar.workOrders')}</span>
-                </Link>
-              </SidebarMenuButton>
-           </SidebarMenuItem>
+           <Collapsible asChild defaultOpen={isCmmsActive}>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                         <SidebarMenuButton
+                            isActive={isCmmsActive}
+                            className="justify-between"
+                            tooltip={{ children: t('sidebar.cmms') }}
+                         >
+                            <div className="flex items-center gap-2">
+                                <Wrench />
+                                <span>{t('sidebar.cmms')}</span>
+                            </div>
+                            <ChevronDown className={cn("transition-transform duration-200", isCmmsActive && "rotate-180")} />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/assets', true)}>
+                                    <Link href="/dashboard/assets">
+                                        <Package />
+                                        <span>{t('sidebar.assets')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/orders', true)}>
+                                    <Link href="/dashboard/orders">
+                                        <ClipboardList />
+                                        <span>{t('sidebar.workOrders')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/users', true)}>
+                                    <Link href="/dashboard/users">
+                                        <Users />
+                                        <span>{t('sidebar.users')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+           </Collapsible>
            
            <Collapsible asChild defaultOpen={isFinanceActive}>
                 <SidebarMenuItem>

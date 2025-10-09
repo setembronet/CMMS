@@ -20,6 +20,7 @@
     "backupRestore": "Backup & Restore",
     "logout": "Logout",
     "overview": "Overview",
-    "segments": "Segments"
+    "segments": "Segments",
+    "cmms": "CMMS"
   }
 }
