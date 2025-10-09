@@ -48,7 +48,7 @@ const emptyUser: User & { password?: string, confirmPassword?: string } = {
     name: '',
     email: '',
     role: '',
-    cmmsRole: 'GESTOR',
+    cmmsRole: null, // Start with null
     saasRole: 'VIEWER', // Default non-SaaS user
     clientId: null,
     clientName: '',
@@ -78,25 +78,28 @@ export default function CMMSUsersPage() {
       const company = companies.find(c => c.id === formData.clientId);
       if (company && company.activeSegments.length > 0) {
         // Get all role IDs applicable to the company's segments
-        const roleIds = new Set<string>();
+        const applicableRoleIds = new Set<string>();
         company.activeSegments.forEach(segmentId => {
           const segment = segments.find(s => s.id === segmentId);
-          (segment?.applicableRoles || []).forEach(roleId => roleIds.add(roleId));
+          (segment?.applicableRoles || []).forEach(roleId => applicableRoleIds.add(roleId));
         });
 
         // Filter the main roles list
-        const filteredRoles = allRoles.filter(role => roleIds.has(role.id));
+        const filteredRoles = allRoles.filter(role => applicableRoleIds.has(role.id));
         setAvailableRoles(filteredRoles);
 
-        // Check if the current role is still valid
-        if (!filteredRoles.some(r => r.id === formData.cmmsRole)) {
-            handleSelectChange('cmmsRole', filteredRoles[0]?.id || '');
+        // Check if the current role is still valid, if not, reset it.
+        if (formData.cmmsRole && !filteredRoles.some(r => r.id === formData.cmmsRole)) {
+            handleSelectChange('cmmsRole', '');
         }
       } else {
-        setAvailableRoles([]); // No segments, no roles
+        // Company has no active segments, so no roles are applicable
+        setAvailableRoles([]);
+        handleSelectChange('cmmsRole', '');
       }
     } else {
-      setAvailableRoles(allRoles); // No company selected, show all roles
+      // No company selected, show all roles as a default (or handle as needed)
+      setAvailableRoles(allRoles);
     }
   }, [formData.clientId]);
 
@@ -140,7 +143,12 @@ export default function CMMSUsersPage() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'clientId') {
+      // When company changes, reset the role
+      setFormData(prev => ({ ...prev, cmmsRole: null, [name]: value }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
@@ -167,7 +175,9 @@ export default function CMMSUsersPage() {
   
   const isSaveDisabled = 
     (!!formData.password && passwordStrength?.level === 'Fraca') ||
-    (formData.password !== formData.confirmPassword);
+    (formData.password !== formData.confirmPassword) ||
+    !formData.clientId ||
+    !formData.cmmsRole;
   
   const getRoleName = (roleId: string | null) => {
     if (!roleId) return '';
@@ -293,7 +303,7 @@ export default function CMMSUsersPage() {
 
                  <div className="space-y-2">
                   <Label htmlFor="clientId">Empresa</Label>
-                  <Select name="clientId" value={formData.clientId || ''} onValueChange={(value) => handleSelectChange('clientId', value)}>
+                  <Select name="clientId" value={formData.clientId || ''} onValueChange={(value) => handleSelectChange('clientId', value)} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma empresa" />
                     </SelectTrigger>
@@ -305,9 +315,9 @@ export default function CMMSUsersPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="cmmsRole">Função CMMS</Label>
-                  <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} disabled={!formData.clientId || availableRoles.length === 0}>
+                  <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} disabled={!formData.clientId} required>
                     <SelectTrigger>
-                      <SelectValue placeholder={!formData.clientId ? "Selecione uma empresa primeiro" : "Selecione uma função"} />
+                      <SelectValue placeholder={!formData.clientId ? "Selecione uma empresa primeiro" : (availableRoles.length > 0 ? "Selecione uma função" : "Nenhuma função aplicável")} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRoles.map(role => (
@@ -333,3 +343,5 @@ export default function CMMSUsersPage() {
     </div>
   );
 }
+
+    
