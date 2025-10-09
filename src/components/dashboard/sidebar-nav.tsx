@@ -68,7 +68,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = pathname.startsWith('/dashboard/settings') || pathname === '/dashboard/cmms-users';
-  const isCmmsActive = ['/dashboard/assets', '/dashboard/users', '/dashboard/orders'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/assets', '/dashboard/orders', '/dashboard/users'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -128,7 +128,42 @@ export function SidebarNav() {
                 </SidebarMenuItem>
            </Collapsible>
           
-           <Collapsible asChild defaultOpen={isCmmsActive}>
+           <Collapsible asChild defaultOpen={isFinanceActive}>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                         <SidebarMenuButton
+                            isActive={isFinanceActive}
+                            className="justify-between"
+                            tooltip={{ children: t('sidebar.finance') }}
+                         >
+                            <div className="flex items-center gap-2">
+                                <TrendingUp />
+                                <span>{t('sidebar.finance')}</span>
+                            </div>
+                            <ChevronDown className={cn("transition-transform duration-200", isFinanceActive && "rotate-180")} />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {financeLinks.map(link => (
+                                 <SidebarMenuSubItem key={link.href}>
+                                     <SidebarMenuSubButton asChild isActive={isActive(link.href, true)}>
+                                        <Link href={link.href}>
+                                            <link.icon />
+                                            <span>{link.label}</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                 </SidebarMenuSubItem>
+                            ))}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+           </Collapsible>
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarContent className="p-2 mt-auto">
+        <SidebarMenu>
+            <Collapsible asChild defaultOpen={isCmmsActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                          <SidebarMenuButton
@@ -173,42 +208,7 @@ export function SidebarNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
-           
-           <Collapsible asChild defaultOpen={isFinanceActive}>
-                <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                         <SidebarMenuButton
-                            isActive={isFinanceActive}
-                            className="justify-between"
-                            tooltip={{ children: t('sidebar.finance') }}
-                         >
-                            <div className="flex items-center gap-2">
-                                <TrendingUp />
-                                <span>{t('sidebar.finance')}</span>
-                            </div>
-                            <ChevronDown className={cn("transition-transform duration-200", isFinanceActive && "rotate-180")} />
-                        </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                            {financeLinks.map(link => (
-                                 <SidebarMenuSubItem key={link.href}>
-                                     <SidebarMenuSubButton asChild isActive={isActive(link.href, true)}>
-                                        <Link href={link.href}>
-                                            <link.icon />
-                                            <span>{link.label}</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                 </SidebarMenuSubItem>
-                            ))}
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </SidebarMenuItem>
-           </Collapsible>
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarContent className="p-2 mt-auto">
-        <SidebarMenu>
+
           <Collapsible asChild defaultOpen={isSettingsActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
