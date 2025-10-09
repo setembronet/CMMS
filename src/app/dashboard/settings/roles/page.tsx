@@ -30,6 +30,7 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { cmmsRoles as initialCmmsRoles, setCmmsRoles } from '@/lib/data';
 import type { CMMSRole } from '@/lib/types';
+import { useI18n } from '@/hooks/use-i18n';
 
 const emptyRole: CMMSRole = {
   id: '',
@@ -37,6 +38,7 @@ const emptyRole: CMMSRole = {
 };
 
 export default function RolesPage() {
+  const { t } = useI18n();
   const [roles, setRoles] = React.useState<CMMSRole[]>(initialCmmsRoles);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingRole, setEditingRole] = React.useState<CMMSRole | null>(null);
@@ -80,7 +82,7 @@ export default function RolesPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Funções do CMMS</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('sidebar.roles')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Nova Função

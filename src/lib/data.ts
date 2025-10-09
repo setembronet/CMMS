@@ -15,7 +15,6 @@ export let cmmsRoles: CMMSRole[] = [
   { id: 'GERENTE_PREDIAL', name: 'Gerente Predial' },
 ];
 
-// This is a placeholder now, the real data is cmmsRoles
 export let contactTypes: ContactType[] = cmmsRoles;
 
 
@@ -197,12 +196,12 @@ export const setSegments = (newSegments: CompanySegment[]) => {
 
 export const setCmmsRoles = (newRoles: CMMSRole[]) => {
   cmmsRoles = newRoles;
+  contactTypes = newRoles;
 };
 
-// This is deprecated, but kept for retro-compatibility.
 export const setContactTypes = (newTypes: ContactType[]) => {
     // This now updates the cmmsRoles
-    cmmsRoles = newTypes;
+    setCmmsRoles(newTypes);
 }
 
 export const setWorkOrders = (newWorkOrders: WorkOrder[]) => {

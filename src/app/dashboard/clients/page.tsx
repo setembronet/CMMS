@@ -30,7 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles, assets, workOrders } from '@/lib/data';
+import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles, assets, workOrders, segments } from '@/lib/data';
 import type { CustomerLocation, Contact, CMMSRole, WorkOrder } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -73,11 +73,28 @@ export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
   const [formData, setFormData] = React.useState<CustomerLocation>(emptyLocation);
+  const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>([]);
   
   React.useEffect(() => {
     // This will keep the local state in sync if the global data changes.
     const currentLocations = initialLocations.filter(l => l.clientId === TEST_CLIENT_ID)
     setLocations(currentLocations);
+
+    // Determine available roles for the contacts based on the main client's segments
+    if (testClient) {
+      const company = testClient;
+      if (company.activeSegments.length > 0) {
+        const applicableRoleIds = new Set<string>();
+        company.activeSegments.forEach(segmentId => {
+          const segment = segments.find(s => s.id === segmentId);
+          (segment?.applicableRoles || []).forEach(roleId => applicableRoleIds.add(roleId));
+        });
+        const filteredRoles = allRoles.filter(role => applicableRoleIds.has(role.id));
+        setAvailableRoles(filteredRoles);
+      } else {
+        setAvailableRoles([]);
+      }
+    }
   }, []);
 
   const openDialog = (location: CustomerLocation | null = null) => {
@@ -396,7 +413,7 @@ export default function ClientsPage() {
                                   <SelectValue placeholder="Selecione uma função" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {allRoles.map(role => (
+                                  {availableRoles.map(role => (
                                     <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
                                   ))}
                                 </SelectContent>
@@ -433,5 +450,3 @@ export default function ClientsPage() {
     </TooltipProvider>
   );
 }
-
-    

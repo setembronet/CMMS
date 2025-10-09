@@ -54,7 +54,7 @@ export type User = {
   email: string;
   role: UserRole;
   saasRole: SaaSUserRole;
-  cmmsRole: CMMSRole['name'] | null;
+  cmmsRole: CMMSRole['id'] | null;
   clientId: string | null;
   clientName?: string; 
   squad?: string;

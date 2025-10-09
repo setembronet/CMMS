@@ -164,6 +164,7 @@ export default function SegmentsPage() {
 
                 <div className="space-y-4 px-1">
                   <h3 className="font-medium">Funções Aplicáveis</h3>
+                  <p className="text-sm text-muted-foreground">Selecione as funções de contato que fazem sentido para este segmento.</p>
                   <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
                       {cmmsRoles.map(role => (
                         <div key={role.id} className="flex items-center gap-2">
