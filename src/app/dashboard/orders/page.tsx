@@ -59,6 +59,7 @@ const emptyWorkOrder: WorkOrder = {
   priority: 'Média',
   creationDate: new Date().getTime(),
   internalObservation: '',
+  squad: '',
 };
 
 export default function WorkOrdersPage() {
@@ -74,7 +75,19 @@ export default function WorkOrdersPage() {
     setClientUsers(allUsers.filter(u => u.clientId === TEST_CLIENT_ID && u.cmmsRole === 'TECNICO'));
   }, []);
 
+  React.useEffect(() => {
+    if (formData.responsibleId) {
+        const selectedUser = clientUsers.find(u => u.id === formData.responsibleId);
+        if (selectedUser?.squad) {
+            setFormData(prev => ({...prev, squad: selectedUser.squad}));
+        }
+    }
+  }, [formData.responsibleId, clientUsers]);
+
+
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
+  const getTechnicianName = (id?: string) => id ? allUsers.find(u => u.id === id)?.name : 'N/A';
+
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
@@ -157,7 +170,8 @@ export default function WorkOrdersPage() {
             <TableRow>
               <TableHead>Título da OS</TableHead>
               <TableHead>Ativo</TableHead>
-              <TableHead>Data</TableHead>
+              <TableHead>Técnico</TableHead>
+              <TableHead>Equipe</TableHead>
               <TableHead>Prioridade</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -168,7 +182,8 @@ export default function WorkOrdersPage() {
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.title}</TableCell>
                 <TableCell>{getAssetName(order.assetId)}</TableCell>
-                <TableCell>{format(new Date(order.creationDate), 'dd/MM/yyyy')}</TableCell>
+                <TableCell>{getTechnicianName(order.responsibleId)}</TableCell>
+                <TableCell>{order.squad || 'N/A'}</TableCell>
                 <TableCell>
                     <Badge variant="outline" className={cn('border', getPriorityBadgeClass(order.priority))}>
                         {order.priority}
@@ -187,7 +202,7 @@ export default function WorkOrdersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(order)}>
-                        Editar
+                        Ver / Editar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -201,9 +216,9 @@ export default function WorkOrdersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingOrder ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}</DialogTitle>
+            <DialogTitle>{editingOrder ? 'Detalhes da Ordem de Serviço' : 'Nova Ordem de Serviço'}</DialogTitle>
             <DialogDescription>
-              Preencha os detalhes da ordem de serviço.
+             {editingOrder ? `OS #${editingOrder.id} - ${format(new Date(editingOrder.creationDate), 'dd/MM/yyyy')}` : 'Preencha os detalhes da ordem de serviço.'}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
@@ -253,16 +268,27 @@ export default function WorkOrdersPage() {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="responsibleId">Técnico Responsável</Label>
-                  <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Atribuir a um técnico (opcional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <Separator />
+
+                <h3 className="text-base font-medium">Atribuição da Equipe</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="responsibleId">Técnico Responsável</Label>
+                        <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Atribuir a um técnico" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">Não atribuído</SelectItem>
+                                {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="squad">Equipe</Label>
+                        <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Ex: Equipe Alpha"/>
+                    </div>
                 </div>
 
                 <Separator />
@@ -274,18 +300,22 @@ export default function WorkOrdersPage() {
               </fieldset>
             </form>
           </ScrollArea>
-          <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between w-full">
+          <DialogFooter className="flex-col-reverse gap-y-2 sm:flex-row sm:justify-between w-full">
             {isFormDisabled ? (
-                <Button onClick={handleReopenOrder}>
+                <Button variant="secondary" onClick={handleReopenOrder}>
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Reabrir OS
                 </Button>
             ) : (
                 <div /> // Placeholder to keep justify-between working
             )}
-            <div>
-                <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-                <Button type="submit" form="order-form" className="ml-2">Salvar</Button>
+            <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={closeDialog}>
+                    {isFormDisabled ? 'Fechar' : 'Cancelar'}
+                </Button>
+                {!isFormDisabled && (
+                    <Button type="submit" form="order-form">Salvar</Button>
+                )}
             </div>
           </DialogFooter>
         </DialogContent>

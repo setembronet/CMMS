@@ -319,7 +319,7 @@ export default function CMMSUsersPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="squad">Equipe</Label>
-                  <Input id="squad" name="squad" value={formData.squad} onChange={handleInputChange} placeholder="Opcional para técnicos" />
+                  <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Opcional para técnicos" />
                 </div>
               </form>
             </ScrollArea>

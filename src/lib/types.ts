@@ -1,9 +1,4 @@
 
-
-
-
-
-
 export type CustomerLocation = {
   id: string;
   name: string;
@@ -130,6 +125,7 @@ export type WorkOrder = {
   creationDate: number;
   responsibleId?: string;
   internalObservation?: string;
+  squad?: string;
 };
 
 export type Subscription = {
