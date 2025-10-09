@@ -54,7 +54,6 @@ export function SidebarNav() {
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
       { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
       { href: '/dashboard/settings/roles', label: t('sidebar.roles'), icon: Briefcase },
-      { href: '/dashboard/settings/contact-types', label: t('sidebar.contactTypes'), icon: Contact },
       { href: '/dashboard/settings/backup', label: t('sidebar.backupRestore'), icon: History },
   ];
 
@@ -71,7 +70,7 @@ export function SidebarNav() {
 
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
-  const isSettingsActive = pathname.startsWith('/dashboard/settings') || pathname === '/dashboard/cmms-users';
+  const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users'].some(p => pathname.startsWith(p));
   const isCmmsActive = ['/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/clients'].some(p => pathname.startsWith(p));
 
   return (

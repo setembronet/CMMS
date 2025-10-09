@@ -29,8 +29,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { companies, customerLocations as initialLocations, setCustomerLocations, contactTypes as initialContactTypes } from '@/lib/data';
-import type { CustomerLocation, Contact, ContactType } from '@/lib/types';
+import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles } from '@/lib/data';
+import type { CustomerLocation, Contact, CMMSRole } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -305,14 +305,14 @@ export default function ClientsPage() {
                             <Input id={`contact-name-${index}`} name="name" value={contact.name} onChange={e => handleContactChange(index, e)} required/>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor={`contact-type-${index}`}>Tipo</Label>
+                            <Label htmlFor={`contact-type-${index}`}>Função</Label>
                              <Select name="contactTypeId" value={contact.contactTypeId} onValueChange={(value) => handleContactSelectChange(index, value)} required>
                               <SelectTrigger>
-                                <SelectValue placeholder="Selecione um tipo" />
+                                <SelectValue placeholder="Selecione uma função" />
                               </SelectTrigger>
                               <SelectContent>
-                                {initialContactTypes.map(type => (
-                                  <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                                {allRoles.map(role => (
+                                  <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>

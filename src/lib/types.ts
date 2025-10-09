@@ -1,14 +1,9 @@
 
 
-export type ContactType = {
-  id: string;
-  name: string;
-};
-
 export type Contact = {
   id: string;
   name: string;
-  contactTypeId: string;
+  contactTypeId: string; // This will now refer to a CMMSRole ID
   phone?: string;
   email?: string;
   observation?: string;
