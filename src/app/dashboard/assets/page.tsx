@@ -38,6 +38,7 @@ import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations } from '@/lib/data';
 import type { Asset, Company, CompanySegment, CustomerLocation } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 
 // --- Development Fix: Use a single client for easier debugging ---
 const TEST_CLIENT_ID = 'client-01';
@@ -52,6 +53,7 @@ const emptyAsset: Asset = {
   serialNumber: '',
   brand: '',
   model: '',
+  observation: '',
   location: { lat: 0, lng: 0 },
 };
 // ----------------------------------------------------------------
@@ -102,7 +104,7 @@ export default function AssetsPage() {
     setFormData(emptyAsset);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -241,6 +243,10 @@ export default function AssetsPage() {
               <div className="space-y-2">
                 <Label htmlFor="serialNumber">Número de Série</Label>
                 <Input id="serialNumber" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="observation">Observação</Label>
+                <Textarea id="observation" name="observation" value={formData.observation || ''} onChange={handleInputChange} placeholder="Detalhes adicionais, histórico, etc."/>
               </div>
             </form>
           </ScrollArea>
