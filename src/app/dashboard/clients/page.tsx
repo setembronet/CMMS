@@ -52,7 +52,7 @@ const emptyLocation: CustomerLocation = {
 };
 // ----------------------------------------------------------------
 
-export default function LocationsPage() {
+export default function ClientsPage() {
   const [locations, setLocations] = React.useState<CustomerLocation[]>(initialLocations.filter(l => l.clientId === TEST_CLIENT_ID));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
@@ -130,17 +130,17 @@ export default function LocationsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Locais dos Clientes</h1>
+        <h1 className="text-3xl font-bold font-headline">Clientes Finais</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Local
+          Novo Cliente
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome do Local</TableHead>
+              <TableHead>Nome do Cliente Final</TableHead>
               <TableHead>Cidade/Estado</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -174,15 +174,15 @@ export default function LocationsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingLocation ? 'Editar Local' : 'Novo Local'}</DialogTitle>
+            <DialogTitle>{editingLocation ? 'Editar Cliente Final' : 'Novo Cliente Final'}</DialogTitle>
             <DialogDescription>
-              {editingLocation ? 'Atualize os detalhes do local.' : `Cadastre um novo local de atendimento para ${testClient?.name || ''}.`}
+              {editingLocation ? 'Atualize os detalhes do cliente.' : `Cadastre um novo cliente final para ${testClient?.name || ''}.`}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
             <form onSubmit={handleSaveLocation} id="location-form" className="space-y-4 py-4 px-1">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome do Local/Cliente Final</Label>
+                <Label htmlFor="name">Nome do Cliente Final</Label>
                 <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Condomínio Edifício Central"/>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -230,5 +230,3 @@ export default function LocationsPage() {
     </div>
   );
 }
-
-    

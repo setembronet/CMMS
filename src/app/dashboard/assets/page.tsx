@@ -140,7 +140,7 @@ export default function AssetsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome do Ativo</TableHead>
-              <TableHead>Local do Cliente</TableHead>
+              <TableHead>Cliente Final</TableHead>
               <TableHead>Segmento</TableHead>
               <TableHead>Nº de Série</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -186,10 +186,10 @@ export default function AssetsPage() {
             <form onSubmit={handleSaveAsset} id="asset-form" className="space-y-4 py-4 px-1">
               
               <div className="space-y-2">
-                <Label htmlFor="customerLocationId">Local do Cliente</Label>
+                <Label htmlFor="customerLocationId">Cliente Final</Label>
                 <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o local" />
+                    <SelectValue placeholder="Selecione o cliente final" />
                   </SelectTrigger>
                   <SelectContent>
                     {availableLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
@@ -239,5 +239,3 @@ export default function AssetsPage() {
     </div>
   );
 }
-
-    

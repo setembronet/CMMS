@@ -69,7 +69,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = pathname.startsWith('/dashboard/settings') || pathname === '/dashboard/cmms-users';
-  const isCmmsActive = ['/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/locations'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/clients'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -182,10 +182,10 @@ export function SidebarNav() {
                     <CollapsibleContent>
                         <SidebarMenuSub>
                              <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/locations', true)}>
-                                    <Link href="/dashboard/locations">
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/clients', true)}>
+                                    <Link href="/dashboard/clients">
                                         <MapPin />
-                                        <span>{t('sidebar.locations')}</span>
+                                        <span>{t('sidebar.clients')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
