@@ -1,6 +1,5 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { I18nProvider } from '@/context/i18n-provider';
 
@@ -25,7 +24,6 @@ export default function RootLayout({
           <I18nProvider>
               {children}
           </I18nProvider>
-          <Toaster />
       </body>
     </html>
   );

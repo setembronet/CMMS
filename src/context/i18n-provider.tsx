@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useCallback, ReactNode } fro
 import pt from '@/locales/pt.json';
 import en from '@/locales/en.json';
 import es from '@/locales/es.json';
+import { Toaster } from '@/components/ui/toaster';
 
 type Locale = 'pt' | 'en' | 'es';
 
@@ -24,10 +25,10 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
     const browserLang = navigator.language.split('-')[0] as Locale;
     const initialLocale = ['pt', 'en', 'es'].includes(browserLang) ? browserLang : 'pt';
     handleSetLocale(initialLocale);
+    setIsMounted(true);
   }, []);
 
   const handleSetLocale = (newLocale: Locale) => {
@@ -44,21 +45,16 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
       if (result && typeof result === 'object' && k in result) {
         result = result[k];
       } else {
-        // Return key if not found, only after component is mounted to avoid mismatch
-        return isMounted ? key : '';
+        return key;
       }
     }
-    return typeof result === 'string' ? result : (isMounted ? key : '');
-  }, [messages, isMounted]);
-
-  if (!isMounted) {
-    // Render nothing or a loading state on the server and initial client render
-    return null; 
-  }
+    return typeof result === 'string' ? result : key;
+  }, [messages]);
 
   return (
     <I18nContext.Provider value={{ locale, setLocale: handleSetLocale, t }}>
-      {children}
+      {isMounted && children}
+      <Toaster />
     </I18nContext.Provider>
   );
 };
