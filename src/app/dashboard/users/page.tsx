@@ -43,15 +43,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
+// --- Development Fix: Use a single client for easier debugging ---
+const TEST_CLIENT_ID = 'client-01';
+const testClient = companies.find(c => c.id === TEST_CLIENT_ID);
+// ----------------------------------------------------------------
+
 const emptyUser: User & { password?: string, confirmPassword?: string } = {
     id: '',
     name: '',
     email: '',
     role: '',
-    cmmsRole: null, // Start with null
-    saasRole: 'VIEWER', // Default non-SaaS user
-    clientId: null,
-    clientName: '',
+    cmmsRole: null, 
+    saasRole: 'VIEWER',
+    clientId: TEST_CLIENT_ID, // Default to the test client
+    clientName: testClient?.name,
     squad: '',
     avatarUrl: '',
     password: '',
@@ -66,17 +71,17 @@ type PasswordStrength = {
 
 
 export default function CMMSUsersPage() {
-  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => allRoles.some(r => r.id === u.cmmsRole)));
+  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => u.clientId === TEST_CLIENT_ID));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
   const [formData, setFormData] = React.useState(emptyUser);
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
-  const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>(allRoles);
+  const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>([]);
 
   React.useEffect(() => {
-    if (formData.clientId) {
-      const company = companies.find(c => c.id === formData.clientId);
-      if (company && company.activeSegments.length > 0) {
+    if (testClient) {
+      const company = testClient;
+      if (company.activeSegments.length > 0) {
         // Get all role IDs applicable to the company's segments
         const applicableRoleIds = new Set<string>();
         company.activeSegments.forEach(segmentId => {
@@ -99,9 +104,9 @@ export default function CMMSUsersPage() {
       }
     } else {
       // No company selected, show all roles as a default (or handle as needed)
-      setAvailableRoles(allRoles);
+      setAvailableRoles([]);
     }
-  }, [formData.clientId]);
+  }, [formData.cmmsRole]);
 
   const calculatePasswordStrength = (password: string): PasswordStrength => {
     let score = 0;
@@ -143,12 +148,7 @@ export default function CMMSUsersPage() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    if (name === 'clientId') {
-      // When company changes, reset the role
-      setFormData(prev => ({ ...prev, cmmsRole: null, [name]: value }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
@@ -156,12 +156,11 @@ export default function CMMSUsersPage() {
 
     if (isSaveDisabled) return;
 
-    const client = companies.find(c => c.id === formData.clientId);
-
     const newUser: User = {
       ...formData,
-      id: editingUser?.id || `user-0${users.length + 1}`,
-      clientName: client?.name,
+      id: editingUser?.id || `user-0${initialUsers.length + 1}`,
+      clientId: TEST_CLIENT_ID,
+      clientName: testClient?.name,
       role: formData.cmmsRole ?? '',
     };
 
@@ -170,13 +169,14 @@ export default function CMMSUsersPage() {
     } else {
       setUsers([newUser, ...users]);
     }
+    // Also update the global list
+    // setGlobalUsers(...) would go here in a real app
     closeDialog();
   };
   
   const isSaveDisabled = 
     (!!formData.password && passwordStrength?.level === 'Fraca') ||
     (formData.password !== formData.confirmPassword) ||
-    !formData.clientId ||
     !formData.cmmsRole;
   
   const getRoleName = (roleId: string | null) => {
@@ -187,7 +187,7 @@ export default function CMMSUsersPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Usuários</h1>
+        <h1 className="text-3xl font-bold font-headline">Usuários de {testClient?.name || 'Empresa'}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Novo Usuário
@@ -199,7 +199,6 @@ export default function CMMSUsersPage() {
             <TableRow>
               <TableHead>Usuário</TableHead>
               <TableHead>Função</TableHead>
-              <TableHead>Empresa</TableHead>
               <TableHead>Equipe</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -220,7 +219,6 @@ export default function CMMSUsersPage() {
                   </div>
                 </TableCell>
                 <TableCell><Badge variant="secondary">{getRoleName(user.cmmsRole)}</Badge></TableCell>
-                <TableCell>{user.clientName}</TableCell>
                 <TableCell>{user.squad || 'N/A'}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -246,7 +244,7 @@ export default function CMMSUsersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário CMMS'}</DialogTitle>
+            <DialogTitle>{editingUser ? 'Editar Usuário' : `Novo Usuário para ${testClient?.name}`}</DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 150px)' }}>
             <ScrollArea className="h-full pr-6 -mx-6 px-6">
@@ -301,23 +299,16 @@ export default function CMMSUsersPage() {
                   )}
                 </div>
 
-                 <div className="space-y-2">
-                  <Label htmlFor="clientId">Empresa</Label>
-                  <Select name="clientId" value={formData.clientId || ''} onValueChange={(value) => handleSelectChange('clientId', value)} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma empresa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2">
+                  <Label>Empresa</Label>
+                  <Input value={testClient?.name || ''} disabled />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="cmmsRole">Função CMMS</Label>
-                  <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} disabled={!formData.clientId} required>
+                  <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} required>
                     <SelectTrigger>
-                      <SelectValue placeholder={!formData.clientId ? "Selecione uma empresa primeiro" : (availableRoles.length > 0 ? "Selecione uma função" : "Nenhuma função aplicável")} />
+                      <SelectValue placeholder={availableRoles.length > 0 ? "Selecione uma função" : "Nenhuma função aplicável"} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRoles.map(role => (
