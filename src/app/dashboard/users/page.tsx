@@ -35,17 +35,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { users as initialUsers, companies, cmmsRoles as allRoles, segments } from '@/lib/data';
+import { users as initialUsers, companies, cmmsRoles as allRoles, segments, plans } from '@/lib/data';
 import type { User, CMMSRole } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // --- Development Fix: Use a single client for easier debugging ---
 const TEST_CLIENT_ID = 'client-01';
 const testClient = companies.find(c => c.id === TEST_CLIENT_ID);
+const clientPlan = plans.find(p => p.id === testClient?.planId);
 // ----------------------------------------------------------------
 
 const emptyUser: User & { password?: string, confirmPassword?: string } = {
@@ -77,6 +79,11 @@ export default function CMMSUsersPage() {
   const [formData, setFormData] = React.useState(emptyUser);
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
   const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>([]);
+
+  const technicianUsersCount = users.filter(u => u.cmmsRole === 'TECNICO').length;
+  const technicianLimit = clientPlan?.technicianUserLimit ?? 0;
+  const hasReachedTechnicianLimit = technicianLimit !== -1 && technicianUsersCount >= technicianLimit;
+
 
   React.useEffect(() => {
     if (testClient) {
@@ -154,6 +161,11 @@ export default function CMMSUsersPage() {
 
     if (isSaveDisabled) return;
 
+    if (!editingUser && formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit) {
+      console.error("Technician limit reached");
+      return;
+    }
+
     const newUser: User = {
       ...formData,
       id: editingUser?.id || `user-0${initialUsers.length + 1}`,
@@ -175,160 +187,186 @@ export default function CMMSUsersPage() {
   const isSaveDisabled = 
     (!!formData.password && passwordStrength?.level === 'Fraca') ||
     (formData.password !== formData.confirmPassword) ||
-    !formData.cmmsRole;
+    !formData.cmmsRole ||
+    (!editingUser && formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit);
+
   
   const getRoleName = (roleId: string | null) => {
     if (!roleId) return '';
     return allRoles.find(r => r.id === roleId)?.name || roleId;
   };
+  
+  const NewUserButton = () => (
+    <Button onClick={() => openDialog()}>
+        <PlusCircle className="mr-2 h-4 w-4" />
+        Novo Usuário
+    </Button>
+  );
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Usuários de {testClient?.name || 'Empresa'}</h1>
-        <Button onClick={() => openDialog()}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Usuário
-        </Button>
-      </div>
-      <div className="rounded-lg border shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Usuário</TableHead>
-              <TableHead>Função</TableHead>
-              <TableHead>Equipe</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage asChild src={user.avatarUrl}><Image src={user.avatarUrl} alt={user.name} width={32} height={32} /></AvatarImage>
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <div>{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell><Badge variant="secondary">{getRoleName(user.cmmsRole)}</Badge></TableCell>
-                <TableCell>{user.squad || 'N/A'}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openDialog(user)}>
-                        Editar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+    <TooltipProvider>
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold font-headline">Usuários de {testClient?.name || 'Empresa'}</h1>
+           {hasReachedTechnicianLimit ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* The button is not disabled itself, logic is on the form */}
+                <span><NewUserButton /></span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Limite de {technicianLimit} técnico(s) do plano {clientPlan?.name} atingido.</p>
+                <p>Você ainda pode criar usuários com outras funções.</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <NewUserButton />
+          )}
+        </div>
+        <div className="rounded-lg border shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Usuário</TableHead>
+                <TableHead>Função</TableHead>
+                <TableHead>Equipe</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle>{editingUser ? 'Editar Usuário' : `Novo Usuário para ${testClient?.name}`}</DialogTitle>
-          </DialogHeader>
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 150px)' }}>
-            <ScrollArea className="h-full pr-6 -mx-6 px-6">
-              <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                      {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
-                      <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="w-full space-y-2">
-                      <Label htmlFor="avatarUrl">URL do Avatar</Label>
-                      <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage asChild src={user.avatarUrl}><Image src={user.avatarUrl} alt={user.name} width={32} height={32} /></AvatarImage>
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                          <div>{user.name}</div>
+                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                      </div>
                     </div>
-                </div>
+                  </TableCell>
+                  <TableCell><Badge variant="secondary">{getRoleName(user.cmmsRole)}</Badge></TableCell>
+                  <TableCell>{user.squad || 'N/A'}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openDialog(user)}>
+                          Editar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
-                </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[480px]">
+            <DialogHeader>
+              <DialogTitle>{editingUser ? 'Editar Usuário' : `Novo Usuário para ${testClient?.name}`}</DialogTitle>
+            </DialogHeader>
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 150px)' }}>
+              <ScrollArea className="h-full pr-6 -mx-6 px-6">
+                <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
+                  <div className="flex items-center gap-4">
+                      <Avatar className="h-16 w-16">
+                        {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
+                        <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="w-full space-y-2">
+                        <Label htmlFor="avatarUrl">URL do Avatar</Label>
+                        <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
+                      </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? 'Deixe em branco para não alterar' : ''} />
-                </div>
-                
-                {passwordStrength && (
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                            <Label>Força da Senha</Label>
-                            <span className={cn(
-                                passwordStrength.level === 'Fraca' && 'text-red-500',
-                                passwordStrength.level === 'Média' && 'text-yellow-500',
-                                passwordStrength.level === 'Forte' && 'text-green-500'
-                            )}>{passwordStrength.level}</span>
-                        </div>
-                        <Progress value={passwordStrength.value} className={cn("h-2", passwordStrength.color)} />
-                         <p className="text-xs text-muted-foreground">
-                            Use 8+ caracteres com letras, números e símbolos.
-                        </p>
-                    </div>
-                )}
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                  <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword || ''} onChange={handleInputChange} required={!!formData.password} />
-                   {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                    <p className="text-sm text-destructive">As senhas não coincidem.</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome</Label>
+                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Senha</Label>
+                    <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? 'Deixe em branco para não alterar' : ''} />
+                  </div>
+                  
+                  {passwordStrength && (
+                      <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                              <Label>Força da Senha</Label>
+                              <span className={cn(
+                                  passwordStrength.level === 'Fraca' && 'text-red-500',
+                                  passwordStrength.level === 'Média' && 'text-yellow-500',
+                                  passwordStrength.level === 'Forte' && 'text-green-500'
+                              )}>{passwordStrength.level}</span>
+                          </div>
+                          <Progress value={passwordStrength.value} className={cn("h-2", passwordStrength.color)} />
+                          <p className="text-xs text-muted-foreground">
+                              Use 8+ caracteres com letras, números e símbolos.
+                          </p>
+                      </div>
                   )}
-                </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                    <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword || ''} onChange={handleInputChange} required={!!formData.password} />
+                    {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                      <p className="text-sm text-destructive">As senhas não coincidem.</p>
+                    )}
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Empresa</Label>
-                  <Input value={testClient?.name || ''} disabled />
-                </div>
+                  <div className="space-y-2">
+                    <Label>Empresa</Label>
+                    <Input value={testClient?.name || ''} disabled />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="cmmsRole">Função CMMS</Label>
-                  <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder={availableRoles.length > 0 ? "Selecione uma função" : "Nenhuma função aplicável"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableRoles.map(role => (
-                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="squad">Equipe</Label>
-                  <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Opcional para técnicos" />
-                </div>
-              </form>
-            </ScrollArea>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="user-form" disabled={isSaveDisabled}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cmmsRole">Função CMMS</Label>
+                    <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder={availableRoles.length > 0 ? "Selecione uma função" : "Nenhuma função aplicável"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableRoles.map(role => (
+                          <SelectItem key={role.id} value={role.id} disabled={role.id === 'TECNICO' && hasReachedTechnicianLimit && !editingUser}>{role.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                     {formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit && !editingUser && (
+                        <p className="text-sm text-destructive">O limite de técnicos para este plano foi atingido.</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="squad">Equipe</Label>
+                    <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Opcional para técnicos" />
+                  </div>
+                </form>
+              </ScrollArea>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
+              <Button type="submit" form="user-form" disabled={isSaveDisabled}>Salvar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 }
+
+    
