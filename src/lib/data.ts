@@ -2,6 +2,7 @@
 
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -150,8 +151,8 @@ export let users: User[] = [
 ];
 
 export let assets: Asset[] = [
-  { id: 'asset-01', clientId: 'client-01', customerLocationId: 'loc-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', location: { lat: -23.5505, lng: -46.6333 } },
-  { id: 'asset-02', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', location: { lat: -22.9068, lng: -43.1729 } },
+  { id: 'asset-01', clientId: 'client-01', customerLocationId: 'loc-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', brand: 'Atlas Schindler', model: '5500 MRL', location: { lat: -23.5505, lng: -46.6333 } },
+  { id: 'asset-02', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', brand: 'Thyssenkrupp', model: 'Velino', location: { lat: -22.9068, lng: -43.1729 } },
 ];
 
 export let workOrders: WorkOrder[] = [

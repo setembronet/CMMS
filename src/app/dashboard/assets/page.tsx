@@ -50,6 +50,8 @@ const emptyAsset: Asset = {
   customerLocationId: '',
   activeSegment: '',
   serialNumber: '',
+  brand: '',
+  model: '',
   location: { lat: 0, lng: 0 },
 };
 // ----------------------------------------------------------------
@@ -141,7 +143,8 @@ export default function AssetsPage() {
             <TableRow>
               <TableHead>Nome do Ativo</TableHead>
               <TableHead>Cliente Final</TableHead>
-              <TableHead>Segmento</TableHead>
+              <TableHead>Marca</TableHead>
+              <TableHead>Modelo</TableHead>
               <TableHead>Nº de Série</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -151,7 +154,8 @@ export default function AssetsPage() {
               <TableRow key={asset.id}>
                 <TableCell className="font-medium">{asset.name}</TableCell>
                 <TableCell>{getLocationName(asset.customerLocationId)}</TableCell>
-                <TableCell>{getSegmentName(asset.activeSegment)}</TableCell>
+                <TableCell>{asset.brand || 'N/A'}</TableCell>
+                <TableCell>{asset.model || 'N/A'}</TableCell>
                 <TableCell>{asset.serialNumber}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -223,6 +227,16 @@ export default function AssetsPage() {
               <div className="space-y-2">
                 <Label htmlFor="name">Nome do Ativo</Label>
                 <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Elevador Social Bloco B"/>
+              </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="brand">Marca</Label>
+                    <Input id="brand" name="brand" value={formData.brand || ''} onChange={handleInputChange} placeholder="Ex: Atlas Schindler"/>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="model">Modelo</Label>
+                    <Input id="model" name="model" value={formData.model || ''} onChange={handleInputChange} placeholder="Ex: 5500 MRL"/>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="serialNumber">Número de Série</Label>

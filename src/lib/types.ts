@@ -1,5 +1,6 @@
 
 
+
 export type CustomerLocation = {
   id: string;
   name: string;
@@ -106,6 +107,8 @@ export type Asset = {
   customerLocationId: string;
   activeSegment: string;
   serialNumber: string;
+  brand?: string;
+  model?: string;
   location: {
     lat: number;
     lng: number;
