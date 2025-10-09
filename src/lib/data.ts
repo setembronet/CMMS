@@ -151,15 +151,15 @@ export let workOrders: WorkOrder[] = [
   { id: 'os-03', clientId: 'client-02', assetId: 'asset-03', title: 'Degrau quebrado', status: 'EM ANDAMENTO', priority: 'Urgente', creationDate: new Date(2024, 6, 22).getTime(), createdByUserId: 'user-06', startDate: new Date(2024, 6, 22, 14).getTime(), responsibleId: 'user-07', squad: 'Equipe Beta' },
 ];
 
-const invoices: any[] = [];
-const subscriptions: any[] = [];
-
 export let kpis = {
     activeUsers: users.length,
-    mockMrr: 0,
+    mockMrr: 1250,
     activeClients: companies.filter(c => c.status === 'active').length,
     inactiveClients: companies.filter(c => c.status === 'inactive').length,
-    overdueInvoices: invoices.filter(inv => inv.status === 'ATRASADO'),
+    overdueInvoices: [
+        {id: 'inv-001', companyId: 'client-01', customerLocationId: 'loc-01', dueDate: '2024-07-15', totalValue: 249},
+        {id: 'inv-002', companyId: 'client-02', customerLocationId: 'loc-03', dueDate: '2024-07-10', totalValue: 999},
+    ],
 };
 
 // Functions to update data
@@ -235,3 +235,5 @@ export const restoreData = (data: any) => {
     if (data.kpis) setKpis(data.kpis);
   }
 };
+
+    

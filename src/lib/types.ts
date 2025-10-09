@@ -97,13 +97,6 @@ export type Company = {
     state?: string;
     zipCode?: string;
   };
-  // Plan and Addons are now managed at the CustomerLocation (via Subscription)
-  // These fields are deprecated at the Company level.
-  planId_DEPRECATED?: string;
-  iaAddonActive_DEPRECATED?: boolean;
-  iotAddonActive_DEPRECATED?: boolean;
-  currentAssets_DEPRECATED?: number;
-  assetLimit_DEPRECATED?: number;
 };
 
 export type Asset = {
@@ -146,3 +139,5 @@ export type ContactType = {
   id: string;
   name: string;
 };
+
+    
