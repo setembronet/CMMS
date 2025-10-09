@@ -252,7 +252,6 @@ export default function WorkOrdersPage() {
                     <SelectValue placeholder="Atribuir a um técnico (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Não atribuído</SelectItem>
                     {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
