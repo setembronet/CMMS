@@ -3,7 +3,7 @@
 export type Contact = {
   id: string;
   name: string;
-  cmmsRoleId: string; // Renomeado de contactTypeId
+  cmmsRoleId: string; 
   phone?: string;
   email?: string;
   observation?: string;
@@ -26,10 +26,19 @@ export type CustomerLocation = {
 };
 
 
+export type CustomFieldType = 'text' | 'number' | 'date';
+
+export type CustomField = {
+  id: string;
+  name: string;
+  label: string;
+  type: CustomFieldType;
+}
+
 export type CompanySegment = {
   id: string;
   name: string;
-  customFields?: { id: string; name: string; type: 'text' | 'number' | 'date' }[];
+  customFields?: CustomField[];
   applicableRoles?: string[]; // IDs of CMMSRole that apply
 };
 
