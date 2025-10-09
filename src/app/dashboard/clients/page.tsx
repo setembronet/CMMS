@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { companies, customerLocations as initialLocations } from '@/lib/data';
+import { companies, customerLocations as initialLocations, setCustomerLocations } from '@/lib/data';
 import type { CustomerLocation } from '@/lib/types';
 
 // --- Development Fix: Use a single client for easier debugging ---
@@ -58,9 +58,14 @@ export default function ClientsPage() {
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
   const [formData, setFormData] = React.useState<CustomerLocation>(emptyLocation);
   
+  React.useEffect(() => {
+    // This will keep the local state in sync if the global data changes.
+    setLocations(initialLocations.filter(l => l.clientId === TEST_CLIENT_ID));
+  }, [initialLocations]);
+
   const openDialog = (location: CustomerLocation | null = null) => {
     setEditingLocation(location);
-    setFormData(location ? { ...location } : emptyLocation);
+    setFormData(location ? { ...location } : { ...emptyLocation, address: { ...emptyLocation.address } });
     setIsDialogOpen(true);
   };
 
@@ -113,17 +118,21 @@ export default function ClientsPage() {
   
   const handleSaveLocation = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newLocation: CustomerLocation = {
-      ...formData,
-      clientId: TEST_CLIENT_ID,
-      id: editingLocation?.id || `loc-0${locations.length + 1}`,
-    };
-
+    let updatedLocations;
+    
     if (editingLocation) {
-      setLocations(locations.map(l => l.id === newLocation.id ? newLocation : l));
+      updatedLocations = initialLocations.map(l => (l.id === editingLocation.id ? formData : l));
     } else {
-      setLocations([newLocation, ...locations]);
+      const newLocation: CustomerLocation = {
+        ...formData,
+        clientId: TEST_CLIENT_ID,
+        id: `loc-0${initialLocations.length + 1}`,
+      };
+      updatedLocations = [newLocation, ...initialLocations];
     }
+    
+    setCustomerLocations(updatedLocations);
+    setLocations(updatedLocations.filter(l => l.clientId === TEST_CLIENT_ID));
     closeDialog();
   };
 
@@ -188,36 +197,36 @@ export default function ClientsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2 md:col-span-1">
                       <Label htmlFor="zipCode">CEP</Label>
-                      <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode} onChange={handleInputChange} onBlur={handleCepBlur} />
+                      <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode || ''} onChange={handleInputChange} onBlur={handleCepBlur} />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="street">Rua</Label>
-                      <Input id="street" name="address.street" value={formData.address?.street} onChange={handleInputChange} />
+                      <Input id="street" name="address.street" value={formData.address?.street || ''} onChange={handleInputChange} />
                   </div>
               </div>
                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="number">Número</Label>
-                        <Input id="number" name="address.number" value={formData.address?.number} onChange={handleInputChange} />
+                        <Input id="number" name="address.number" value={formData.address?.number || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="complement">Complemento</Label>
-                        <Input id="complement" name="address.complement" value={formData.address?.complement} onChange={handleInputChange} />
+                        <Input id="complement" name="address.complement" value={formData.address?.complement || ''} onChange={handleInputChange} />
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="neighborhood">Bairro</Label>
-                      <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood} onChange={handleInputChange} />
+                      <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood || ''} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="city">Cidade</Label>
-                      <Input id="city" name="address.city" value={formData.address?.city} onChange={handleInputChange} />
+                      <Input id="city" name="address.city" value={formData.address?.city || ''} onChange={handleInputChange} />
                   </div>
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="state">Estado</Label>
-                    <Input id="state" name="address.state" value={formData.address?.state} onChange={handleInputChange} />
+                    <Input id="state" name="address.state" value={formData.address?.state || ''} onChange={handleInputChange} />
                 </div>
             </form>
           </ScrollArea>
