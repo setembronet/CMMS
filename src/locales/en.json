@@ -11,7 +11,7 @@
     "clients": "Clients",
     "workOrders": "Work Orders",
     "finance": "Finance",
-    "financeDashboard": "Dashboard",
+    "financeDashboard": "Finance Dashboard",
     "plans": "Plans",
     "addons": "Add-ons",
     "settings": "Settings",
@@ -23,6 +23,152 @@
     "overview": "Overview",
     "segments": "Segments",
     "cmms": "CMMS",
-    "contracts": "Contracts"
+    "contracts": "Contracts",
+    "cmmsDashboard": "CMMS Dashboard"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "status": "Status",
+    "actions": "Actions",
+    "openMenu": "Open menu",
+    "saveChanges": "Save Changes",
+    "address": "Address",
+    "selectPlaceholder": "Select an option",
+    "value": "Value"
+  },
+  "address": {
+    "zipCode": "Zip Code",
+    "street": "Street",
+    "number": "Number",
+    "complement": "Complement",
+    "neighborhood": "Neighborhood",
+    "city": "City",
+    "state": "State"
+  },
+  "companies": {
+    "overviewTitle": "Companies Overview",
+    "newCompany": "New Company",
+    "toggleStatus": "Toggle company status",
+    "editCompany": "Edit Company",
+    "editDescription": "Update the company details.",
+    "newDescription": "Fill in the new company details.",
+    "name": "Company Name",
+    "cnpj": "CNPJ",
+    "operationalConfig": "Operational Configuration",
+    "subscriptionPlan": "Subscription Plan",
+    "actingSegments": "Acting Segments",
+    "contractedAddons": "Contracted Add-ons"
+  },
+  "login": {
+    "title": "Panel Access",
+    "description": "Enter your credentials to access.",
+    "forgotPassword": "Forgot your password?",
+    "button": "Login"
+  },
+  "userNav": {
+    "loggedInAs": "Logged in as",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "settings": {
+    "profileTitle": "Profile",
+    "profileDescription": "Update your personal information.",
+    "appearanceTitle": "Appearance",
+    "appearanceDescription": "Customize the look and feel of the application.",
+    "themeLabel": "Theme",
+    "themeDescription": "Select your preferred color scheme.",
+    "passwordTitle": "Password",
+    "passwordDescription": "Change your password. It's recommended to use a strong password.",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "updatePassword": "Update Password"
+  },
+  "backup": {
+    "title": "Backup and Restore",
+    "doBackupTitle": "Perform Backup",
+    "doBackupDescription": "Create a complete backup of all application data. Keep this file in a safe place.",
+    "doBackupButton": "Backup Now",
+    "restoreBackupTitle": "Restore Backup",
+    "restoreWarning": "Warning: Restoring will overwrite ALL current data. This action cannot be undone.",
+    "backupFileLabel": "Backup File (.json)",
+    "restoreDataButton": "Restore Data",
+    "confirmTitle": "Are you absolutely sure?",
+    "confirmDescription": "This action is irreversible and will replace all existing data in the application with the data from the backup file. Do you confirm you want to proceed?",
+    "confirmAction": "Yes, restore backup",
+    "backupSuccessTitle": "Backup Successful!",
+    "backupSuccessDescription": "The backup file has been downloaded to your computer.",
+    "backupErrorLog": "Failed to create backup:",
+    "backupErrorTitle": "Backup Error",
+    "backupErrorDescription": "Could not generate the backup file.",
+    "invalidFileTitle": "Invalid File",
+    "invalidFileDescription": "Please select a valid .json file.",
+    "fileReadError": "Failed to read the file.",
+    "restoreSuccessTitle": "Restore Completed!",
+    "restoreSuccessDescription": "The data has been successfully restored. Please refresh the page to see the changes.",
+    "restoreErrorLog": "Failed to restore:",
+    "restoreErrorTitle": "Restore Error",
+    "restoreErrorDescription": "The backup file is corrupt or in an invalid format."
+  },
+  "cmmsDashboard": {
+    "title": "Operational Dashboard",
+    "openWorkOrders": "Open Work Orders",
+    "totalOpen": "Total open or in-progress WOs",
+    "urgentAlerts": "Urgent Alerts",
+    "urgentPriority": "WOs with urgent priority",
+    "assetsInMaintenance": "Assets in Maintenance",
+    "currentlyInIntervention": "Equipment currently under intervention",
+    "activeTechnicians": "Active Technicians",
+    "availableTeam": "Team available for service",
+    "recentActivity": "Recent Activity",
+    "latestWorkOrders": "Latest work orders created for your company."
+  },
+  "workOrders": {
+    "title": "WO Title",
+    "priority": "Priority",
+    "creationDate": "Creation Date",
+    "status": "Status"
+  },
+  "assets": {
+    "title": "Asset"
+  },
+  "finance": {
+    "mrr": "MRR (Monthly Recurring Revenue)",
+    "mrrDescription": "+5.2% vs last month (simulated)",
+    "overdue": "Overdue",
+    "overdueDescription": "{count} overdue invoices",
+    "activeClients": "Active Clients",
+    "activeClientsDescription": "Total clients with active subscriptions",
+    "mrrEvolution": "MRR Evolution",
+    "mrrEvolutionDescription": "Monthly recurring revenue over the last 6 months (simulated).",
+    "revenueByModule": "Revenue by Module",
+    "revenueByModuleDescription": "Revenue distribution between modules and plans.",
+    "overdueInvoices": "Overdue Invoices",
+    "overdueInvoicesDescription": "Invoices that have passed their due date and remain pending.",
+    "invoiceId": "Invoice ID",
+    "dueDate": "Due Date",
+    "modules": {
+      "planosbase": "Base Plans",
+      "móduloia": "AI Module",
+      "móduloiot": "IoT Module"
+    }
+  },
+  "months": {
+    "jan": "Jan",
+    "fev": "Feb",
+    "mar": "Mar",
+    "abr": "Apr",
+    "mai": "May",
+    "jun": "Jun"
+  },
+  "clients": {
+    "finalClient": "Final Client"
   }
 }
+
+    

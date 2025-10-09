@@ -11,7 +11,7 @@
     "clients": "Clientes",
     "workOrders": "Ordens de Serviço",
     "finance": "Financeiro",
-    "financeDashboard": "Dashboard",
+    "financeDashboard": "Dashboard Financeiro",
     "plans": "Planos",
     "addons": "Add-ons",
     "settings": "Configurações",
@@ -23,6 +23,152 @@
     "overview": "Visão Geral",
     "segments": "Segmentos",
     "cmms": "CMMS",
-    "contracts": "Contratos"
+    "contracts": "Contratos",
+    "cmmsDashboard": "Dashboard CMMS"
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "name": "Nome",
+    "email": "Email",
+    "phone": "Telefone",
+    "status": "Status",
+    "actions": "Ações",
+    "openMenu": "Abrir menu",
+    "saveChanges": "Salvar Alterações",
+    "address": "Endereço",
+    "selectPlaceholder": "Selecione uma opção",
+    "value": "Valor"
+  },
+  "address": {
+    "zipCode": "CEP",
+    "street": "Rua",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Bairro",
+    "city": "Cidade",
+    "state": "Estado"
+  },
+  "companies": {
+    "overviewTitle": "Visão Geral das Empresas",
+    "newCompany": "Nova Empresa",
+    "toggleStatus": "Ativar/Desativar empresa",
+    "editCompany": "Editar Empresa",
+    "editDescription": "Atualize os detalhes da empresa.",
+    "newDescription": "Preencha os detalhes da nova empresa.",
+    "name": "Nome da Empresa",
+    "cnpj": "CNPJ",
+    "operationalConfig": "Configuração Operacional",
+    "subscriptionPlan": "Plano de Assinatura",
+    "actingSegments": "Segmentos de Atuação",
+    "contractedAddons": "Add-ons Contratados"
+  },
+  "login": {
+    "title": "Acesso ao Painel",
+    "description": "Insira suas credenciais para acessar.",
+    "forgotPassword": "Esqueceu sua senha?",
+    "button": "Entrar"
+  },
+  "userNav": {
+    "loggedInAs": "Logado como",
+    "settings": "Configurações",
+    "logout": "Sair"
+  },
+  "settings": {
+    "profileTitle": "Perfil",
+    "profileDescription": "Atualize suas informações pessoais.",
+    "appearanceTitle": "Aparência",
+    "appearanceDescription": "Personalize a aparência do aplicativo.",
+    "themeLabel": "Tema",
+    "themeDescription": "Selecione seu esquema de cores preferido.",
+    "passwordTitle": "Senha",
+    "passwordDescription": "Altere sua senha. É recomendável usar uma senha forte.",
+    "currentPassword": "Senha Atual",
+    "newPassword": "Nova Senha",
+    "confirmPassword": "Confirme a Nova Senha",
+    "updatePassword": "Atualizar Senha"
+  },
+  "backup": {
+    "title": "Backup e Restore",
+    "doBackupTitle": "Fazer Backup",
+    "doBackupDescription": "Crie um backup completo de todos os dados da aplicação. Guarde este arquivo em um local seguro.",
+    "doBackupButton": "Fazer Backup Agora",
+    "restoreBackupTitle": "Restaurar Backup",
+    "restoreWarning": "Atenção: A restauração substituirá TODOS os dados atuais. Esta ação não pode ser desfeita.",
+    "backupFileLabel": "Arquivo de Backup (.json)",
+    "restoreDataButton": "Restaurar Dados",
+    "confirmTitle": "Você tem certeza absoluta?",
+    "confirmDescription": "Esta ação é irreversível e substituirá todos os dados existentes na aplicação pelos dados do arquivo de backup. Você confirma que deseja prosseguir?",
+    "confirmAction": "Sim, restaurar backup",
+    "backupSuccessTitle": "Backup Realizado com Sucesso!",
+    "backupSuccessDescription": "O arquivo de backup foi baixado para o seu computador.",
+    "backupErrorLog": "Falha ao criar backup:",
+    "backupErrorTitle": "Erro no Backup",
+    "backupErrorDescription": "Não foi possível gerar o arquivo de backup.",
+    "invalidFileTitle": "Arquivo Inválido",
+    "invalidFileDescription": "Por favor, selecione um arquivo .json válido.",
+    "fileReadError": "Falha ao ler o arquivo.",
+    "restoreSuccessTitle": "Restauração Concluída!",
+    "restoreSuccessDescription": "Os dados foram restaurados com sucesso. Atualize a página para ver as mudanças.",
+    "restoreErrorLog": "Falha ao restaurar:",
+    "restoreErrorTitle": "Erro na Restauração",
+    "restoreErrorDescription": "O arquivo de backup está corrompido ou em formato inválido."
+  },
+  "cmmsDashboard": {
+    "title": "Dashboard Operacional",
+    "openWorkOrders": "Ordens de Serviço Abertas",
+    "totalOpen": "Total de OS em aberto ou em andamento",
+    "urgentAlerts": "Alertas Urgentes",
+    "urgentPriority": "OS com prioridade urgente",
+    "assetsInMaintenance": "Ativos em Manutenção",
+    "currentlyInIntervention": "Equipamentos em intervenção",
+    "activeTechnicians": "Técnicos Ativos",
+    "availableTeam": "Equipe disponível para atendimento",
+    "recentActivity": "Atividade Recente",
+    "latestWorkOrders": "Últimas ordens de serviço criadas para sua empresa."
+  },
+  "workOrders": {
+    "title": "Título da OS",
+    "priority": "Prioridade",
+    "creationDate": "Data de Criação",
+    "status": "Status"
+  },
+  "assets": {
+    "title": "Ativo"
+  },
+  "finance": {
+    "mrr": "MRR (Receita Recorrente Mensal)",
+    "mrrDescription": "+5.2% vs mês anterior (simulado)",
+    "overdue": "Inadimplência",
+    "overdueDescription": "{count} faturas vencidas",
+    "activeClients": "Clientes Ativos",
+    "activeClientsDescription": "Total de clientes com assinaturas ativas",
+    "mrrEvolution": "Evolução do MRR",
+    "mrrEvolutionDescription": "Receita recorrente mensal nos últimos 6 meses (simulado).",
+    "revenueByModule": "Receita por Módulo",
+    "revenueByModuleDescription": "Distribuição da receita entre os módulos e planos.",
+    "overdueInvoices": "Faturas em Atraso",
+    "overdueInvoicesDescription": "Faturas que passaram da data de vencimento e continuam pendentes.",
+    "invoiceId": "ID da Fatura",
+    "dueDate": "Vencimento",
+    "modules": {
+      "planosbase": "Planos Base",
+      "móduloia": "Módulo IA",
+      "móduloiot": "Módulo IoT"
+    }
+  },
+  "months": {
+    "jan": "Jan",
+    "fev": "Fev",
+    "mar": "Mar",
+    "abr": "Abr",
+    "mai": "Mai",
+    "jun": "Jun"
+  },
+  "clients": {
+    "finalClient": "Cliente Final"
   }
 }
+
+    

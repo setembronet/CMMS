@@ -21,8 +21,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useI18n } from '@/hooks/use-i18n';
 
 export default function BackupPage() {
+  const { t } = useI18n();
   const { toast } = useToast();
   const [fileToRestore, setFileToRestore] = React.useState<File | null>(null);
 
@@ -41,15 +43,15 @@ export default function BackupPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast({
-        title: 'Backup Realizado com Sucesso!',
-        description: 'O arquivo de backup foi baixado para o seu computador.',
+        title: t('backup.backupSuccessTitle'),
+        description: t('backup.backupSuccessDescription'),
       });
     } catch (error) {
-      console.error('Falha ao criar backup:', error);
+      console.error(t('backup.backupErrorLog'), error);
       toast({
         variant: 'destructive',
-        title: 'Erro no Backup',
-        description: 'Não foi possível gerar o arquivo de backup.',
+        title: t('backup.backupErrorTitle'),
+        description: t('backup.backupErrorDescription'),
       });
     }
   };
@@ -62,8 +64,8 @@ export default function BackupPage() {
       setFileToRestore(null);
       toast({
         variant: 'destructive',
-        title: 'Arquivo Inválido',
-        description: 'Por favor, selecione um arquivo .json válido.',
+        title: t('backup.invalidFileTitle'),
+        description: t('backup.invalidFileDescription'),
       });
     }
   };
@@ -76,14 +78,13 @@ export default function BackupPage() {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') {
-          throw new Error('Falha ao ler o arquivo.');
+          throw new Error(t('backup.fileReadError'));
         }
         const data = JSON.parse(text);
-        restoreData(data); // This function is not available in this context.
-                           // In a real app this would call an API endpoint.
+        restoreData(data);
         toast({
-          title: 'Restauração Concluída!',
-          description: 'Os dados foram restaurados com sucesso. Atualize a página para ver as mudanças.',
+          title: t('backup.restoreSuccessTitle'),
+          description: t('backup.restoreSuccessDescription'),
         });
         setFileToRestore(null);
         // We clear the input value manually
@@ -92,11 +93,11 @@ export default function BackupPage() {
             fileInput.value = '';
         }
       } catch (error) {
-        console.error('Falha ao restaurar:', error);
+        console.error(t('backup.restoreErrorLog'), error);
         toast({
           variant: 'destructive',
-          title: 'Erro na Restauração',
-          description: 'O arquivo de backup está corrompido ou em formato inválido.',
+          title: t('backup.restoreErrorTitle'),
+          description: t('backup.restoreErrorDescription'),
         });
       }
     };
@@ -105,17 +106,17 @@ export default function BackupPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-3xl font-bold font-headline">Backup e Restore</h1>
+      <h1 className="text-3xl font-bold font-headline">{t('backup.title')}</h1>
       
       <Card>
         <CardHeader>
-          <CardTitle>Fazer Backup</CardTitle>
-          <CardDescription>Crie um backup completo de todos os dados da aplicação. Guarde este arquivo em um local seguro.</CardDescription>
+          <CardTitle>{t('backup.doBackupTitle')}</CardTitle>
+          <CardDescription>{t('backup.doBackupDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={handleBackup}>
             <Download className="mr-2 h-4 w-4" />
-            Fazer Backup Agora
+            {t('backup.doBackupButton')}
           </Button>
         </CardContent>
       </Card>
@@ -124,17 +125,17 @@ export default function BackupPage() {
 
       <Card className="border-destructive">
         <CardHeader>
-          <CardTitle className="text-destructive">Restaurar Backup</CardTitle>
+          <CardTitle className="text-destructive">{t('backup.restoreBackupTitle')}</CardTitle>
           <CardDescription>
             <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-destructive" />
-                <span>Atenção: A restauração substituirá TODOS os dados atuais. Esta ação não pode ser desfeita.</span>
+                <span>{t('backup.restoreWarning')}</span>
             </div>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="restore-file">Arquivo de Backup (.json)</Label>
+            <Label htmlFor="restore-file">{t('backup.backupFileLabel')}</Label>
             <Input id="restore-file" type="file" accept=".json" onChange={handleFileChange} />
           </div>
           
@@ -142,20 +143,19 @@ export default function BackupPage() {
             <AlertDialogTrigger asChild>
                 <Button variant="destructive" disabled={!fileToRestore}>
                     <Upload className="mr-2 h-4 w-4" />
-                    Restaurar Dados
+                    {t('backup.restoreDataButton')}
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                <AlertDialogTitle>{t('backup.confirmTitle')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Esta ação é irreversível e substituirá todos os dados existentes na aplicação
-                  pelos dados do arquivo de backup. Você confirma que deseja prosseguir?
+                  {t('backup.confirmDescription')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleRestore}>Sim, restaurar backup</AlertDialogAction>
+                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRestore}>{t('backup.confirmAction')}</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -164,3 +164,5 @@ export default function BackupPage() {
     </div>
   );
 }
+
+    

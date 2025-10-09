@@ -11,7 +11,7 @@
     "clients": "Clientes",
     "workOrders": "Órdenes de Servicio",
     "finance": "Finanzas",
-    "financeDashboard": "Dashboard",
+    "financeDashboard": "Dashboard Financiero",
     "plans": "Planes",
     "addons": "Add-ons",
     "settings": "Configuraciones",
@@ -22,7 +22,153 @@
     "logout": "Salir",
     "overview": "Visión General",
     "segments": "Segmentos",
-    "cmms": "CMMS",
-    "contracts": "Contratos"
+    "cmms": "GMAO",
+    "contracts": "Contratos",
+    "cmmsDashboard": "Dashboard GMAO"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "name": "Nombre",
+    "email": "Email",
+    "phone": "Teléfono",
+    "status": "Estado",
+    "actions": "Acciones",
+    "openMenu": "Abrir menú",
+    "saveChanges": "Guardar Cambios",
+    "address": "Dirección",
+    "selectPlaceholder": "Seleccione una opción",
+    "value": "Valor"
+  },
+  "address": {
+    "zipCode": "Código Postal",
+    "street": "Calle",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Barrio",
+    "city": "Ciudad",
+    "state": "Estado"
+  },
+  "companies": {
+    "overviewTitle": "Visión General de Empresas",
+    "newCompany": "Nueva Empresa",
+    "toggleStatus": "Activar/Desactivar empresa",
+    "editCompany": "Editar Empresa",
+    "editDescription": "Actualice los detalles de la empresa.",
+    "newDescription": "Rellene los detalles de la nueva empresa.",
+    "name": "Nombre de la Empresa",
+    "cnpj": "CNPJ",
+    "operationalConfig": "Configuración Operacional",
+    "subscriptionPlan": "Plan de Suscripción",
+    "actingSegments": "Segmentos de Actuación",
+    "contractedAddons": "Add-ons Contratados"
+  },
+  "login": {
+    "title": "Acceso al Panel",
+    "description": "Introduzca sus credenciales para acceder.",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "button": "Entrar"
+  },
+  "userNav": {
+    "loggedInAs": "Sesión iniciada como",
+    "settings": "Configuraciones",
+    "logout": "Salir"
+  },
+  "settings": {
+    "profileTitle": "Perfil",
+    "profileDescription": "Actualice su información personal.",
+    "appearanceTitle": "Apariencia",
+    "appearanceDescription": "Personalice la apariencia de la aplicación.",
+    "themeLabel": "Tema",
+    "themeDescription": "Seleccione su esquema de colores preferido.",
+    "passwordTitle": "Contraseña",
+    "passwordDescription": "Cambie su contraseña. Se recomienda usar una contraseña segura.",
+    "currentPassword": "Contraseña Actual",
+    "newPassword": "Nueva Contraseña",
+    "confirmPassword": "Confirme la Nueva Contraseña",
+    "updatePassword": "Actualizar Contraseña"
+  },
+  "backup": {
+    "title": "Copia de Seguridad y Restauración",
+    "doBackupTitle": "Realizar Copia de Seguridad",
+    "doBackupDescription": "Cree una copia de seguridad completa de todos los datos de la aplicación. Guarde este archivo en un lugar seguro.",
+    "doBackupButton": "Hacer Copia Ahora",
+    "restoreBackupTitle": "Restaurar Copia de Seguridad",
+    "restoreWarning": "Atención: La restauración sobrescribirá TODOS los datos actuales. Esta acción no se puede deshacer.",
+    "backupFileLabel": "Archivo de Copia de Seguridad (.json)",
+    "restoreDataButton": "Restaurar Datos",
+    "confirmTitle": "¿Está absolutamente seguro?",
+    "confirmDescription": "Esta acción es irreversible y reemplazará todos los datos existentes en la aplicación con los datos del archivo de copia de seguridad. ¿Confirma que desea continuar?",
+    "confirmAction": "Sí, restaurar copia",
+    "backupSuccessTitle": "¡Copia de Seguridad Realizada!",
+    "backupSuccessDescription": "El archivo de copia de seguridad se ha descargado en su computadora.",
+    "backupErrorLog": "Error al crear la copia de seguridad:",
+    "backupErrorTitle": "Error en la Copia de Seguridad",
+    "backupErrorDescription": "No se pudo generar el archivo de copia de seguridad.",
+    "invalidFileTitle": "Archivo Inválido",
+    "invalidFileDescription": "Por favor, seleccione un archivo .json válido.",
+    "fileReadError": "Error al leer el archivo.",
+    "restoreSuccessTitle": "¡Restauración Completada!",
+    "restoreSuccessDescription": "Los datos se han restaurado con éxito. Actualice la página para ver los cambios.",
+    "restoreErrorLog": "Error al restaurar:",
+    "restoreErrorTitle": "Error en la Restauración",
+    "restoreErrorDescription": "El archivo de copia de seguridad está dañado o en un formato no válido."
+  },
+  "cmmsDashboard": {
+    "title": "Dashboard Operacional",
+    "openWorkOrders": "Órdenes de Servicio Abiertas",
+    "totalOpen": "Total de OS abiertas o en curso",
+    "urgentAlerts": "Alertas Urgentes",
+    "urgentPriority": "OS con prioridad urgente",
+    "assetsInMaintenance": "Activos en Mantenimiento",
+    "currentlyInIntervention": "Equipos en intervención actualmente",
+    "activeTechnicians": "Técnicos Activos",
+    "availableTeam": "Equipo disponible para servicio",
+    "recentActivity": "Actividad Reciente",
+    "latestWorkOrders": "Últimas órdenes de servicio creadas para su empresa."
+  },
+  "workOrders": {
+    "title": "Título de la OS",
+    "priority": "Prioridad",
+    "creationDate": "Fecha de Creación",
+    "status": "Estado"
+  },
+  "assets": {
+    "title": "Activo"
+  },
+  "finance": {
+    "mrr": "MRR (Ingresos Recurrentes Mensuales)",
+    "mrrDescription": "+5.2% vs mes anterior (simulado)",
+    "overdue": "Morosidad",
+    "overdueDescription": "{count} facturas vencidas",
+    "activeClients": "Clientes Activos",
+    "activeClientsDescription": "Total de clientes con suscripciones activas",
+    "mrrEvolution": "Evolución del MRR",
+    "mrrEvolutionDescription": "Ingresos recurrentes mensuales en los últimos 6 meses (simulado).",
+    "revenueByModule": "Ingresos por Módulo",
+    "revenueByModuleDescription": "Distribución de ingresos entre módulos y planes.",
+    "overdueInvoices": "Facturas Vencidas",
+    "overdueInvoicesDescription": "Facturas que han pasado su fecha de vencimiento y siguen pendientes.",
+    "invoiceId": "ID de Factura",
+    "dueDate": "Vencimiento",
+    "modules": {
+      "planosbase": "Planes Base",
+      "móduloia": "Módulo IA",
+      "móduloiot": "Módulo IoT"
+    }
+  },
+  "months": {
+    "jan": "Ene",
+    "fev": "Feb",
+    "mar": "Mar",
+    "abr": "Abr",
+    "mai": "May",
+    "jun": "Jun"
+  },
+  "clients": {
+    "finalClient": "Cliente Final"
   }
 }
+
+    

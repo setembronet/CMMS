@@ -36,6 +36,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useI18n } from '@/hooks/use-i18n';
 
 const emptyCompany: Company = {
   id: '',
@@ -59,6 +60,7 @@ const emptyCompany: Company = {
 };
 
 export default function CompaniesPage() {
+  const { t } = useI18n();
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
@@ -171,21 +173,21 @@ export default function CompaniesPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Visão Geral das Empresas</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('companies.overviewTitle')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Nova Empresa
+          {t('companies.newCompany')}
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Plano</TableHead>
-              <TableHead>Segmentos</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>{t('common.name')}</TableHead>
+              <TableHead>{t('sidebar.plans')}</TableHead>
+              <TableHead>{t('sidebar.segments')}</TableHead>
+              <TableHead>{t('common.status')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -202,20 +204,20 @@ export default function CompaniesPage() {
                         <Switch
                             checked={company.status === 'active'}
                             onCheckedChange={(checked) => toggleCompanyStatus(company.id, checked)}
-                            aria-label="Toggle company status"
+                            aria-label={t('companies.toggleStatus')}
                         />
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Abrir menu</span>
+                            <span className="sr-only">{t('common.openMenu')}</span>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openDialog(company)}>
-                            Editar
+                            {t('common.edit')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -230,9 +232,9 @@ export default function CompaniesPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
+            <DialogTitle>{editingCompany ? t('companies.editCompany') : t('companies.newCompany')}</DialogTitle>
             <DialogDescription>
-              {editingCompany ? 'Atualize os detalhes da empresa.' : 'Preencha os detalhes da nova empresa.'}
+              {editingCompany ? t('companies.editDescription') : t('companies.newDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="h-[calc(80vh-150px)] overflow-y-auto">
@@ -240,66 +242,66 @@ export default function CompaniesPage() {
               <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6 py-4 px-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name">Nome da Empresa</Label>
+                        <Label htmlFor="name">{t('companies.name')}</Label>
                         <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="cnpj">CNPJ</Label>
+                        <Label htmlFor="cnpj">{t('companies.cnpj')}</Label>
                         <Input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleInputChange} required />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">{t('common.email')}</Label>
                         <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="phone">Telefone</Label>
+                        <Label htmlFor="phone">{t('common.phone')}</Label>
                         <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} required />
                     </div>
                 </div>
 
                 <Separator />
 
-                <h3 className="text-lg font-medium">Endereço</h3>
+                <h3 className="text-lg font-medium">{t('common.address')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2 md:col-span-1">
-                        <Label htmlFor="zipCode">CEP</Label>
+                        <Label htmlFor="zipCode">{t('address.zipCode')}</Label>
                         <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode || ''} onChange={handleInputChange} onBlur={handleCepBlur} />
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="street">Rua</Label>
+                        <Label htmlFor="street">{t('address.street')}</Label>
                         <Input id="street" name="address.street" value={formData.address?.street || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="number">Número</Label>
+                        <Label htmlFor="number">{t('address.number')}</Label>
                         <Input id="number" name="address.number" value={formData.address?.number || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="complement">Complemento</Label>
+                        <Label htmlFor="complement">{t('address.complement')}</Label>
                         <Input id="complement" name="address.complement" value={formData.address?.complement || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="neighborhood">Bairro</Label>
+                        <Label htmlFor="neighborhood">{t('address.neighborhood')}</Label>
                         <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="city">Cidade</Label>
+                        <Label htmlFor="city">{t('address.city')}</Label>
                         <Input id="city" name="address.city" value={formData.address?.city || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="state">Estado</Label>
+                        <Label htmlFor="state">{t('address.state')}</Label>
                         <Input id="state" name="address.state" value={formData.address?.state || ''} onChange={handleInputChange} />
                     </div>
                 </div>
                 
                 <Separator />
                 
-                <h3 className="text-lg font-medium">Configuração Operacional</h3>
+                <h3 className="text-lg font-medium">{t('companies.operationalConfig')}</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="planId">Plano de Assinatura</Label>
+                    <Label htmlFor="planId">{t('companies.subscriptionPlan')}</Label>
                     <Select name="planId" value={formData.planId} onValueChange={(value) => handleSelectChange('planId', value)} required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um plano" />
+                        <SelectValue placeholder={t('common.selectPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {plans.map(plan => (
@@ -309,7 +311,7 @@ export default function CompaniesPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Segmentos de Atuação</Label>
+                    <Label>{t('companies.actingSegments')}</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4 mt-2">
                         {segments.map(segment => (
                           <div key={segment.id} className="flex items-center gap-2">
@@ -326,7 +328,7 @@ export default function CompaniesPage() {
                     </div>
                   </div>
                    <div>
-                    <Label>Add-ons Contratados</Label>
+                    <Label>{t('companies.contractedAddons')}</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4 mt-2">
                         {addons.map(addon => (
                           <div key={addon.id} className="flex items-center gap-2">
@@ -347,11 +349,13 @@ export default function CompaniesPage() {
             </ScrollArea>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="company-form">Salvar</Button>
+            <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+            <Button type="submit" form="company-form">{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    

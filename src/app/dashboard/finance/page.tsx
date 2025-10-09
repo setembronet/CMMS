@@ -30,6 +30,7 @@ import {
     Pie,
     Cell
 } from 'recharts';
+import { useI18n } from '@/hooks/use-i18n';
 
 // --- Dynamic Data Calculation ---
 const activeClients = companies.filter(c => c.status === 'active');
@@ -89,41 +90,53 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 // --------------------------------
 
 export default function FinancePage() {
+  const { t } = useI18n();
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.name || 'N/A';
   const getCustomerLocationName = (id: string) => customerLocations.find(l => l.id === id)?.name || 'N/A';
 
+  const formattedMrrData = mrrData.map(item => ({
+    ...item,
+    month: t(`months.${item.month.toLowerCase()}`)
+  }));
+
+  const formattedRevenueByModuleData = revenueByModuleData.map(item => ({
+    ...item,
+    name: t(`finance.modules.${item.name.toLowerCase().replace(/ /g, '')}`)
+  }));
+
+
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-3xl font-bold font-headline">Dashboard Financeiro</h1>
+      <h1 className="text-3xl font-bold font-headline">{t('sidebar.financeDashboard')}</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">MRR (Receita Recorrente Mensal)</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('finance.mrr')}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {totalMrr.toLocaleString('pt-BR')}</div>
-            <p className="text-xs text-muted-foreground">+5.2% vs mês anterior (simulado)</p>
+            <p className="text-xs text-muted-foreground">{t('finance.mrrDescription')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inadimplência</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('finance.overdue')}</CardTitle>
             <AlertCircle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">R$ {overdueValue.toLocaleString('pt-BR')}</div>
-            <p className="text-xs text-muted-foreground">{overdueInvoices.length} faturas vencidas</p>
+            <p className="text-xs text-muted-foreground">{t('finance.overdueDescription', { count: overdueInvoices.length })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('finance.activeClients')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeClientsCount}</div>
-            <p className="text-xs text-muted-foreground">Total de clientes com assinaturas ativas</p>
+            <p className="text-xs text-muted-foreground">{t('finance.activeClientsDescription')}</p>
           </CardContent>
         </Card>
       </div>
@@ -131,12 +144,12 @@ export default function FinancePage() {
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Evolução do MRR</CardTitle>
-            <CardDescription>Receita recorrente mensal nos últimos 6 meses (simulado).</CardDescription>
+            <CardTitle>{t('finance.mrrEvolution')}</CardTitle>
+            <CardDescription>{t('finance.mrrEvolutionDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={mrrData}>
+                <LineChart data={formattedMrrData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
@@ -149,14 +162,14 @@ export default function FinancePage() {
         </Card>
          <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Receita por Módulo</CardTitle>
-            <CardDescription>Distribuição da receita entre os módulos e planos.</CardDescription>
+            <CardTitle>{t('finance.revenueByModule')}</CardTitle>
+            <CardDescription>{t('finance.revenueByModuleDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                     <Pie
-                        data={revenueByModuleData}
+                        data={formattedRevenueByModuleData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -166,7 +179,7 @@ export default function FinancePage() {
                         nameKey="name"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
-                        {revenueByModuleData.map((entry, index) => (
+                        {formattedRevenueByModuleData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>
@@ -180,18 +193,18 @@ export default function FinancePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Faturas em Atraso</CardTitle>
-          <CardDescription>Faturas que passaram da data de vencimento e continuam pendentes.</CardDescription>
+          <CardTitle>{t('finance.overdueInvoices')}</CardTitle>
+          <CardDescription>{t('finance.overdueInvoicesDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cliente Final</TableHead>
-                <TableHead>Empresa</TableHead>
-                <TableHead>ID da Fatura</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
+                <TableHead>{t('clients.finalClient')}</TableHead>
+                <TableHead>{t('sidebar.companies')}</TableHead>
+                <TableHead>{t('finance.invoiceId')}</TableHead>
+                <TableHead>{t('finance.dueDate')}</TableHead>
+                <TableHead className="text-right">{t('common.value')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -211,3 +224,5 @@ export default function FinancePage() {
     </div>
   );
 }
+
+    
