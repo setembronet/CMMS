@@ -104,14 +104,14 @@ export default function SubscriptionsPage() {
   }, [formData.planId, formData.activeAddons, formData.period]);
 
   React.useEffect(() => {
-    // We only need the locations for the simulated client
-    setAvailableLocations(allCustomerLocations.filter(loc => loc.clientId === TEST_CLIENT_ID));
+    const clientLocations = allCustomerLocations.filter(loc => loc.clientId === TEST_CLIENT_ID);
+    setAvailableLocations(clientLocations);
     
     // Reset customerLocationId if it's no longer valid for the selected company
-    if (formData.customerLocationId && !availableLocations.some(loc => loc.id === formData.customerLocationId)) {
+    if (formData.customerLocationId && !clientLocations.some(loc => loc.id === formData.customerLocationId)) {
         setFormData(prev => ({...prev, customerLocationId: ''}));
     }
-  }, [formData.companyId, availableLocations, formData.customerLocationId]);
+  }, [formData.companyId, formData.customerLocationId]);
 
   const openDialog = (subscription: Subscription | null = null) => {
     setEditingSubscription(subscription);
@@ -188,7 +188,7 @@ export default function SubscriptionsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Gerenciamento de Contratos</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('sidebar.subscriptions')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Novo Contrato
@@ -377,5 +377,3 @@ export default function SubscriptionsPage() {
     </div>
   );
 }
-
-    
