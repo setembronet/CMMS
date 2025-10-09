@@ -3,6 +3,7 @@
 
 
 
+
 export type CustomerLocation = {
   id: string;
   name: string;
@@ -128,6 +129,7 @@ export type WorkOrder = {
   priority: OrderPriority;
   creationDate: number;
   responsibleId?: string;
+  internalObservation?: string;
 };
 
 export type Subscription = {

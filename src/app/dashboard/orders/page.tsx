@@ -36,12 +36,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, RotateCcw } from 'lucide-react';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Separator } from '@/components/ui/separator';
 
 const TEST_CLIENT_ID = 'client-01';
 
@@ -57,6 +58,7 @@ const emptyWorkOrder: WorkOrder = {
   status: 'ABERTO',
   priority: 'Média',
   creationDate: new Date().getTime(),
+  internalObservation: '',
 };
 
 export default function WorkOrdersPage() {
@@ -73,7 +75,6 @@ export default function WorkOrdersPage() {
   }, []);
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
-  const getResponsibleName = (id?: string) => id ? allUsers.find(u => u.id === id)?.name || 'N/A' : 'Não atribuído';
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
@@ -113,6 +114,11 @@ export default function WorkOrdersPage() {
     }
     closeDialog();
   };
+
+  const handleReopenOrder = () => {
+    if (!formData) return;
+    setFormData(prev => ({...prev, status: 'ABERTO'}));
+  };
   
   const getStatusBadgeVariant = (status: OrderStatus) => {
     switch (status) {
@@ -134,6 +140,7 @@ export default function WorkOrdersPage() {
     }
   };
 
+  const isFormDisabled = formData.status === 'CONCLUIDO' || formData.status === 'CANCELADO';
 
   return (
     <div className="flex flex-col gap-8">
@@ -202,66 +209,84 @@ export default function WorkOrdersPage() {
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
             <form onSubmit={handleSaveOrder} id="order-form" className="space-y-4 py-4 px-1">
               
-              <div className="space-y-2">
-                <Label htmlFor="assetId">Ativo</Label>
-                <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o ativo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="title">Título</Label>
-                <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Ex: Manutenção Corretiva Urgente"/>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder="Detalhe o problema ou o serviço a ser realizado."/>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <fieldset disabled={isFormDisabled} className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            {orderStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                  <Label htmlFor="assetId">Ativo</Label>
+                  <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o ativo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="priority">Prioridade</Label>
-                     <Select name="priority" value={formData.priority} onValueChange={(value) => handleSelectChange('priority', value as OrderPriority)} required>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            {orderPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="responsibleId">Técnico Responsável</Label>
-                <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Atribuir a um técnico (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="title">Título</Label>
+                  <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Ex: Manutenção Corretiva Urgente"/>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição</Label>
+                  <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder="Detalhe o problema ou o serviço a ser realizado."/>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                              {orderStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="priority">Prioridade</Label>
+                       <Select name="priority" value={formData.priority} onValueChange={(value) => handleSelectChange('priority', value as OrderPriority)} required>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                              {orderPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="responsibleId">Técnico Responsável</Label>
+                  <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Atribuir a um técnico (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label htmlFor="internalObservation">Observação Interna (visível apenas para a equipe)</Label>
+                  <Textarea id="internalObservation" name="internalObservation" value={formData.internalObservation || ''} onChange={handleInputChange} placeholder="Detalhes técnicos, histórico relevante, etc."/>
+                </div>
+              </fieldset>
             </form>
           </ScrollArea>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="order-form">Salvar</Button>
+          <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between w-full">
+            {isFormDisabled ? (
+                <Button onClick={handleReopenOrder}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Reabrir OS
+                </Button>
+            ) : (
+                <div /> // Placeholder to keep justify-between working
+            )}
+            <div>
+                <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
+                <Button type="submit" form="order-form" className="ml-2">Salvar</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

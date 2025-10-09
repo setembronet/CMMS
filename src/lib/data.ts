@@ -5,6 +5,7 @@
 
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation, OrderStatus, OrderPriority } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -160,7 +161,7 @@ export let assets: Asset[] = [
 
 export let workOrders: WorkOrder[] = [
   { id: 'os-01', clientId: 'client-01', assetId: 'asset-01', title: 'Verificar ruído no motor', status: 'ABERTO', priority: 'Alta', creationDate: new Date(2024, 6, 20).getTime(), description: 'Cliente relatou ruído estranho vindo da casa de máquinas durante a operação.' },
-  { id: 'os-02', clientId: 'client-01', assetId: 'asset-02', title: 'Manutenção preventiva mensal', status: 'CONCLUIDO', priority: 'Média', creationDate: new Date(2024, 5, 15).getTime(), responsibleId: 'user-05' },
+  { id: 'os-02', clientId: 'client-01', assetId: 'asset-02', title: 'Manutenção preventiva mensal', status: 'CONCLUIDO', priority: 'Média', creationDate: new Date(2024, 5, 15).getTime(), responsibleId: 'user-05', internalObservation: 'Troca de óleo realizada.' },
   { id: 'os-03', clientId: 'client-02', assetId: 'asset-03', title: 'Degrau quebrado', status: 'EM ANDAMENTO', priority: 'Urgente', creationDate: new Date(2024, 6, 22).getTime(), responsibleId: 'user-07' },
 ];
 
