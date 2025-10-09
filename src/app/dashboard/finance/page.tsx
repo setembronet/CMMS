@@ -16,9 +16,8 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, AlertCircle, PieChart, Users } from 'lucide-react';
-import { kpis, companies, customerLocations } from '@/lib/data';
-import { cn } from '@/lib/utils';
+import { DollarSign, AlertCircle, PieChart, Users } from 'lucide-react';
+import { kpis, companies, customerLocations, plans, addons } from '@/lib/data';
 import { 
     ResponsiveContainer,
     LineChart,
@@ -32,25 +31,62 @@ import {
     Cell
 } from 'recharts';
 
-// Mock data for charts
-const mrrData = [
-  { month: 'Jan', value: 650 },
-  { month: 'Fev', value: 700 },
-  { month: 'Mar', value: 720 },
-  { month: 'Abr', value: 780 },
-  { month: 'Mai', value: 850 },
-  { month: 'Jun', value: kpis.mockMrr },
-];
+// --- Dynamic Data Calculation ---
+const activeClients = companies.filter(c => c.status === 'active');
 
-const revenueByModuleData = [
-    { name: 'Planos Base', value: 400 },
-    { name: 'Módulo IA', value: 300 },
-    { name: 'Módulo IoT', value: 200 },
-];
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+const totalMrr = activeClients.reduce((total, company) => {
+  const plan = plans.find(p => p.id === company.planId);
+  const planPrice = plan?.price || 0;
+  
+  const addonsPrice = company.activeAddons.reduce((addonTotal, addonId) => {
+    const addon = addons.find(a => a.id === addonId);
+    return addonTotal + (addon?.price || 0);
+  }, 0);
+
+  return total + planPrice + addonsPrice;
+}, 0);
 
 const overdueInvoices = kpis.overdueInvoices || [];
 const overdueValue = overdueInvoices.reduce((sum, inv) => sum + inv.totalValue, 0);
+const activeClientsCount = activeClients.length;
+
+// Mock historical data based on current MRR
+const mrrData = [
+  { month: 'Jan', value: totalMrr * 0.75 },
+  { month: 'Fev', value: totalMrr * 0.80 },
+  { month: 'Mar', value: totalMrr * 0.82 },
+  { month: 'Abr', value: totalMrr * 0.90 },
+  { month: 'Mai', value: totalMrr * 0.95 },
+  { month: 'Jun', value: totalMrr },
+].map(d => ({...d, value: Math.round(d.value)}));
+
+
+// Calculate revenue by module (Plans vs Addons)
+const totalPlanRevenue = activeClients.reduce((total, company) => {
+    const plan = plans.find(p => p.id === company.planId);
+    return total + (plan?.price || 0);
+}, 0);
+
+const totalIaAddonRevenue = activeClients.reduce((total, company) => {
+    const hasIaAddon = company.activeAddons.includes('ia-addon');
+    const addon = addons.find(a => a.id === 'ia-addon');
+    return total + (hasIaAddon ? (addon?.price || 0) : 0);
+}, 0);
+
+const totalIotAddonRevenue = activeClients.reduce((total, company) => {
+    const hasIotAddon = company.activeAddons.includes('iot-addon');
+    const addon = addons.find(a => a.id === 'iot-addon');
+    return total + (hasIotAddon ? (addon?.price || 0) : 0);
+}, 0);
+
+const revenueByModuleData = [
+    { name: 'Planos Base', value: totalPlanRevenue },
+    { name: 'Módulo IA', value: totalIaAddonRevenue },
+    { name: 'Módulo IoT', value: totalIotAddonRevenue },
+].filter(d => d.value > 0);
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+// --------------------------------
 
 export default function FinancePage() {
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.name || 'N/A';
@@ -66,8 +102,8 @@ export default function FinancePage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ {kpis.mockMrr.toLocaleString('pt-BR')}</div>
-            <p className="text-xs text-muted-foreground">+5.2% vs mês anterior</p>
+            <div className="text-2xl font-bold">R$ {totalMrr.toLocaleString('pt-BR')}</div>
+            <p className="text-xs text-muted-foreground">+5.2% vs mês anterior (simulado)</p>
           </CardContent>
         </Card>
         <Card>
@@ -86,7 +122,7 @@ export default function FinancePage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpis.activeClients}</div>
+            <div className="text-2xl font-bold">{activeClientsCount}</div>
             <p className="text-xs text-muted-foreground">Total de clientes com assinaturas ativas</p>
           </CardContent>
         </Card>
@@ -96,7 +132,7 @@ export default function FinancePage() {
         <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Evolução do MRR</CardTitle>
-            <CardDescription>Receita recorrente mensal nos últimos 6 meses.</CardDescription>
+            <CardDescription>Receita recorrente mensal nos últimos 6 meses (simulado).</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
              <ResponsiveContainer width="100%" height={300}>
@@ -114,7 +150,7 @@ export default function FinancePage() {
          <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Receita por Módulo</CardTitle>
-            <CardDescription>Distribuição da receita entre os módulos.</CardDescription>
+            <CardDescription>Distribuição da receita entre os módulos e planos.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

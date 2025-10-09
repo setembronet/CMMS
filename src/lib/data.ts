@@ -73,6 +73,8 @@ export let companies: Company[] = [
     cnpj: '12.345.678/0001-90', 
     email: 'contato@atlas.com', 
     status: 'active', 
+    planId: 'plan_enterprise',
+    activeAddons: ['ia-addon'],
     activeSegments: ['ELEVADOR'], 
   },
   { 
@@ -81,6 +83,8 @@ export let companies: Company[] = [
     cnpj: '98.765.432/0001-10', 
     email: 'contato@escadasbr.com', 
     status: 'active', 
+    planId: 'plan_pro',
+    activeAddons: [],
     activeSegments: ['ESCADA_ROLANTE'], 
   },
   { 
@@ -89,6 +93,8 @@ export let companies: Company[] = [
     cnpj: '55.555.555/0001-55', 
     email: 'suporte@xyz.com', 
     status: 'inactive', 
+    planId: 'plan_pro',
+    activeAddons: [],
     activeSegments: ['ELEVADOR', 'AR_CONDICIONADO'], 
   },
   { 
@@ -97,6 +103,8 @@ export let companies: Company[] = [
     cnpj: '33.333.333/0001-33', 
     email: 'vendas@tecnolift.com.br', 
     status: 'active', 
+    planId: 'plan_free',
+    activeAddons: [],
     activeSegments: ['ELEVADOR'], 
   },
 ];
@@ -153,7 +161,7 @@ export let workOrders: WorkOrder[] = [
 
 export let kpis = {
     activeUsers: users.length,
-    mockMrr: 1250,
+    mockMrr: 1250, // This will be replaced by dynamic calculation
     activeClients: companies.filter(c => c.status === 'active').length,
     inactiveClients: companies.filter(c => c.status === 'inactive').length,
     overdueInvoices: [
@@ -235,5 +243,3 @@ export const restoreData = (data: any) => {
     if (data.kpis) setKpis(data.kpis);
   }
 };
-
-    

@@ -14,12 +14,19 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Building, DollarSign, Users, Activity } from 'lucide-react';
-import { kpis, companies } from '@/lib/data';
+import { kpis, companies, plans } from '@/lib/data';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const recentCompanies = companies.slice(0, 5);
   
+  // Calculate total assets for recent companies based on their plan
+  const getAssetLimit = (planId: string) => {
+    const plan = plans.find(p => p.id === planId);
+    if (!plan) return 0;
+    return plan.assetLimit === -1 ? 'Ilimitado' : plan.assetLimit;
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-3xl font-bold font-headline">Dashboard Geral</h1>
@@ -85,7 +92,7 @@ export default function DashboardPage() {
                 <TableRow key={company.id}>
                   <TableCell className="font-medium">{company.name}</TableCell>
                   <TableCell>{company.email}</TableCell>
-                  <TableCell>{company.assetLimit}</TableCell>
+                  <TableCell>{getAssetLimit(company.planId)}</TableCell>
                   <TableCell>
                     <Badge variant={company.status === 'active' ? 'secondary' : 'destructive'} className={cn(company.status === 'active' && 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300')}>
                       {company.status === 'active' ? 'ativo' : 'inativo'}

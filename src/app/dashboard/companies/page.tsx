@@ -30,11 +30,12 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { companies as initialCompanies, segments as initialSegments } from '@/lib/data';
-import type { Company, CompanySegment } from '@/lib/types';
+import { companies as initialCompanies, segments as initialSegments, plans, addons } from '@/lib/data';
+import type { Company, CompanySegment, Plan, Addon } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const emptyCompany: Company = {
   id: '',
@@ -43,6 +44,8 @@ const emptyCompany: Company = {
   email: '',
   phone: '',
   status: 'active',
+  planId: plans[0]?.id || '',
+  activeAddons: [],
   activeSegments: [],
   address: {
     street: '',
@@ -91,6 +94,10 @@ export default function CompaniesPage() {
       setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     }
   };
+
+  const handleSelectChange = (name: keyof Company, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
   
   const handleSegmentChange = (segmentId: string, checked: boolean) => {
     setFormData(prev => {
@@ -102,6 +109,18 @@ export default function CompaniesPage() {
       }
     });
   };
+
+  const handleAddonChange = (addonId: string, checked: boolean) => {
+    setFormData(prev => {
+      const currentAddons = prev.activeAddons || [];
+      if (checked) {
+        return { ...prev, activeAddons: [...currentAddons, addonId] };
+      } else {
+        return { ...prev, activeAddons: currentAddons.filter(s => s !== addonId) };
+      }
+    });
+  };
+
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
@@ -163,18 +182,21 @@ export default function CompaniesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>CNPJ</TableHead>
-              <TableHead>Segmentos Ativos</TableHead>
+              <TableHead>Plano</TableHead>
+              <TableHead>Segmentos</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {companies.map((company) => {
+                const plan = plans.find(p => p.id === company.planId);
                 return (
                   <TableRow key={company.id}>
                     <TableCell className="font-medium">{company.name}</TableCell>
-                    <TableCell>{company.cnpj}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{plan?.name || 'N/A'}</Badge>
+                    </TableCell>
                     <TableCell>{company.activeSegments.length}</TableCell>
                     <TableCell>
                         <Switch
@@ -206,7 +228,7 @@ export default function CompaniesPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             <DialogDescription>
@@ -215,7 +237,7 @@ export default function CompaniesPage() {
           </DialogHeader>
           <div className="h-[calc(80vh-150px)] overflow-y-auto">
             <ScrollArea className="h-full pr-6 -mx-6 px-6">
-              <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6 py-4">
+              <form onSubmit={handleSaveCompany} id="company-form" className="space-y-6 py-4 px-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Nome da Empresa</Label>
@@ -273,6 +295,19 @@ export default function CompaniesPage() {
                 
                 <h3 className="text-lg font-medium">Configuração Operacional</h3>
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="planId">Plano de Assinatura</Label>
+                    <Select name="planId" value={formData.planId} onValueChange={(value) => handleSelectChange('planId', value)} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um plano" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {plans.map(plan => (
+                          <SelectItem key={plan.id} value={plan.id}>{plan.name} - R$ {plan.price}/mês</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>
                     <Label>Segmentos de Atuação</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4 mt-2">
@@ -285,6 +320,23 @@ export default function CompaniesPage() {
                               />
                               <Label htmlFor={`segment-${segment.id}`} className="font-normal capitalize">
                                 {segment.name.replace(/_/g, ' ').toLowerCase()}
+                              </Label>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                   <div>
+                    <Label>Add-ons Contratados</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4 mt-2">
+                        {addons.map(addon => (
+                          <div key={addon.id} className="flex items-center gap-2">
+                              <Checkbox 
+                                id={`addon-${addon.id}`}
+                                checked={(formData.activeAddons || []).includes(addon.id)}
+                                onCheckedChange={(checked) => handleAddonChange(addon.id, !!checked)}
+                              />
+                              <Label htmlFor={`addon-${addon.id}`} className="font-normal">
+                                {addon.name}
                               </Label>
                           </div>
                         ))}

@@ -87,6 +87,8 @@ export type Company = {
   email: string;
   phone?: string;
   status: CompanyStatus;
+  planId: string;
+  activeAddons: string[]; // IDs of Addon
   activeSegments: string[]; // This will store segment IDs
   address?: {
     street?: string;
@@ -139,5 +141,3 @@ export type ContactType = {
   id: string;
   name: string;
 };
-
-    
