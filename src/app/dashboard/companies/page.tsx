@@ -29,19 +29,11 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { PlusCircle, MoreHorizontal, Sparkles, AlertTriangle } from 'lucide-react';
-import { companies as initialCompanies, plans, addons, segments as initialSegments } from '@/lib/data';
-import type { Company, Plan, CompanySegment } from '@/lib/types';
+import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { companies as initialCompanies, segments as initialSegments } from '@/lib/data';
+import type { Company, CompanySegment } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const emptyCompany: Company = {
@@ -52,7 +44,6 @@ const emptyCompany: Company = {
   phone: '',
   status: 'active',
   activeSegments: [],
-  assetLimit: 0,
   address: {
     street: '',
     number: '',
@@ -62,10 +53,6 @@ const emptyCompany: Company = {
     state: '',
     zipCode: '',
   },
-  planId: 'plan_free',
-  iaAddonActive: false,
-  iotAddonActive: false,
-  currentAssets: 0,
 };
 
 export default function CompaniesPage() {
@@ -73,7 +60,7 @@ export default function CompaniesPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
   const [formData, setFormData] = React.useState<Company>(emptyCompany);
-  const [segments, setSegments] = React.useState<CompanySegment[]>(initialSegments);
+  const [segments] = React.useState<CompanySegment[]>(initialSegments);
 
   const openDialog = (company: Company | null = null) => {
     setEditingCompany(company);
@@ -105,10 +92,6 @@ export default function CompaniesPage() {
     }
   };
   
-  const handleSelectChange = (name: string, value: string) => {
-     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleSegmentChange = (segmentId: string, checked: boolean) => {
     setFormData(prev => {
       const currentSegments = prev.activeSegments || [];
@@ -119,27 +102,6 @@ export default function CompaniesPage() {
       }
     });
   };
-
-  const handleAddonSwitchChange = (addonId: string, checked: boolean) => {
-    const fieldMap: { [key: string]: keyof Company } = {
-        'ia-addon': 'iaAddonActive',
-        'iot-addon': 'iotAddonActive',
-    };
-    const fieldToUpdate = fieldMap[addonId];
-    if (fieldToUpdate) {
-        setFormData(prev => ({...prev, [fieldToUpdate]: checked}));
-    }
-  }
-
-  const isAddonActive = (addonId: string) => {
-    const fieldMap: { [key: string]: keyof Company } = {
-        'ia-addon': 'iaAddonActive',
-        'iot-addon': 'iotAddonActive',
-    };
-    const field = fieldMap[addonId];
-    // @ts-ignore
-    return field ? !!formData[field] : false;
-  }
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
@@ -169,13 +131,10 @@ export default function CompaniesPage() {
 
   const handleSaveCompany = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const plan = plans.find(p => p.id === formData.planId);
     
     const newCompany: Company = {
       ...formData,
       id: editingCompany?.id || `client-0${companies.length + 1}`,
-      assetLimit: plan?.assetLimit ?? 0, // Set assetLimit based on plan
-      currentAssets: Number(formData.currentAssets)
     };
 
     if (editingCompany) {
@@ -188,34 +147,6 @@ export default function CompaniesPage() {
 
   const toggleCompanyStatus = (companyId: string, status: boolean) => {
     setCompanies(companies.map(c => c.id === companyId ? { ...c, status: status ? 'active' : 'inactive' } : c));
-  };
-  
-  const getPlanById = (planId: string) => plans.find(p => p.id === planId);
-
-  const renderAssetUsage = (company: Company) => {
-    const plan = getPlanById(company.planId);
-    if (!plan || plan.assetLimit === 0) return null;
-    
-    // Handle unlimited plan
-    if (plan.assetLimit === -1) {
-        return (
-            <div className="w-24">
-                <div className="text-sm">Ilimitado</div>
-                <div className="text-xs text-muted-foreground">{company.currentAssets} / ∞</div>
-            </div>
-        );
-    }
-
-    const usage = (company.currentAssets / plan.assetLimit) * 100;
-    
-    return (
-        <div className="w-24">
-            <Progress value={usage > 100 ? 100 : usage} className="h-2" />
-            <div className="text-xs text-muted-foreground mt-1">
-                {company.currentAssets} / {plan.assetLimit}
-            </div>
-        </div>
-    );
   };
   
   return (
@@ -232,29 +163,19 @@ export default function CompaniesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>Plano</TableHead>
-              <TableHead>Uso de Ativos</TableHead>
-              <TableHead>Add-ons</TableHead>
+              <TableHead>CNPJ</TableHead>
+              <TableHead>Segmentos Ativos</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {companies.map((company) => {
-                const plan = getPlanById(company.planId);
                 return (
                   <TableRow key={company.id}>
                     <TableCell className="font-medium">{company.name}</TableCell>
-                    <TableCell>
-                        <Badge variant={plan?.id === 'plan_free' ? 'secondary' : 'default'}>
-                            {plan?.name ?? 'N/A'}
-                        </Badge>
-                    </TableCell>
-                    <TableCell>{renderAssetUsage(company)}</TableCell>
-                    <TableCell className="flex gap-2 items-center">
-                        {company.iaAddonActive && <Badge variant="outline"><Sparkles className="h-3 w-3 mr-1" /> IA</Badge>}
-                        {company.iotAddonActive && <Badge variant="outline"><AlertTriangle className="h-3 w-3 mr-1" /> IoT</Badge>}
-                    </TableCell>
+                    <TableCell>{company.cnpj}</TableCell>
+                    <TableCell>{company.activeSegments.length}</TableCell>
                     <TableCell>
                         <Switch
                             checked={company.status === 'active'}
@@ -350,44 +271,6 @@ export default function CompaniesPage() {
                 
                 <Separator />
                 
-                <h3 className="text-lg font-medium">Plano e Faturamento</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="planId">Plano</Label>
-                    <Select name="planId" value={formData.planId} onValueChange={(value) => handleSelectChange('planId', value)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione um plano" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {plans.map(plan => (
-                                <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="currentAssets">Ativos Atuais (Contador)</Label>
-                    <Input id="currentAssets" name="currentAssets" type="number" value={String(formData.currentAssets)} onChange={handleInputChange} required />
-                  </div>
-                  <div className="space-y-2 col-span-full">
-                    <Label>Add-ons</Label>
-                    <div className="flex items-center gap-4">
-                        {addons.map(addon => (
-                          <div className="flex items-center gap-2" key={addon.id}>
-                              <Switch 
-                                  id={addon.id} 
-                                  checked={isAddonActive(addon.id)}
-                                  onCheckedChange={(checked) => handleAddonSwitchChange(addon.id, checked)} 
-                              />
-                              <Label htmlFor={addon.id}>{addon.name}</Label>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
                 <h3 className="text-lg font-medium">Configuração Operacional</h3>
                 <div className="space-y-4">
                   <div>

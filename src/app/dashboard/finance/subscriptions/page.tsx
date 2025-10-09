@@ -39,8 +39,8 @@ import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon } from 'lucide-react';
-import { subscriptions as initialSubscriptions, companies, plans, addons } from '@/lib/data';
-import type { Subscription, Plan, Addon, Company, SubscriptionStatus, BillingPeriod } from '@/lib/types';
+import { subscriptions as initialSubscriptions, companies, plans, addons, customerLocations as allCustomerLocations } from '@/lib/data';
+import type { Subscription, Plan, Addon, Company, SubscriptionStatus, BillingPeriod, CustomerLocation } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -48,13 +48,14 @@ import { cn } from '@/lib/utils';
 
 const emptySubscription: Subscription = {
   id: '',
-  clientId: '',
+  companyId: '',
+  customerLocationId: '',
   planId: '',
   status: 'ATIVA',
   period: 'MONTHLY',
   startDate: new Date().getTime(),
   nextBillingDate: add(new Date(), { months: 1 }).getTime(),
-  basePlanValue: 0,
+  totalValue: 0,
   activeAddons: [],
 };
 
@@ -64,10 +65,12 @@ export default function SubscriptionsPage() {
   const [editingSubscription, setEditingSubscription] = React.useState<Subscription | null>(null);
   const [formData, setFormData] = React.useState<Subscription>(emptySubscription);
   const [totalValue, setTotalValue] = React.useState(0);
+  const [availableLocations, setAvailableLocations] = React.useState<CustomerLocation[]>([]);
 
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.name || 'N/A';
   const getPlanName = (id: string) => plans.find(p => p.id === id)?.name || 'N/A';
   const getPlan = (id: string) => plans.find(p => p.id === id);
+  const getLocationName = (id: string) => allCustomerLocations.find(l => l.id === id)?.name || 'N/A';
 
 
   React.useEffect(() => {
@@ -91,6 +94,18 @@ export default function SubscriptionsPage() {
     setTotalValue((planPrice + addonsPrice) * multiplier);
 
   }, [formData.planId, formData.activeAddons, formData.period]);
+
+  React.useEffect(() => {
+    if (formData.companyId) {
+      setAvailableLocations(allCustomerLocations.filter(loc => loc.clientId === formData.companyId));
+      // Reset customerLocationId if it's no longer valid for the selected company
+      if (!allCustomerLocations.some(loc => loc.clientId === formData.companyId && loc.id === formData.customerLocationId)) {
+        setFormData(prev => ({...prev, customerLocationId: ''}));
+      }
+    } else {
+      setAvailableLocations([]);
+    }
+  }, [formData.companyId, formData.customerLocationId]);
 
   const openDialog = (subscription: Subscription | null = null) => {
     setEditingSubscription(subscription);
@@ -138,7 +153,7 @@ export default function SubscriptionsPage() {
     const newSubscription: Subscription = {
       ...formData,
       id: editingSubscription?.id || `sub_${Date.now()}`,
-      basePlanValue: totalValue,
+      totalValue: totalValue,
       nextBillingDate: add(new Date(formData.startDate), periodMap[formData.period]).getTime()
     };
 
@@ -176,9 +191,9 @@ export default function SubscriptionsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Cliente Final</TableHead>
               <TableHead>Empresa</TableHead>
               <TableHead>Plano</TableHead>
-              <TableHead>Período</TableHead>
               <TableHead>Valor Total</TableHead>
               <TableHead>Próxima Cobrança</TableHead>
               <TableHead>Status</TableHead>
@@ -188,10 +203,10 @@ export default function SubscriptionsPage() {
           <TableBody>
             {subscriptions.map(sub => (
               <TableRow key={sub.id}>
-                <TableCell className="font-medium">{getCompanyName(sub.clientId)}</TableCell>
+                <TableCell className="font-medium">{getLocationName(sub.customerLocationId)}</TableCell>
+                <TableCell>{getCompanyName(sub.companyId)}</TableCell>
                 <TableCell>{getPlanName(sub.planId)}</TableCell>
-                <TableCell>{periodLabels[sub.period]}</TableCell>
-                <TableCell>R$ {(sub.basePlanValue).toLocaleString('pt-BR')}</TableCell>
+                <TableCell>R$ {(sub.totalValue).toLocaleString('pt-BR')}</TableCell>
                 <TableCell>{format(new Date(sub.nextBillingDate), 'dd/MM/yyyy')}</TableCell>
                 <TableCell>
                   <Badge variant={sub.status === 'ATIVA' ? 'secondary' : 'destructive'} className={cn(sub.status === 'ATIVA' && 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300')}>{statusLabels[sub.status]}</Badge>
@@ -222,7 +237,7 @@ export default function SubscriptionsPage() {
           <DialogHeader>
             <DialogTitle>{editingSubscription ? 'Editar Assinatura' : 'Nova Assinatura'}</DialogTitle>
             <DialogDescription>
-              {editingSubscription ? 'Atualize os detalhes da assinatura.' : 'Crie um novo contrato de assinatura para uma empresa.'}
+              {editingSubscription ? 'Atualize os detalhes da assinatura.' : 'Crie um novo contrato de assinatura para um cliente final.'}
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto -mx-6 px-6" style={{ height: 'calc(80vh - 150px)' }}>
@@ -231,8 +246,8 @@ export default function SubscriptionsPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="clientId">Empresa</Label>
-                        <Select name="clientId" value={formData.clientId} onValueChange={(value) => handleSelectChange('clientId', value)} required>
+                        <Label htmlFor="companyId">Empresa (Cliente SaaS)</Label>
+                        <Select name="companyId" value={formData.companyId} onValueChange={(value) => handleSelectChange('companyId', value)} required>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecione uma empresa" />
                             </SelectTrigger>
@@ -241,17 +256,28 @@ export default function SubscriptionsPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="status">Status</Label>
-                        <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value)} required>
+                    <div className="space-y-2">
+                        <Label htmlFor="customerLocationId">Cliente Final</Label>
+                        <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required disabled={!formData.companyId}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Selecione o status" />
+                                <SelectValue placeholder="Selecione um cliente final" />
                             </SelectTrigger>
                             <SelectContent>
-                                {(Object.keys(statusLabels) as SubscriptionStatus[]).map(s => <SelectItem key={s} value={s}>{statusLabels[s]}</SelectItem>)}
+                                {availableLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value)} required>
+                        <SelectTrigger className="w-full md:w-1/2">
+                            <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {(Object.keys(statusLabels) as SubscriptionStatus[]).map(s => <SelectItem key={s} value={s}>{statusLabels[s]}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                 </div>
                 
                 <Separator />

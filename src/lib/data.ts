@@ -74,11 +74,6 @@ export let companies: Company[] = [
     email: 'contato@atlas.com', 
     status: 'active', 
     activeSegments: ['ELEVADOR'], 
-    planId: 'plan_pro',
-    iaAddonActive: true,
-    iotAddonActive: false,
-    currentAssets: 18,
-    assetLimit: 50
   },
   { 
     id: 'client-02', 
@@ -87,11 +82,6 @@ export let companies: Company[] = [
     email: 'contato@escadasbr.com', 
     status: 'active', 
     activeSegments: ['ESCADA_ROLANTE'], 
-    planId: 'plan_pro',
-    iaAddonActive: false,
-    iotAddonActive: false,
-    currentAssets: 45,
-    assetLimit: 50,
   },
   { 
     id: 'client-03', 
@@ -100,11 +90,6 @@ export let companies: Company[] = [
     email: 'suporte@xyz.com', 
     status: 'inactive', 
     activeSegments: ['ELEVADOR', 'AR_CONDICIONADO'], 
-    planId: 'plan_free',
-    iaAddonActive: false,
-    iotAddonActive: false,
-    currentAssets: 4,
-    assetLimit: 5,
   },
   { 
     id: 'client-04', 
@@ -113,11 +98,6 @@ export let companies: Company[] = [
     email: 'vendas@tecnolift.com.br', 
     status: 'active', 
     activeSegments: ['ELEVADOR'], 
-    planId: 'plan_enterprise',
-    iaAddonActive: true,
-    iotAddonActive: true,
-    currentAssets: 150,
-    assetLimit: 500
   },
 ];
 
@@ -173,47 +153,35 @@ export let workOrders: WorkOrder[] = [
 
 export let subscriptions: Subscription[] = [
     { 
-        id: 'sub-01', 
-        clientId: 'client-01', 
+        id: 'sub-01',
+        companyId: 'client-01', 
+        customerLocationId: 'loc-01',
         planId: 'plan_pro',
         status: 'ATIVA', 
         period: 'MONTHLY', 
         startDate: new Date(2023, 0, 15).getTime(), 
         nextBillingDate: new Date(2024, 7, 15).getTime(), 
-        basePlanValue: 249, 
+        totalValue: 448, 
         activeAddons: [{ id: 'ia-addon', name: 'Módulo IA', price: 199 }] 
     },
     { 
-        id: 'sub-02', 
-        clientId: 'client-02', 
+        id: 'sub-02',
+        companyId: 'client-02',
+        customerLocationId: 'loc-03',
         planId: 'plan_pro',
         status: 'ATIVA', 
         period: 'QUARTERLY', 
         startDate: new Date(2023, 2, 1).getTime(), 
         nextBillingDate: new Date(2024, 8, 1).getTime(), 
-        basePlanValue: 249*3, 
+        totalValue: 747, 
         activeAddons: [] 
-    },
-    { 
-        id: 'sub-04', 
-        clientId: 'client-04', 
-        planId: 'plan_enterprise',
-        status: 'CANCELADA', 
-        period: 'ANNUALLY', 
-        startDate: new Date(2022, 5, 20).getTime(), 
-        nextBillingDate: new Date(2023, 5, 20).getTime(), 
-        basePlanValue: 999*12, 
-        activeAddons: [
-            { id: 'ia-addon', name: 'Módulo IA', price: 199*12 }, 
-            { id: 'iot-addon', name: 'Módulo IoT', price: 299*12 }
-        ] 
     },
 ];
 
 export let invoices: Invoice[] = [
-    { id: 'inv-01', clientId: 'client-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 5, 15).getTime(), dueDate: new Date(2024, 5, 22).getTime(), totalValue: 448, status: 'PAGO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
-    { id: 'inv-02', clientId: 'client-02', subscriptionId: 'sub-02', issueDate: new Date(2024, 5, 1).getTime(), dueDate: new Date(2024, 5, 8).getTime(), totalValue: 747, status: 'PENDENTE', billedItems: [{description: 'Plano Pró (Trimestral)', value: 747}] },
-    { id: 'inv-03', clientId: 'client-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 4, 15).getTime(), dueDate: new Date(2024, 4, 22).getTime(), totalValue: 448, status: 'ATRASADO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
+    { id: 'inv-01', companyId: 'client-01', customerLocationId: 'loc-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 5, 15).getTime(), dueDate: new Date(2024, 5, 22).getTime(), totalValue: 448, status: 'PAGO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
+    { id: 'inv-02', companyId: 'client-02', customerLocationId: 'loc-03', subscriptionId: 'sub-02', issueDate: new Date(2024, 5, 1).getTime(), dueDate: new Date(2024, 5, 8).getTime(), totalValue: 747, status: 'PENDENTE', billedItems: [{description: 'Plano Pró (Trimestral)', value: 747}] },
+    { id: 'inv-03', companyId: 'client-01', customerLocationId: 'loc-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 4, 15).getTime(), dueDate: new Date(2024, 4, 22).getTime(), totalValue: 448, status: 'ATRASADO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
 ];
 
 
@@ -221,13 +189,11 @@ export let kpis = {
     activeUsers: users.length,
     mockMrr: subscriptions.reduce((total, sub) => {
         if (sub.status === 'ATIVA') {
-            let monthlyValue = sub.basePlanValue;
+            let monthlyValue = sub.totalValue;
             if (sub.period === 'QUARTERLY') monthlyValue /= 3;
             if (sub.period === 'SEMIANNUALLY') monthlyValue /= 6;
             if (sub.period === 'ANNUALLY') monthlyValue /= 12;
-
-            const addonsValue = sub.activeAddons.reduce((acc, addon) => acc + addon.price, 0);
-            return total + monthlyValue + addonsValue;
+            return total + monthlyValue;
         }
         return total;
     }, 0),

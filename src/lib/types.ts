@@ -102,11 +102,13 @@ export type Company = {
     state?: string;
     zipCode?: string;
   };
-  planId: string;
-  iaAddonActive: boolean;
-  iotAddonActive: boolean;
-  currentAssets: number;
-  assetLimit?: number; 
+  // Plan and Addons are now managed at the CustomerLocation (via Subscription)
+  // These fields are deprecated at the Company level.
+  planId_DEPRECATED?: string;
+  iaAddonActive_DEPRECATED?: boolean;
+  iotAddonActive_DEPRECATED?: boolean;
+  currentAssets_DEPRECATED?: number;
+  assetLimit_DEPRECATED?: number;
 };
 
 export type Asset = {
@@ -145,20 +147,21 @@ export type WorkOrder = {
 
 export type Subscription = {
   id: string;
-  clientId: string;
+  companyId: string; // The SaaS Client (e.g. Atlas)
+  customerLocationId: string; // The End Customer (e.g. Condominio Central)
   planId: string;
   status: SubscriptionStatus;
   period: BillingPeriod;
   startDate: number; // timestamp
   nextBillingDate: number; // timestamp
-  basePlanValue: number;
-  valuePerAsset?: number;
+  totalValue: number;
   activeAddons: { id: string; name: string; price: number }[];
 };
 
 export type Invoice = {
   id: string;
-  clientId: string;
+  companyId: string;
+  customerLocationId: string;
   subscriptionId: string;
   issueDate: number; // timestamp
   dueDate: number; // timestamp

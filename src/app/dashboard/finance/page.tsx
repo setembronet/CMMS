@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, TrendingUp, AlertCircle, PieChart, Users } from 'lucide-react';
-import { kpis, invoices, companies } from '@/lib/data';
+import { kpis, invoices, companies, customerLocations } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { 
     ResponsiveContainer,
@@ -53,7 +53,8 @@ const overdueInvoices = kpis.overdueInvoices;
 const overdueValue = overdueInvoices.reduce((sum, inv) => sum + inv.totalValue, 0);
 
 export default function FinancePage() {
-  const getCompanyName = (clientId: string) => companies.find(c => c.id === clientId)?.name || 'N/A';
+  const getCompanyName = (id: string) => companies.find(c => c.id === id)?.name || 'N/A';
+  const getCustomerLocationName = (id: string) => customerLocations.find(l => l.id === id)?.name || 'N/A';
 
   return (
     <div className="flex flex-col gap-8">
@@ -150,6 +151,7 @@ export default function FinancePage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Cliente Final</TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>ID da Fatura</TableHead>
                 <TableHead>Vencimento</TableHead>
@@ -159,7 +161,8 @@ export default function FinancePage() {
             <TableBody>
               {overdueInvoices.map((invoice) => (
                 <TableRow key={invoice.id}>
-                  <TableCell className="font-medium">{getCompanyName(invoice.clientId)}</TableCell>
+                  <TableCell className="font-medium">{getCustomerLocationName(invoice.customerLocationId)}</TableCell>
+                  <TableCell>{getCompanyName(invoice.companyId)}</TableCell>
                   <TableCell>{invoice.id}</TableCell>
                   <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">R$ {invoice.totalValue.toLocaleString('pt-BR')}</TableCell>
