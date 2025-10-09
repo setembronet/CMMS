@@ -4,7 +4,8 @@
 
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation } from './types';
+
+import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation, OrderStatus, OrderPriority } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -123,13 +124,13 @@ export let customerLocations: CustomerLocation[] = [
     id: 'loc-01',
     clientId: 'client-01',
     name: 'Condomínio Edifício Central',
-    address: { city: 'São Paulo', state: 'SP' },
+    address: { street: 'Av. Paulista', number: '1000', city: 'São Paulo', state: 'SP', zipCode: '01310-100' },
   },
   {
     id: 'loc-02',
     clientId: 'client-01',
     name: 'Shopping Plaza',
-    address: { city: 'São Paulo', state: 'SP' },
+     address: { street: 'Rua das Flores', number: 'S/N', city: 'São Paulo', state: 'SP', zipCode: '01001-000' },
   },
   {
     id: 'loc-03',
@@ -153,12 +154,14 @@ export let users: User[] = [
 
 export let assets: Asset[] = [
   { id: 'asset-01', clientId: 'client-01', customerLocationId: 'loc-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', brand: 'Atlas Schindler', model: '5500 MRL', observation: 'Instalado em 2020. Contrato de manutenção platinum.', location: { lat: -23.5505, lng: -46.6333 } },
-  { id: 'asset-02', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', brand: 'Thyssenkrupp', model: 'Velino', observation: 'Fluxo intenso em horários de pico.', location: { lat: -22.9068, lng: -43.1729 } },
+  { id: 'asset-02', clientId: 'client-01', customerLocationId: 'loc-02', name: 'Elevador de Carga', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-C01', brand: 'Thyssenkrupp', model: 'Synergy', observation: 'Utilizado para abastecimento do shopping.', location: { lat: -23.5505, lng: -46.6333 } },
+  { id: 'asset-03', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', brand: 'Thyssenkrupp', model: 'Velino', observation: 'Fluxo intenso em horários de pico.', location: { lat: -22.9068, lng: -43.1729 } },
 ];
 
 export let workOrders: WorkOrder[] = [
-  { id: 'os-01', clientId: 'client-01', assetId: 'asset-01', title: 'Verificar ruído no motor', status: 'ABERTO', priority: 'Alta' },
-  { id: 'os-02', clientId: 'client-02', assetId: 'asset-02', title: 'Manutenção preventiva mensal', status: 'FECHADO', priority: 'Média' },
+  { id: 'os-01', clientId: 'client-01', assetId: 'asset-01', title: 'Verificar ruído no motor', status: 'ABERTO', priority: 'Alta', creationDate: new Date(2024, 6, 20).getTime(), description: 'Cliente relatou ruído estranho vindo da casa de máquinas durante a operação.' },
+  { id: 'os-02', clientId: 'client-01', assetId: 'asset-02', title: 'Manutenção preventiva mensal', status: 'CONCLUIDO', priority: 'Média', creationDate: new Date(2024, 5, 15).getTime(), responsibleId: 'user-05' },
+  { id: 'os-03', clientId: 'client-02', assetId: 'asset-03', title: 'Degrau quebrado', status: 'EM ANDAMENTO', priority: 'Urgente', creationDate: new Date(2024, 6, 22).getTime(), responsibleId: 'user-07' },
 ];
 
 export let subscriptions: Subscription[] = [
@@ -231,6 +234,10 @@ export const setCompanies = (newCompanies: Company[]) => {
   companies = newCompanies;
 };
 
+export const setCustomerLocations = (newLocations: CustomerLocation[]) => {
+  customerLocations = newLocations;
+}
+
 export const setUsers = (newUsers: User[]) => {
   users = newUsers;
 };
@@ -259,6 +266,10 @@ export const setInvoices = (newInvoices: Invoice[]) => {
     invoices = newInvoices;
 };
 
+export const setWorkOrders = (newWorkOrders: WorkOrder[]) => {
+  workOrders = newWorkOrders;
+};
+
 export const setKpis = (newKpis: typeof kpis) => {
     kpis = newKpis;
 };
@@ -269,6 +280,7 @@ export const getBackupData = () => ({
   plans,
   addons,
   companies,
+  customerLocations,
   users,
   assets,
   workOrders,
@@ -286,7 +298,10 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.plans)) setPlans(data.plans);
     if (Array.isArray(data.addons)) setAddons(data.addons);
     if (Array.isArray(data.companies)) setCompanies(data.companies);
+    if (Array.isArray(data.customerLocations)) setCustomerLocations(data.customerLocations);
     if (Array.isArray(data.users)) setUsers(data.users);
+    if (Array.isArray(data.assets)) assets = data.assets;
+    if (Array.isArray(data.workOrders)) setWorkOrders(data.workOrders);
     if (Array.isArray(data.subscriptions)) setSubscriptions(data.subscriptions);
     if (Array.isArray(data.invoices)) setInvoices(data.invoices);
     if (Array.isArray(data.cmmsRoles)) setCmmsRoles(data.cmmsRoles);

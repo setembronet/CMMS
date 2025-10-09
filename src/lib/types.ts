@@ -2,6 +2,7 @@
 
 
 
+
 export type CustomerLocation = {
   id: string;
   name: string;
@@ -26,8 +27,8 @@ export type CompanySegment = {
 };
 
 export type CompanyStatus = 'active' | 'inactive';
-export type OrderStatus = 'ABERTO' | 'FECHADO';
-export type OrderPriority = 'Baixa' | 'Média' | 'Alta';
+export type OrderStatus = 'ABERTO' | 'EM ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
+export type OrderPriority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 
 // Roles for SaaS management (internal users)
 export type SaaSUserRole = 'ADMIN' | 'FINANCEIRO' | 'SUPORTE' | 'VIEWER';
@@ -120,10 +121,13 @@ export type Asset = {
 export type WorkOrder = {
   id: string;
   title: string;
+  description?: string;
   clientId: string;
   assetId: string;
   status: OrderStatus;
   priority: OrderPriority;
+  creationDate: number;
+  responsibleId?: string;
 };
 
 export type Subscription = {
