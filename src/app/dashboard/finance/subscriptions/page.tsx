@@ -44,6 +44,8 @@ import type { Subscription, Plan, Addon, Company, SubscriptionStatus, BillingPer
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { useI18n } from '@/hooks/use-i18n';
 
 
 // --- Development Fix: Simulate being logged in as a Company Manager ---
@@ -64,6 +66,7 @@ const emptySubscription: Subscription = {
 };
 
 export default function SubscriptionsPage() {
+  const { t } = useI18n();
   // Filter subscriptions to show only those for the simulated logged-in company
   const [subscriptions, setSubscriptions] = React.useState<Subscription[]>(initialSubscriptions.filter(s => s.companyId === TEST_CLIENT_ID));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -108,7 +111,7 @@ export default function SubscriptionsPage() {
     if (formData.customerLocationId && !availableLocations.some(loc => loc.id === formData.customerLocationId)) {
         setFormData(prev => ({...prev, customerLocationId: ''}));
     }
-  }, [formData.companyId]);
+  }, [formData.companyId, availableLocations, formData.customerLocationId]);
 
   const openDialog = (subscription: Subscription | null = null) => {
     setEditingSubscription(subscription);
@@ -265,7 +268,7 @@ export default function SubscriptionsPage() {
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value)} required>
+                    <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as SubscriptionStatus)} required>
                         <SelectTrigger className="w-full md:w-1/2">
                             <SelectValue placeholder="Selecione o status" />
                         </SelectTrigger>
@@ -294,7 +297,7 @@ export default function SubscriptionsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="period">Período de Faturamento</Label>
-                    <Select name="period" value={formData.period} onValueChange={(value) => handleSelectChange('period', value)} required>
+                    <Select name="period" value={formData.period} onValueChange={(value) => handleSelectChange('period', value as BillingPeriod)} required>
                         <SelectTrigger>
                             <SelectValue placeholder="Selecione o período" />
                         </SelectTrigger>
@@ -374,3 +377,5 @@ export default function SubscriptionsPage() {
     </div>
   );
 }
+
+    
