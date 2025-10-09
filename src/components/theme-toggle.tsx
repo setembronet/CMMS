@@ -5,6 +5,7 @@ import { Moon, Sun } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 export function ThemeToggle() {
   const [isMounted, setIsMounted] = React.useState(false);
@@ -15,18 +16,18 @@ export function ThemeToggle() {
     // This effect runs only on the client, after hydration.
     setIsMounted(true);
     // We determine the initial theme from the document here, on the client.
-    const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-    setTheme(currentTheme);
+    const storedTheme = localStorage.getItem('theme') as 'dark' | 'light' | null;
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const initialTheme = storedTheme || systemTheme;
+    setTheme(initialTheme);
+    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
   // Until the component is mounted on the client, we render a placeholder to prevent hydration mismatch.

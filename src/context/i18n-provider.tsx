@@ -21,12 +21,13 @@ export const I18nContext = createContext<I18nContextType | undefined>(undefined)
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
   const [locale, setLocale] = useState<Locale>('pt');
   const [messages, setMessages] = useState<Translations>(translations.pt);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const browserLang = navigator.language.split('-')[0] as Locale;
     const initialLocale = ['pt', 'en', 'es'].includes(browserLang) ? browserLang : 'pt';
-    setLocale(initialLocale);
-    setMessages(translations[initialLocale]);
+    handleSetLocale(initialLocale);
   }, []);
 
   const handleSetLocale = (newLocale: Locale) => {
@@ -43,11 +44,17 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
       if (result && typeof result === 'object' && k in result) {
         result = result[k];
       } else {
-        return key; // Return the key itself if translation is not found
+        // Return key if not found, only after component is mounted to avoid mismatch
+        return isMounted ? key : '';
       }
     }
-    return typeof result === 'string' ? result : key;
-  }, [messages]);
+    return typeof result === 'string' ? result : (isMounted ? key : '');
+  }, [messages, isMounted]);
+
+  if (!isMounted) {
+    // Render nothing or a loading state on the server and initial client render
+    return null; 
+  }
 
   return (
     <I18nContext.Provider value={{ locale, setLocale: handleSetLocale, t }}>
