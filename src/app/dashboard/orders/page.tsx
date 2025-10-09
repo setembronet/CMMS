@@ -47,6 +47,7 @@ import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 
 const TEST_CLIENT_ID = 'client-01';
+const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
 
 const orderStatuses: OrderStatus[] = ['ABERTO', 'EM ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
 const orderPriorities: OrderPriority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
@@ -60,6 +61,7 @@ const emptyWorkOrder: WorkOrder = {
   status: 'ABERTO',
   priority: 'Média',
   creationDate: new Date().getTime(),
+  createdByUserId: CURRENT_USER_ID,
   internalObservation: '',
   squad: '',
 };
@@ -80,11 +82,11 @@ export default function WorkOrdersPage() {
   React.useEffect(() => {
     if (formData.responsibleId) {
         const selectedUser = clientUsers.find(u => u.id === formData.responsibleId);
-        if (selectedUser?.squad) {
+        if (selectedUser?.squad && !formData.squad) { // only autofill if squad is empty
             setFormData(prev => ({...prev, squad: selectedUser.squad}));
         }
     }
-  }, [formData.responsibleId, clientUsers]);
+  }, [formData.responsibleId, clientUsers, formData.squad]);
 
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
@@ -93,7 +95,12 @@ export default function WorkOrdersPage() {
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
-    setFormData(order || emptyWorkOrder);
+    if (order) {
+        setFormData(order);
+    } else {
+        // When creating new, ensure it has the current user ID
+        setFormData({...emptyWorkOrder, createdByUserId: CURRENT_USER_ID});
+    }
     setIsDialogOpen(true);
   };
 
@@ -149,6 +156,7 @@ export default function WorkOrdersPage() {
       clientId: TEST_CLIENT_ID,
       id: editingOrder?.id || `os-${Date.now()}`,
       creationDate: editingOrder?.creationDate || new Date().getTime(),
+      createdByUserId: editingOrder?.createdByUserId || CURRENT_USER_ID,
     };
 
     if (editingOrder) {
@@ -186,6 +194,11 @@ export default function WorkOrdersPage() {
       case 'Urgente': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
       default: return '';
     }
+  };
+  
+  const getCreatorName = (userId?: string) => {
+    if (!userId) return 'N/A';
+    return allUsers.find(u => u.id === userId)?.name || 'Desconhecido';
   };
 
   const isFormDisabled = formData.status === 'CONCLUIDO' || formData.status === 'CANCELADO';
@@ -256,7 +269,7 @@ export default function WorkOrdersPage() {
           <DialogHeader>
             <DialogTitle>{editingOrder ? 'Detalhes da Ordem de Serviço' : 'Nova Ordem de Serviço'}</DialogTitle>
             <DialogDescription>
-             {editingOrder ? `OS #${editingOrder.id} - Criada em: ${formatDateTime(editingOrder.creationDate)}` : 'Preencha os detalhes da ordem de serviço.'}
+             {editingOrder ? `OS #${editingOrder.id} - Criada por ${getCreatorName(editingOrder.createdByUserId)} em: ${formatDateTime(editingOrder.creationDate)}` : 'Preencha os detalhes da ordem de serviço.'}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">

@@ -123,6 +123,7 @@ export type WorkOrder = {
   status: OrderStatus;
   priority: OrderPriority;
   creationDate: number;
+  createdByUserId?: string;
   scheduledDate?: number;
   startDate?: number;
   endDate?: number;
