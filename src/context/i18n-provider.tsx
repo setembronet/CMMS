@@ -3,7 +3,6 @@ import React, { createContext, useState, useEffect, useCallback, ReactNode } fro
 import pt from '@/locales/pt.json';
 import en from '@/locales/en.json';
 import es from '@/locales/es.json';
-import { Toaster } from '@/components/ui/toaster';
 
 type Locale = 'pt' | 'en' | 'es';
 
@@ -21,7 +20,6 @@ export const I18nContext = createContext<I18nContextType | undefined>(undefined)
 
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
   const [locale, setLocale] = useState<Locale>('pt');
-  const [messages, setMessages] = useState<Translations>(translations.pt);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -34,13 +32,14 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
   const handleSetLocale = (newLocale: Locale) => {
     if (translations[newLocale]) {
       setLocale(newLocale);
-      setMessages(translations[newLocale]);
+      document.documentElement.lang = newLocale;
     }
   };
 
   const t = useCallback((key: string): string => {
+    const messages = translations[locale] || translations.pt;
     const keys = key.split('.');
-    let result = messages;
+    let result: any = messages;
     for (const k of keys) {
       if (result && typeof result === 'object' && k in result) {
         result = result[k];
@@ -49,12 +48,15 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     return typeof result === 'string' ? result : key;
-  }, [messages]);
+  }, [locale]);
+  
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <I18nContext.Provider value={{ locale, setLocale: handleSetLocale, t }}>
-      {isMounted && children}
-      <Toaster />
+      {children}
     </I18nContext.Provider>
   );
 };
