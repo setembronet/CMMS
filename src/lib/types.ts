@@ -39,7 +39,7 @@ export type CompanySegment = {
   id: string;
   name: string;
   customFields?: CustomField[];
-  applicableRoles?: string[]; // IDs of CMMSRole that apply
+  applicableRoles?: string[]; // IDs of CMMSRole
 };
 
 export type CompanyStatus = 'active' | 'inactive';
@@ -124,6 +124,7 @@ export type Asset = {
     lat: number;
     lng: number;
   };
+  customData?: { [key: string]: any };
 };
 
 export type WorkOrder = {

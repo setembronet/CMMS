@@ -16,9 +16,29 @@ export let cmmsRoles: CMMSRole[] = [
 ];
 
 export let segments: CompanySegment[] = [
-  { id: 'ELEVADOR', name: 'Elevador', customFields: [], applicableRoles: ['GESTOR', 'TECNICO', 'SINDICO', 'GERENTE_PREDIAL', 'ZELADOR'] },
-  { id: 'ESCADA_ROLANTE', name: 'Escada Rolante', customFields: [], applicableRoles: ['GESTOR', 'TECNICO'] },
-  { id: 'AR_CONDICIONADO', name: 'Ar Condicionado', customFields: [], applicableRoles: ['GESTOR', 'TECNICO', 'TECNICO_TERCERIZADO'] },
+  { 
+    id: 'ELEVADOR', 
+    name: 'Elevador', 
+    customFields: [
+        { id: 'field_1', name: 'numero_de_paradas', label: 'Número de Paradas', type: 'number'},
+        { id: 'field_2', name: 'data_ultima_vistoria', label: 'Data da Última Vistoria', type: 'date'},
+    ], 
+    applicableRoles: ['GESTOR', 'TECNICO', 'SINDICO', 'GERENTE_PREDIAL', 'ZELADOR'] 
+  },
+  { 
+    id: 'ESCADA_ROLANTE', 
+    name: 'Escada Rolante', 
+    customFields: [], 
+    applicableRoles: ['GESTOR', 'TECNICO'] 
+  },
+  { 
+    id: 'AR_CONDICIONADO', 
+    name: 'Ar Condicionado', 
+    customFields: [
+        { id: 'field_3', name: 'potencia_btus', label: 'Potência (BTUs)', type: 'number'},
+    ], 
+    applicableRoles: ['GESTOR', 'TECNICO', 'TECNICO_TERCERIZADO'] 
+  },
 ];
 
 export let plans: Plan[] = [
@@ -144,7 +164,7 @@ export let users: User[] = [
 ];
 
 export let assets: Asset[] = [
-  { id: 'asset-01', clientId: 'client-01', customerLocationId: 'loc-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', brand: 'Atlas Schindler', model: '5500 MRL', observation: 'Instalado em 2020. Contrato de manutenção platinum.', location: { lat: -23.5505, lng: -46.6333 } },
+  { id: 'asset-01', clientId: 'client-01', customerLocationId: 'loc-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', brand: 'Atlas Schindler', model: '5500 MRL', observation: 'Instalado em 2020. Contrato de manutenção platinum.', location: { lat: -23.5505, lng: -46.6333 }, customData: { numero_de_paradas: 15, data_ultima_vistoria: '2024-07-01' } },
   { id: 'asset-02', clientId: 'client-01', customerLocationId: 'loc-02', name: 'Elevador de Carga', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-C01', brand: 'Thyssenkrupp', model: 'Synergy', observation: 'Utilizado para abastecimento do shopping.', location: { lat: -23.5505, lng: -46.6333 } },
   { id: 'asset-03', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', brand: 'Thyssenkrupp', model: 'Velino', observation: 'Fluxo intenso em horários de pico.', location: { lat: -22.9068, lng: -43.1729 } },
 ];

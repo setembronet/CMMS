@@ -38,10 +38,11 @@ import {
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal, History } from 'lucide-react';
 import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations, workOrders } from '@/lib/data';
-import type { Asset, CompanySegment, CustomerLocation, WorkOrder } from '@/lib/types';
+import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 // --- Development Fix: Use a single client for easier debugging ---
 const TEST_CLIENT_ID = 'client-01';
@@ -58,6 +59,7 @@ const emptyAsset: Asset = {
   model: '',
   observation: '',
   location: { lat: 0, lng: 0 },
+  customData: {},
 };
 // ----------------------------------------------------------------
 
@@ -70,6 +72,7 @@ export default function AssetsPage() {
   const [formData, setFormData] = React.useState<Asset>(emptyAsset);
   const [availableSegments, setAvailableSegments] = React.useState<CompanySegment[]>([]);
   const [availableLocations, setAvailableLocations] = React.useState<CustomerLocation[]>([]);
+  const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
 
   React.useEffect(() => {
     if (testClient) {
@@ -87,6 +90,15 @@ export default function AssetsPage() {
       setAvailableLocations([]);
     }
   }, [testClient, formData.activeSegment]);
+
+  React.useEffect(() => {
+    if (formData.activeSegment) {
+      const segment = allSegments.find(s => s.id === formData.activeSegment);
+      setCustomFields(segment?.customFields || []);
+    } else {
+      setCustomFields([]);
+    }
+  }, [formData.activeSegment]);
 
 
   const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
@@ -117,7 +129,10 @@ export default function AssetsPage() {
 
   const openDialog = (asset: Asset | null = null) => {
     setEditingAsset(asset);
-    const assetData = asset ? { ...asset } : emptyAsset;
+    const assetData = asset ? JSON.parse(JSON.stringify(asset)) : JSON.parse(JSON.stringify(emptyAsset));
+    
+    // Ensure customData exists
+    assetData.customData = assetData.customData || {};
 
     if (!asset && availableSegments.length === 1) {
         assetData.activeSegment = availableSegments[0].id;
@@ -136,6 +151,22 @@ export default function AssetsPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleCustomFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    let processedValue: string | number = value;
+    if (type === 'number') {
+        processedValue = value === '' ? '' : Number(value);
+    }
+    
+    setFormData(prev => ({ 
+        ...prev, 
+        customData: {
+            ...prev.customData,
+            [name]: processedValue,
+        }
+    }));
   };
 
   const handleSelectChange = (name: keyof Asset, value: string) => {
@@ -287,6 +318,30 @@ export default function AssetsPage() {
                 <Label htmlFor="serialNumber">Número de Série</Label>
                 <Input id="serialNumber" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} required />
               </div>
+
+              {customFields.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">Dados Específicos do Segmento</h3>
+                    {customFields.map((field) => (
+                      <div key={field.id} className="space-y-2">
+                        <Label htmlFor={field.name}>{field.label}</Label>
+                        <Input 
+                          id={field.name}
+                          name={field.name}
+                          type={field.type === 'date' ? 'date' : field.type}
+                          value={formData.customData?.[field.name] || ''}
+                          onChange={handleCustomFieldChange}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <Separator />
+
               <div className="space-y-2">
                 <Label htmlFor="observation">Observação</Label>
                 <Textarea id="observation" name="observation" value={formData.observation || ''} onChange={handleInputChange} placeholder="Detalhes adicionais, histórico, etc."/>
