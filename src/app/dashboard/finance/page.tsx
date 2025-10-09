@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, TrendingUp, AlertCircle, PieChart, Users } from 'lucide-react';
-import { kpis, invoices, companies, customerLocations } from '@/lib/data';
+import { kpis, companies, customerLocations } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { 
     ResponsiveContainer,
@@ -49,7 +49,7 @@ const revenueByModuleData = [
 ];
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
-const overdueInvoices = kpis.overdueInvoices;
+const overdueInvoices = kpis.overdueInvoices || [];
 const overdueValue = overdueInvoices.reduce((sum, inv) => sum + inv.totalValue, 0);
 
 export default function FinancePage() {

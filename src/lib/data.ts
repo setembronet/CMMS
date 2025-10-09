@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, ContactType } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, ContactType } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -151,52 +151,12 @@ export let workOrders: WorkOrder[] = [
   { id: 'os-03', clientId: 'client-02', assetId: 'asset-03', title: 'Degrau quebrado', status: 'EM ANDAMENTO', priority: 'Urgente', creationDate: new Date(2024, 6, 22).getTime(), createdByUserId: 'user-06', startDate: new Date(2024, 6, 22, 14).getTime(), responsibleId: 'user-07', squad: 'Equipe Beta' },
 ];
 
-export let subscriptions: Subscription[] = [
-    { 
-        id: 'sub-01',
-        companyId: 'client-01', 
-        customerLocationId: 'loc-01',
-        planId: 'plan_pro',
-        status: 'ATIVA', 
-        period: 'MONTHLY', 
-        startDate: new Date(2023, 0, 15).getTime(), 
-        nextBillingDate: new Date(2024, 7, 15).getTime(), 
-        totalValue: 448, 
-        activeAddons: [{ id: 'ia-addon', name: 'Módulo IA', price: 199 }] 
-    },
-    { 
-        id: 'sub-02',
-        companyId: 'client-02',
-        customerLocationId: 'loc-03',
-        planId: 'plan_pro',
-        status: 'ATIVA', 
-        period: 'QUARTERLY', 
-        startDate: new Date(2023, 2, 1).getTime(), 
-        nextBillingDate: new Date(2024, 8, 1).getTime(), 
-        totalValue: 747, 
-        activeAddons: [] 
-    },
-];
-
-export let invoices: Invoice[] = [
-    { id: 'inv-01', companyId: 'client-01', customerLocationId: 'loc-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 5, 15).getTime(), dueDate: new Date(2024, 5, 22).getTime(), totalValue: 448, status: 'PAGO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
-    { id: 'inv-02', companyId: 'client-02', customerLocationId: 'loc-03', subscriptionId: 'sub-02', issueDate: new Date(2024, 5, 1).getTime(), dueDate: new Date(2024, 5, 8).getTime(), totalValue: 747, status: 'PENDENTE', billedItems: [{description: 'Plano Pró (Trimestral)', value: 747}] },
-    { id: 'inv-03', companyId: 'client-01', customerLocationId: 'loc-01', subscriptionId: 'sub-01', issueDate: new Date(2024, 4, 15).getTime(), dueDate: new Date(2024, 4, 22).getTime(), totalValue: 448, status: 'ATRASADO', billedItems: [{description: 'Plano Pró', value: 249}, {description: 'Módulo IA', value: 199}] },
-];
-
+const invoices: any[] = [];
+const subscriptions: any[] = [];
 
 export let kpis = {
     activeUsers: users.length,
-    mockMrr: subscriptions.reduce((total, sub) => {
-        if (sub.status === 'ATIVA') {
-            let monthlyValue = sub.totalValue;
-            if (sub.period === 'QUARTERLY') monthlyValue /= 3;
-            if (sub.period === 'SEMIANNUALLY') monthlyValue /= 6;
-            if (sub.period === 'ANNUALLY') monthlyValue /= 12;
-            return total + monthlyValue;
-        }
-        return total;
-    }, 0),
+    mockMrr: 0,
     activeClients: companies.filter(c => c.status === 'active').length,
     inactiveClients: companies.filter(c => c.status === 'inactive').length,
     overdueInvoices: invoices.filter(inv => inv.status === 'ATRASADO'),
@@ -237,14 +197,6 @@ export const setContactTypes = (newTypes: ContactType[]) => {
     cmmsRoles = newTypes;
 }
 
-export const setSubscriptions = (newSubscriptions: Subscription[]) => {
-  subscriptions = newSubscriptions;
-};
-
-export const setInvoices = (newInvoices: Invoice[]) => {
-    invoices = newInvoices;
-};
-
 export const setWorkOrders = (newWorkOrders: WorkOrder[]) => {
   workOrders = newWorkOrders;
 };
@@ -263,10 +215,8 @@ export const getBackupData = () => ({
   users,
   assets,
   workOrders,
-  subscriptions,
-  invoices,
-  kpis,
   cmmsRoles,
+  kpis,
 });
 
 // Function to restore all data
@@ -281,8 +231,6 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.users)) setUsers(data.users);
     if (Array.isArray(data.assets)) assets = data.assets;
     if (Array.isArray(data.workOrders)) setWorkOrders(data.workOrders);
-    if (Array.isArray(data.subscriptions)) setSubscriptions(data.subscriptions);
-    if (Array.isArray(data.invoices)) setInvoices(data.invoices);
     if (Array.isArray(data.cmmsRoles)) setCmmsRoles(data.cmmsRoles);
     if (data.kpis) setKpis(data.kpis);
   }

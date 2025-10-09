@@ -12,7 +12,6 @@
     "workOrders": "Ordens de Serviço",
     "finance": "Financeiro",
     "financeDashboard": "Dashboard",
-    "subscriptions": "Contratos",
     "plans": "Planos",
     "addons": "Add-ons",
     "settings": "Configurações",
@@ -24,8 +23,7 @@
     "logout": "Sair",
     "overview": "Visão Geral",
     "segments": "Segmentos",
-    "cmms": "CMMS"
+    "cmms": "CMMS",
+    "contracts": "Contratos"
   }
 }
-
-    

@@ -71,7 +71,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance') && !pathname.includes('subscriptions');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/finance/subscriptions'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -191,14 +191,6 @@ export function SidebarNav() {
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
-                              <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/subscriptions', true)}>
-                                    <Link href="/dashboard/finance/subscriptions">
-                                        <FileText />
-                                        <span>{t('sidebar.subscriptions')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
                              <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/assets', true)}>
                                     <Link href="/dashboard/assets">
@@ -272,5 +264,3 @@ export function SidebarNav() {
     </>
   );
 }
-
-    

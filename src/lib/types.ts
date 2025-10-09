@@ -48,11 +48,6 @@ export type CMMSRole = {
 
 export type UserRole = SaaSUserRole | CMMSRole['name'] | string;
 
-export type SubscriptionStatus = 'ATIVA' | 'CANCELADA' | 'PAUSADA';
-export type BillingPeriod = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'ANNUALLY';
-export type InvoiceStatus = 'PENDENTE' | 'PAGO' | 'CANCELADO' | 'ATRASADO';
-
-
 export type User = {
   id: string;
   name: string;
@@ -143,32 +138,6 @@ export type WorkOrder = {
   responsibleId?: string;
   internalObservation?: string;
   squad?: string;
-};
-
-export type Subscription = {
-  id: string;
-  companyId: string; // The SaaS Client (e.g. Atlas)
-  customerLocationId: string; // The End Customer (e.g. Condominio Central)
-  planId: string;
-  status: SubscriptionStatus;
-  period: BillingPeriod;
-  startDate: number; // timestamp
-  nextBillingDate: number; // timestamp
-  totalValue: number;
-  activeAddons: { id: string; name: string; price: number }[];
-};
-
-export type Invoice = {
-  id: string;
-  companyId: string;
-  customerLocationId: string;
-  subscriptionId: string;
-  issueDate: number; // timestamp
-  dueDate: number; // timestamp
-  totalValue: number;
-  status: InvoiceStatus;
-  billedItems: { description: string; value: number }[];
-  paymentLink?: string;
 };
 
 // This was moved to roles, but is kept for retro-compatibility in case some files still use it.

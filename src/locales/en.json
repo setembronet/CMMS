@@ -12,7 +12,6 @@
     "workOrders": "Work Orders",
     "finance": "Finance",
     "financeDashboard": "Dashboard",
-    "subscriptions": "Contracts",
     "plans": "Plans",
     "addons": "Add-ons",
     "settings": "Settings",
@@ -24,8 +23,7 @@
     "logout": "Logout",
     "overview": "Overview",
     "segments": "Segments",
-    "cmms": "CMMS"
+    "cmms": "CMMS",
+    "contracts": "Contracts"
   }
 }
-
-    
