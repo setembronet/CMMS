@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -20,6 +21,7 @@ import {
   ClipboardList,
   Wrench,
   MapPin,
+  Contact,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -52,6 +54,7 @@ export function SidebarNav() {
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
       { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
       { href: '/dashboard/settings/roles', label: t('sidebar.roles'), icon: Briefcase },
+      { href: '/dashboard/settings/contact-types', label: t('sidebar.contactTypes'), icon: Contact },
       { href: '/dashboard/settings/backup', label: t('sidebar.backupRestore'), icon: History },
   ];
 

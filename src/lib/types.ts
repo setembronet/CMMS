@@ -1,5 +1,19 @@
 
 
+export type ContactType = {
+  id: string;
+  name: string;
+};
+
+export type Contact = {
+  id: string;
+  name: string;
+  contactTypeId: string;
+  phone?: string;
+  email?: string;
+  observation?: string;
+};
+
 export type CustomerLocation = {
   id: string;
   name: string;
@@ -13,6 +27,7 @@ export type CustomerLocation = {
     state?: string;
     zipCode?: string;
   };
+  contacts?: Contact[];
 };
 
 
@@ -157,5 +172,3 @@ export type Invoice = {
   billedItems: { description: string; value: number }[];
   paymentLink?: string;
 };
-
-    

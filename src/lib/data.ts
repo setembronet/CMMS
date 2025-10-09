@@ -1,8 +1,16 @@
 
-import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation, OrderStatus, OrderPriority } from './types';
+
+import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation, OrderStatus, OrderPriority, ContactType, Contact } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
+
+export let contactTypes: ContactType[] = [
+  { id: 'SINDICO', name: 'Síndico(a)' },
+  { id: 'ZELADOR', name: 'Zelador(a)' },
+  { id: 'PORTEIRO', name: 'Porteiro(a)' },
+  { id: 'GERENTE_PREDIAL', name: 'Gerente Predial' },
+];
 
 export let cmmsRoles: CMMSRole[] = [
   { id: 'GESTOR', name: 'Gestor' },
@@ -119,18 +127,23 @@ export let customerLocations: CustomerLocation[] = [
     clientId: 'client-01',
     name: 'Condomínio Edifício Central',
     address: { street: 'Av. Paulista', number: '1000', city: 'São Paulo', state: 'SP', zipCode: '01310-100' },
+    contacts: [
+      { id: 'contact-01', name: 'Sr. Roberto', contactTypeId: 'SINDICO', phone: '11987654321', email: 'roberto.sindico@email.com', observation: 'Ligar apenas em emergências.' }
+    ]
   },
   {
     id: 'loc-02',
     clientId: 'client-01',
     name: 'Shopping Plaza',
      address: { street: 'Rua das Flores', number: 'S/N', city: 'São Paulo', state: 'SP', zipCode: '01001-000' },
+     contacts: []
   },
   {
     id: 'loc-03',
     clientId: 'client-02',
     name: 'Aeroporto Internacional',
     address: { city: 'Rio de Janeiro', state: 'RJ' },
+    contacts: []
   },
 ];
 
@@ -252,6 +265,10 @@ export const setCmmsRoles = (newRoles: CMMSRole[]) => {
   cmmsRoles = newRoles;
 };
 
+export const setContactTypes = (newContactTypes: ContactType[]) => {
+  contactTypes = newContactTypes;
+};
+
 export const setSubscriptions = (newSubscriptions: Subscription[]) => {
   subscriptions = newSubscriptions;
 };
@@ -282,6 +299,7 @@ export const getBackupData = () => ({
   invoices,
   kpis,
   cmmsRoles,
+  contactTypes,
 });
 
 // Function to restore all data
@@ -299,8 +317,7 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.subscriptions)) setSubscriptions(data.subscriptions);
     if (Array.isArray(data.invoices)) setInvoices(data.invoices);
     if (Array.isArray(data.cmmsRoles)) setCmmsRoles(data.cmmsRoles);
+    if (Array.isArray(data.contactTypes)) setContactTypes(data.contactTypes);
     if (data.kpis) setKpis(data.kpis);
   }
 };
-
-    
