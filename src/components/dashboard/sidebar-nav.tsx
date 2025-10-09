@@ -45,7 +45,6 @@ export function SidebarNav() {
 
   const financeLinks = [
       { href: '/dashboard/finance', label: t('sidebar.financeDashboard'), icon: LayoutGrid },
-      { href: '/dashboard/finance/subscriptions', label: t('sidebar.subscriptions'), icon: FileText },
       { href: '/dashboard/finance/plans', label: t('sidebar.plans'), icon: Package },
       { href: '/dashboard/finance/addons', label: t('sidebar.addons'), icon: Puzzle },
   ];
@@ -72,7 +71,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/clients'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/finance/subscriptions'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -189,6 +188,14 @@ export function SidebarNav() {
                                     <Link href="/dashboard/clients">
                                         <MapPin />
                                         <span>{t('sidebar.clients')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/subscriptions', true)}>
+                                    <Link href="/dashboard/finance/subscriptions">
+                                        <FileText />
+                                        <span>{t('sidebar.subscriptions')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>

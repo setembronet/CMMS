@@ -46,9 +46,13 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 
+// --- Development Fix: Simulate being logged in as a Company Manager ---
+const TEST_CLIENT_ID = 'client-01';
+// ----------------------------------------------------------------
+
 const emptySubscription: Subscription = {
   id: '',
-  companyId: '',
+  companyId: TEST_CLIENT_ID, // Default to the test client
   customerLocationId: '',
   planId: '',
   status: 'ATIVA',
@@ -60,7 +64,8 @@ const emptySubscription: Subscription = {
 };
 
 export default function SubscriptionsPage() {
-  const [subscriptions, setSubscriptions] = React.useState<Subscription[]>(initialSubscriptions);
+  // Filter subscriptions to show only those for the simulated logged-in company
+  const [subscriptions, setSubscriptions] = React.useState<Subscription[]>(initialSubscriptions.filter(s => s.companyId === TEST_CLIENT_ID));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingSubscription, setEditingSubscription] = React.useState<Subscription | null>(null);
   const [formData, setFormData] = React.useState<Subscription>(emptySubscription);
@@ -96,16 +101,14 @@ export default function SubscriptionsPage() {
   }, [formData.planId, formData.activeAddons, formData.period]);
 
   React.useEffect(() => {
-    if (formData.companyId) {
-      setAvailableLocations(allCustomerLocations.filter(loc => loc.clientId === formData.companyId));
-      // Reset customerLocationId if it's no longer valid for the selected company
-      if (!allCustomerLocations.some(loc => loc.clientId === formData.companyId && loc.id === formData.customerLocationId)) {
+    // We only need the locations for the simulated client
+    setAvailableLocations(allCustomerLocations.filter(loc => loc.clientId === TEST_CLIENT_ID));
+    
+    // Reset customerLocationId if it's no longer valid for the selected company
+    if (formData.customerLocationId && !availableLocations.some(loc => loc.id === formData.customerLocationId)) {
         setFormData(prev => ({...prev, customerLocationId: ''}));
-      }
-    } else {
-      setAvailableLocations([]);
     }
-  }, [formData.companyId, formData.customerLocationId]);
+  }, [formData.companyId]);
 
   const openDialog = (subscription: Subscription | null = null) => {
     setEditingSubscription(subscription);
@@ -153,6 +156,7 @@ export default function SubscriptionsPage() {
     const newSubscription: Subscription = {
       ...formData,
       id: editingSubscription?.id || `sub_${Date.now()}`,
+      companyId: TEST_CLIENT_ID, // Ensure it's always the test client
       totalValue: totalValue,
       nextBillingDate: add(new Date(formData.startDate), periodMap[formData.period]).getTime()
     };
@@ -181,10 +185,10 @@ export default function SubscriptionsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Gerenciamento de Assinaturas</h1>
+        <h1 className="text-3xl font-bold font-headline">Gerenciamento de Contratos</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Nova Assinatura
+          Novo Contrato
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
@@ -192,7 +196,6 @@ export default function SubscriptionsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Cliente Final</TableHead>
-              <TableHead>Empresa</TableHead>
               <TableHead>Plano</TableHead>
               <TableHead>Valor Total</TableHead>
               <TableHead>Próxima Cobrança</TableHead>
@@ -204,7 +207,6 @@ export default function SubscriptionsPage() {
             {subscriptions.map(sub => (
               <TableRow key={sub.id}>
                 <TableCell className="font-medium">{getLocationName(sub.customerLocationId)}</TableCell>
-                <TableCell>{getCompanyName(sub.companyId)}</TableCell>
                 <TableCell>{getPlanName(sub.planId)}</TableCell>
                 <TableCell>R$ {(sub.totalValue).toLocaleString('pt-BR')}</TableCell>
                 <TableCell>{format(new Date(sub.nextBillingDate), 'dd/MM/yyyy')}</TableCell>
@@ -235,9 +237,9 @@ export default function SubscriptionsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>{editingSubscription ? 'Editar Assinatura' : 'Nova Assinatura'}</DialogTitle>
+            <DialogTitle>{editingSubscription ? 'Editar Contrato' : 'Novo Contrato'}</DialogTitle>
             <DialogDescription>
-              {editingSubscription ? 'Atualize os detalhes da assinatura.' : 'Crie um novo contrato de assinatura para um cliente final.'}
+              {editingSubscription ? 'Atualize os detalhes do contrato.' : `Crie um novo contrato para um cliente final de ${getCompanyName(TEST_CLIENT_ID)}.`}
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto -mx-6 px-6" style={{ height: 'calc(80vh - 150px)' }}>
@@ -246,19 +248,12 @@ export default function SubscriptionsPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="companyId">Empresa (Cliente SaaS)</Label>
-                        <Select name="companyId" value={formData.companyId} onValueChange={(value) => handleSelectChange('companyId', value)} required>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione uma empresa" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <Label>Empresa (Cliente SaaS)</Label>
+                        <Input value={getCompanyName(TEST_CLIENT_ID)} disabled />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="customerLocationId">Cliente Final</Label>
-                        <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required disabled={!formData.companyId}>
+                        <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecione um cliente final" />
                             </SelectTrigger>
