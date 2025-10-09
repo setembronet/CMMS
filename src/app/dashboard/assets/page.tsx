@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -27,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -34,11 +36,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations } from '@/lib/data';
-import type { Asset, Company, CompanySegment, CustomerLocation } from '@/lib/types';
+import { PlusCircle, MoreHorizontal, History } from 'lucide-react';
+import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations, workOrders } from '@/lib/data';
+import type { Asset, CompanySegment, CustomerLocation, WorkOrder } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 // --- Development Fix: Use a single client for easier debugging ---
 const TEST_CLIENT_ID = 'client-01';
@@ -58,6 +61,8 @@ const emptyAsset: Asset = {
 };
 // ----------------------------------------------------------------
 
+type AssetStatus = 'Operacional' | 'Em Manutenção';
+
 export default function AssetsPage() {
   const [assets, setAssets] = React.useState<Asset[]>(initialAssets.filter(a => a.clientId === TEST_CLIENT_ID));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -71,7 +76,6 @@ export default function AssetsPage() {
       const companySegments = allSegments.filter(s => testClient.activeSegments.includes(s.id));
       setAvailableSegments(companySegments);
       
-      // Auto-select segment if there's only one
       if (companySegments.length === 1 && formData.activeSegment !== companySegments[0].id) {
           handleSelectChange('activeSegment', companySegments[0].id);
       }
@@ -88,11 +92,33 @@ export default function AssetsPage() {
   const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
   const getSegmentName = (id: string) => allSegments.find(s => s.id === id)?.name || 'N/A';
 
+  const getAssetStatus = (assetId: string): AssetStatus => {
+    const hasOpenWorkOrder = workOrders.some(
+        wo => wo.assetId === assetId && (wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO')
+    );
+    return hasOpenWorkOrder ? 'Em Manutenção' : 'Operacional';
+  };
+  
+  const getWorkOrderCount = (assetId: string) => {
+      return workOrders.filter(wo => wo.assetId === assetId).length;
+  }
+  
+  const getStatusBadgeVariant = (status: AssetStatus) => {
+    switch (status) {
+      case 'Operacional':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'Em Manutenção':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default:
+        return 'secondary';
+    }
+  };
+
+
   const openDialog = (asset: Asset | null = null) => {
     setEditingAsset(asset);
     const assetData = asset ? { ...asset } : emptyAsset;
 
-    // If creating new and there's only one segment, pre-fill it.
     if (!asset && availableSegments.length === 1) {
         assetData.activeSegment = availableSegments[0].id;
     }
@@ -121,7 +147,7 @@ export default function AssetsPage() {
     
     const newAsset: Asset = {
       ...formData,
-      clientId: TEST_CLIENT_ID, // Ensure it's always the test client
+      clientId: TEST_CLIENT_ID,
       id: editingAsset?.id || `asset-0${assets.length + 1}`,
     };
 
@@ -148,20 +174,27 @@ export default function AssetsPage() {
             <TableRow>
               <TableHead>Nome do Ativo</TableHead>
               <TableHead>Cliente Final</TableHead>
-              <TableHead>Marca</TableHead>
-              <TableHead>Modelo</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Nº de Série</TableHead>
+              <TableHead>Histórico de OS</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {assets.map(asset => (
+            {assets.map(asset => {
+              const status = getAssetStatus(asset.id);
+              const osCount = getWorkOrderCount(asset.id);
+              return (
               <TableRow key={asset.id}>
                 <TableCell className="font-medium">{asset.name}</TableCell>
                 <TableCell>{getLocationName(asset.customerLocationId)}</TableCell>
-                <TableCell>{asset.brand || 'N/A'}</TableCell>
-                <TableCell>{asset.model || 'N/A'}</TableCell>
+                <TableCell>
+                    <Badge variant="outline" className={cn('border', getStatusBadgeVariant(status))}>
+                        {status}
+                    </Badge>
+                </TableCell>
                 <TableCell>{asset.serialNumber}</TableCell>
+                <TableCell>{osCount > 0 ? `${osCount} OS` : 'Nenhuma'}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -174,11 +207,18 @@ export default function AssetsPage() {
                       <DropdownMenuItem onClick={() => openDialog(asset)}>
                         Editar
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        {/* This link is a placeholder for future functionality */}
+                        <Link href="/dashboard/orders"> 
+                            <History className="mr-2 h-4 w-4" />
+                            Ver Histórico de OS
+                        </Link>
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
           </TableBody>
         </Table>
       </div>
