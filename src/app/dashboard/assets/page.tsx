@@ -71,22 +71,19 @@ export default function AssetsPage() {
       const companySegments = allSegments.filter(s => testClient.activeSegments.includes(s.id));
       setAvailableSegments(companySegments);
       
-      if (companySegments.length === 1) {
-        handleSelectChange('activeSegment', companySegments[0].id);
-      } else {
-        if (!companySegments.some(s => s.id === formData.activeSegment)) {
-          handleSelectChange('activeSegment', '');
-        }
+      // Auto-select segment if there's only one
+      if (companySegments.length === 1 && formData.activeSegment !== companySegments[0].id) {
+          handleSelectChange('activeSegment', companySegments[0].id);
       }
-
+      
       const clientLocations = allLocations.filter(l => l.clientId === TEST_CLIENT_ID);
       setAvailableLocations(clientLocations);
     } else {
       setAvailableSegments([]);
       setAvailableLocations([]);
-      handleSelectChange('activeSegment', '');
     }
-  }, [formData.activeSegment, testClient]);
+  }, [testClient, formData.activeSegment]);
+
 
   const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
   const getSegmentName = (id: string) => allSegments.find(s => s.id === id)?.name || 'N/A';
@@ -94,6 +91,12 @@ export default function AssetsPage() {
   const openDialog = (asset: Asset | null = null) => {
     setEditingAsset(asset);
     const assetData = asset ? { ...asset } : emptyAsset;
+
+    // If creating new and there's only one segment, pre-fill it.
+    if (!asset && availableSegments.length === 1) {
+        assetData.activeSegment = availableSegments[0].id;
+    }
+    
     setFormData(assetData);
     setIsDialogOpen(true);
   };

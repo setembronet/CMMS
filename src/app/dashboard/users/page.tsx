@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -92,21 +93,20 @@ export default function CMMSUsersPage() {
         // Filter the main roles list
         const filteredRoles = allRoles.filter(role => applicableRoleIds.has(role.id));
         setAvailableRoles(filteredRoles);
-
-        // Check if the current role is still valid, if not, reset it.
-        if (formData.cmmsRole && !filteredRoles.some(r => r.id === formData.cmmsRole)) {
-            handleSelectChange('cmmsRole', '');
-        }
       } else {
-        // Company has no active segments, so no roles are applicable
         setAvailableRoles([]);
-        handleSelectChange('cmmsRole', '');
       }
     } else {
-      // No company selected, show all roles as a default (or handle as needed)
       setAvailableRoles([]);
     }
-  }, [formData.cmmsRole]);
+  }, []);
+
+  React.useEffect(() => {
+    // When the dialog opens for a new user, check if their role needs to be reset
+    if (isDialogOpen && !editingUser && formData.cmmsRole && !availableRoles.some(r => r.id === formData.cmmsRole)) {
+        handleSelectChange('cmmsRole', '');
+    }
+  }, [isDialogOpen, editingUser, formData.cmmsRole, availableRoles]);
 
   const calculatePasswordStrength = (password: string): PasswordStrength => {
     let score = 0;
@@ -133,7 +133,6 @@ export default function CMMSUsersPage() {
     setEditingUser(null);
     setIsDialogOpen(false);
     setFormData(emptyUser);
-    setAvailableRoles(allRoles);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

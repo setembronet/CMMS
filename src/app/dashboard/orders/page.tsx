@@ -76,6 +76,7 @@ export default function WorkOrdersPage() {
 
   React.useEffect(() => {
     setClientAssets(allAssets.filter(a => a.clientId === TEST_CLIENT_ID));
+    // Only show users that belong to the client and are technicians
     setClientUsers(allUsers.filter(u => u.clientId === TEST_CLIENT_ID && u.cmmsRole === 'TECNICO'));
   }, []);
 
@@ -98,8 +99,8 @@ export default function WorkOrdersPage() {
     if (order) {
         setFormData(order);
     } else {
-        // When creating new, ensure it has the current user ID
-        setFormData({...emptyWorkOrder, createdByUserId: CURRENT_USER_ID});
+        // When creating new, ensure it has the current user ID and client ID
+        setFormData({...emptyWorkOrder, createdByUserId: CURRENT_USER_ID, clientId: TEST_CLIENT_ID});
     }
     setIsDialogOpen(true);
   };
