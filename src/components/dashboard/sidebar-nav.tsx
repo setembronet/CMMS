@@ -17,6 +17,7 @@ import {
   History,
   Briefcase,
   Home,
+  ClipboardList,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -125,6 +126,45 @@ export function SidebarNav() {
                 </SidebarMenuItem>
            </Collapsible>
           
+           <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive('/dashboard/users')}
+                tooltip={{ children: t('sidebar.users') }}
+              >
+                <Link href="/dashboard/users">
+                  <Users />
+                  <span>{t('sidebar.users')}</span>
+                </Link>
+              </SidebarMenuButton>
+           </SidebarMenuItem>
+
+           <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive('/dashboard/assets')}
+                tooltip={{ children: t('sidebar.assets') }}
+              >
+                <Link href="/dashboard/assets">
+                  <Package />
+                  <span>{t('sidebar.assets')}</span>
+                </Link>
+              </SidebarMenuButton>
+           </SidebarMenuItem>
+
+           <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive('/dashboard/orders')}
+                tooltip={{ children: t('sidebar.workOrders') }}
+              >
+                <Link href="/dashboard/orders">
+                  <ClipboardList />
+                  <span>{t('sidebar.workOrders')}</span>
+                </Link>
+              </SidebarMenuButton>
+           </SidebarMenuItem>
+           
            <Collapsible asChild defaultOpen={isFinanceActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
@@ -193,7 +233,7 @@ export function SidebarNav() {
            </Collapsible>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
-                    <Link href="/saas-login">
+                    <Link href="/">
                         <LogOut />
                         <span>{t('sidebar.logout')}</span>
                     </Link>
