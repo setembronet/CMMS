@@ -4,11 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Building2,
-  ClipboardList,
-  Home,
   Settings,
   Users,
-  Wrench,
   TrendingUp,
   ChevronDown,
   LayoutGrid,
@@ -19,6 +16,7 @@ import {
   FileText,
   History,
   Briefcase,
+  Home,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -40,14 +38,6 @@ export function SidebarNav() {
   const pathname = usePathname();
   const { t } = useI18n();
 
-  const mainLinks = [
-    { href: '/dashboard', label: t('sidebar.dashboard'), icon: Home },
-    { href: '/dashboard/companies', label: t('sidebar.companies'), icon: Building2 },
-    { href: '/dashboard/users', label: t('sidebar.users'), icon: Users },
-    { href: '/dashboard/assets', label: t('sidebar.assets'), icon: Wrench },
-    { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ClipboardList },
-  ];
-
   const financeLinks = [
       { href: '/dashboard/finance', label: t('sidebar.financeDashboard'), icon: LayoutGrid },
       { href: '/dashboard/finance/subscriptions', label: t('sidebar.subscriptions'), icon: FileText },
@@ -64,20 +54,18 @@ export function SidebarNav() {
 
 
   const isActive = (href: string, isSubItem: boolean = false) => {
-    // Exact match for sub-items or dashboard, startsWith for others
-    if (isSubItem || href === '/dashboard') {
+    if (href === '/dashboard') {
         return pathname === href;
     }
-    // Make company links active only on their specific page
-    if (href.startsWith('/dashboard/companies')) {
-        return pathname === href || pathname.startsWith('/dashboard/companies/segments');
+     if (isSubItem) {
+        return pathname === href;
     }
     return pathname.startsWith(href);
   };
 
-  const isCompaniesActive = mainLinks.some(link => link.href.startsWith('/dashboard/companies') && isActive(link.href));
-  const isFinanceActive = financeLinks.some(link => isActive(link.href, true));
-  const isSettingsActive = settingsLinks.some(link => isActive(link.href, true));
+  const isCompaniesActive = pathname.startsWith('/dashboard/companies');
+  const isFinanceActive = pathname.startsWith('/dashboard/finance');
+  const isSettingsActive = pathname.startsWith('/dashboard/settings') || pathname === '/dashboard/cmms-users';
 
   return (
     <>
@@ -136,21 +124,6 @@ export function SidebarNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
-          
-          {mainLinks.filter(link => !link.href.includes('/dashboard/companies') && link.href !== '/dashboard').map((link) => (
-            <SidebarMenuItem key={link.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive(link.href)}
-                tooltip={{ children: link.label }}
-              >
-                <Link href={link.href}>
-                  <link.icon />
-                  <span>{link.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
           
            <Collapsible asChild defaultOpen={isFinanceActive}>
                 <SidebarMenuItem>
@@ -220,7 +193,7 @@ export function SidebarNav() {
            </Collapsible>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
-                    <Link href="/login">
+                    <Link href="/saas-login">
                         <LogOut />
                         <span>{t('sidebar.logout')}</span>
                     </Link>
