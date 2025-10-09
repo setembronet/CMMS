@@ -24,6 +24,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -36,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -107,8 +109,37 @@ export default function WorkOrdersPage() {
   };
 
   const handleSelectChange = (name: keyof WorkOrder, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const oldStatus = formData.status;
+    const newStatus = name === 'status' ? value as OrderStatus : oldStatus;
+    
+    setFormData(prev => {
+        let newStartDate = prev.startDate;
+        let newEndDate = prev.endDate;
+
+        if (name === 'status') {
+            if (newStatus === 'EM ANDAMENTO' && oldStatus !== 'EM ANDAMENTO') {
+                newStartDate = prev.startDate || new Date().getTime();
+            }
+            if (newStatus === 'CONCLUIDO' && oldStatus !== 'CONCLUIDO') {
+                newEndDate = prev.endDate || new Date().getTime();
+            }
+             if (newStatus === 'ABERTO') {
+                newEndDate = undefined;
+            }
+        }
+        
+        return { 
+            ...prev, 
+            [name]: value,
+            startDate: newStartDate,
+            endDate: newEndDate,
+        };
+    });
   };
+
+  const handleDateChange = (name: keyof WorkOrder, date: Date | undefined) => {
+    setFormData(prev => ({...prev, [name]: date?.getTime()}));
+  }
 
   const handleSaveOrder = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -130,7 +161,11 @@ export default function WorkOrdersPage() {
 
   const handleReopenOrder = () => {
     if (!formData) return;
-    setFormData(prev => ({...prev, status: 'ABERTO'}));
+    setFormData(prev => ({
+        ...prev, 
+        status: 'ABERTO',
+        endDate: undefined, // Clear end date on reopen
+    }));
   };
   
   const getStatusBadgeVariant = (status: OrderStatus) => {
@@ -154,6 +189,9 @@ export default function WorkOrdersPage() {
   };
 
   const isFormDisabled = formData.status === 'CONCLUIDO' || formData.status === 'CANCELADO';
+  
+  const formatDate = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy') : 'N/A';
+  const formatDateTime = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy HH:mm') : 'N/A';
 
   return (
     <div className="flex flex-col gap-8">
@@ -170,8 +208,8 @@ export default function WorkOrdersPage() {
             <TableRow>
               <TableHead>Título da OS</TableHead>
               <TableHead>Ativo</TableHead>
+              <TableHead>Agendamento</TableHead>
               <TableHead>Técnico</TableHead>
-              <TableHead>Equipe</TableHead>
               <TableHead>Prioridade</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -182,8 +220,8 @@ export default function WorkOrdersPage() {
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.title}</TableCell>
                 <TableCell>{getAssetName(order.assetId)}</TableCell>
+                <TableCell>{formatDate(order.scheduledDate)}</TableCell>
                 <TableCell>{getTechnicianName(order.responsibleId)}</TableCell>
-                <TableCell>{order.squad || 'N/A'}</TableCell>
                 <TableCell>
                     <Badge variant="outline" className={cn('border', getPriorityBadgeClass(order.priority))}>
                         {order.priority}
@@ -214,11 +252,11 @@ export default function WorkOrdersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingOrder ? 'Detalhes da Ordem de Serviço' : 'Nova Ordem de Serviço'}</DialogTitle>
             <DialogDescription>
-             {editingOrder ? `OS #${editingOrder.id} - ${format(new Date(editingOrder.creationDate), 'dd/MM/yyyy')}` : 'Preencha os detalhes da ordem de serviço.'}
+             {editingOrder ? `OS #${editingOrder.id} - Criada em: ${formatDateTime(editingOrder.creationDate)}` : 'Preencha os detalhes da ordem de serviço.'}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
@@ -247,7 +285,7 @@ export default function WorkOrdersPage() {
                   <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder="Detalhe o problema ou o serviço a ser realizado."/>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="status">Status</Label>
                       <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
@@ -266,21 +304,34 @@ export default function WorkOrdersPage() {
                           </SelectContent>
                       </Select>
                   </div>
+                  <div className="space-y-2">
+                     <Label htmlFor="scheduledDate">Data de Agendamento</Label>
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.scheduledDate && "text-muted-foreground")}>
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {formData.scheduledDate ? format(new Date(formData.scheduledDate), "PPP") : <span>Opcional</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={formData.scheduledDate ? new Date(formData.scheduledDate) : undefined} onSelect={(date) => handleDateChange('scheduledDate', date)} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
                 
                 <Separator />
 
-                <h3 className="text-base font-medium">Atribuição da Equipe</h3>
-
+                <h3 className="text-base font-medium">Atribuição e Execução</h3>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="responsibleId">Técnico Responsável</Label>
                         <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
                             <SelectTrigger>
-                            <SelectValue placeholder="Atribuir a um técnico" />
+                            <SelectValue placeholder="Atribuir a um técnico (opcional)" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Não atribuído</SelectItem>
                                 {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -290,6 +341,18 @@ export default function WorkOrdersPage() {
                         <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Ex: Equipe Alpha"/>
                     </div>
                 </div>
+                
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4">
+                    <div className="space-y-1">
+                        <Label className="text-sm">Início da Execução</Label>
+                        <p className="text-sm text-muted-foreground">{formatDateTime(formData.startDate)}</p>
+                    </div>
+                     <div className="space-y-1">
+                        <Label className="text-sm">Fim da Execução</Label>
+                        <p className="text-sm text-muted-foreground">{formatDateTime(formData.endDate)}</p>
+                    </div>
+                </div>
+
 
                 <Separator />
 

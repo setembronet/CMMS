@@ -123,6 +123,9 @@ export type WorkOrder = {
   status: OrderStatus;
   priority: OrderPriority;
   creationDate: number;
+  scheduledDate?: number;
+  startDate?: number;
+  endDate?: number;
   responsibleId?: string;
   internalObservation?: string;
   squad?: string;
