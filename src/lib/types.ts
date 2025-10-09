@@ -3,7 +3,7 @@
 export type Contact = {
   id: string;
   name: string;
-  contactTypeId: string; // This will now refer to a CMMSRole ID
+  cmmsRoleId: string; // Renomeado de contactTypeId
   phone?: string;
   email?: string;
   observation?: string;
@@ -133,11 +133,4 @@ export type WorkOrder = {
   responsibleId?: string;
   internalObservation?: string;
   squad?: string;
-};
-
-// This was moved to roles, but is kept for retro-compatibility in case some files still use it.
-// Will be removed in a future iteration.
-export type ContactType = {
-  id: string;
-  name: string;
 };

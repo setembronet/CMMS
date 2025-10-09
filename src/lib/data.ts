@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, ContactType } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -14,9 +14,6 @@ export let cmmsRoles: CMMSRole[] = [
   { id: 'PORTEIRO', name: 'Porteiro(a)' },
   { id: 'GERENTE_PREDIAL', name: 'Gerente Predial' },
 ];
-
-export let contactTypes: ContactType[] = cmmsRoles;
-
 
 export let segments: CompanySegment[] = [
   { id: 'ELEVADOR', name: 'Elevador', customFields: [], applicableRoles: ['GESTOR', 'TECNICO', 'SINDICO', 'GERENTE_PREDIAL', 'ZELADOR'] },
@@ -115,7 +112,7 @@ export let customerLocations: CustomerLocation[] = [
     name: 'Condomínio Edifício Central',
     address: { street: 'Av. Paulista', number: '1000', city: 'São Paulo', state: 'SP', zipCode: '01310-100' },
     contacts: [
-      { id: 'contact-01', name: 'Sr. Roberto', contactTypeId: 'SINDICO', phone: '11987654321', email: 'roberto.sindico@email.com', observation: 'Ligar apenas em emergências.' }
+      { id: 'contact-01', name: 'Sr. Roberto', cmmsRoleId: 'SINDICO', phone: '11987654321', email: 'roberto.sindico@email.com', observation: 'Ligar apenas em emergências.' }
     ]
   },
   {
@@ -196,13 +193,7 @@ export const setSegments = (newSegments: CompanySegment[]) => {
 
 export const setCmmsRoles = (newRoles: CMMSRole[]) => {
   cmmsRoles = newRoles;
-  contactTypes = newRoles;
 };
-
-export const setContactTypes = (newTypes: ContactType[]) => {
-    // This now updates the cmmsRoles
-    setCmmsRoles(newTypes);
-}
 
 export const setWorkOrders = (newWorkOrders: WorkOrder[]) => {
   workOrders = newWorkOrders;

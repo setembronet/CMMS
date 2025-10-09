@@ -69,7 +69,7 @@ export function SidebarNav() {
 
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance') && !pathname.includes('subscriptions');
-  const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users'].some(p => pathname.startsWith(p));
+  const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
   const isCmmsActive = ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users'].some(p => pathname.startsWith(p));
 
   return (

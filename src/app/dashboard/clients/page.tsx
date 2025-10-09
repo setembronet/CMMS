@@ -61,7 +61,7 @@ const emptyLocation: CustomerLocation = {
 const emptyContact: Contact = {
   id: '',
   name: '',
-  contactTypeId: '',
+  cmmsRoleId: '',
   email: '',
   phone: '',
   observation: ''
@@ -141,7 +141,7 @@ export default function ClientsPage() {
 
   const handleContactSelectChange = (index: number, value: string) => {
     const newContacts = [...(formData.contacts || [])];
-    newContacts[index].contactTypeId = value;
+    newContacts[index].cmmsRoleId = value;
     setFormData(prev => ({ ...prev, contacts: newContacts }));
   };
 
@@ -407,8 +407,8 @@ export default function ClientsPage() {
                               <Input id={`contact-name-${index}`} name="name" value={contact.name} onChange={e => handleContactChange(index, e)} required/>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor={`contact-type-${index}`}>Função</Label>
-                               <Select name="contactTypeId" value={contact.contactTypeId} onValueChange={(value) => handleContactSelectChange(index, value)} required>
+                              <Label htmlFor={`contact-role-${index}`}>Função</Label>
+                               <Select name="cmmsRoleId" value={contact.cmmsRoleId} onValueChange={(value) => handleContactSelectChange(index, value)} required>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione uma função" />
                                 </SelectTrigger>
