@@ -1,4 +1,5 @@
 
+
 export type CustomerLocation = {
   id: string;
   name: string;
@@ -156,3 +157,5 @@ export type Invoice = {
   billedItems: { description: string; value: number }[];
   paymentLink?: string;
 };
+
+    
