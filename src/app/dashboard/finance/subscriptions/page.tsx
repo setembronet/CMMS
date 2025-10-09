@@ -94,7 +94,7 @@ export default function SubscriptionsPage() {
 
   const openDialog = (subscription: Subscription | null = null) => {
     setEditingSubscription(subscription);
-    setFormData(subscription || emptySubscription);
+    setFormData(subscription ? JSON.parse(JSON.stringify(subscription)) : emptySubscription);
     setIsDialogOpen(true);
   };
 
@@ -322,7 +322,7 @@ export default function SubscriptionsPage() {
                 <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
                     <h3 className="text-lg font-medium">Resumo</h3>
                     <div className="flex justify-between">
-                        <span>Plano Base ({getPlan(formData.planId)?.name})</span>
+                        <span>Plano Base ({getPlan(formData.planId)?.name || ''})</span>
                         <span>R$ {getPlan(formData.planId)?.price.toLocaleString('pt-BR') || '0,00'}</span>
                     </div>
                     {formData.activeAddons.map(addon => (

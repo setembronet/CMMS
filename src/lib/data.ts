@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation, OrderStatus, OrderPriority, Contact } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, ContactType } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -14,6 +14,10 @@ export let cmmsRoles: CMMSRole[] = [
   { id: 'PORTEIRO', name: 'Porteiro(a)' },
   { id: 'GERENTE_PREDIAL', name: 'Gerente Predial' },
 ];
+
+// This is a placeholder now, the real data is cmmsRoles
+export let contactTypes: ContactType[] = cmmsRoles;
+
 
 export let segments: CompanySegment[] = [
   { id: 'ELEVADOR', name: 'Elevador', customFields: [], applicableRoles: ['GESTOR', 'TECNICO', 'SINDICO', 'GERENTE_PREDIAL', 'ZELADOR'] },
@@ -260,6 +264,12 @@ export const setSegments = (newSegments: CompanySegment[]) => {
 export const setCmmsRoles = (newRoles: CMMSRole[]) => {
   cmmsRoles = newRoles;
 };
+
+// This is deprecated, but kept for retro-compatibility.
+export const setContactTypes = (newTypes: ContactType[]) => {
+    // This now updates the cmmsRoles
+    cmmsRoles = newTypes;
+}
 
 export const setSubscriptions = (newSubscriptions: Subscription[]) => {
   subscriptions = newSubscriptions;

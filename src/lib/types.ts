@@ -167,3 +167,10 @@ export type Invoice = {
   billedItems: { description: string; value: number }[];
   paymentLink?: string;
 };
+
+// This was moved to roles, but is kept for retro-compatibility in case some files still use it.
+// Will be removed in a future iteration.
+export type ContactType = {
+  id: string;
+  name: string;
+};

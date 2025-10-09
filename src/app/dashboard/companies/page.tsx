@@ -77,7 +77,7 @@ export default function CompaniesPage() {
 
   const openDialog = (company: Company | null = null) => {
     setEditingCompany(company);
-    setFormData(company || emptyCompany);
+    setFormData(company ? JSON.parse(JSON.stringify(company)) : emptyCompany);
     setIsDialogOpen(true);
   };
 
@@ -194,14 +194,25 @@ export default function CompaniesPage() {
 
   const renderAssetUsage = (company: Company) => {
     const plan = getPlanById(company.planId);
-    if (!plan) return null;
+    if (!plan || plan.assetLimit === 0) return null;
+    
+    // Handle unlimited plan
+    if (plan.assetLimit === -1) {
+        return (
+            <div className="w-24">
+                <div className="text-sm">Ilimitado</div>
+                <div className="text-xs text-muted-foreground">{company.currentAssets} / ∞</div>
+            </div>
+        );
+    }
+
     const usage = (company.currentAssets / plan.assetLimit) * 100;
     
     return (
         <div className="w-24">
             <Progress value={usage > 100 ? 100 : usage} className="h-2" />
             <div className="text-xs text-muted-foreground mt-1">
-                {company.currentAssets} / {plan.assetLimit === -1 ? '∞' : plan.assetLimit}
+                {company.currentAssets} / {plan.assetLimit}
             </div>
         </div>
     );
@@ -309,31 +320,31 @@ export default function CompaniesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2 md:col-span-1">
                         <Label htmlFor="zipCode">CEP</Label>
-                        <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode} onChange={handleInputChange} onBlur={handleCepBlur} />
+                        <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode || ''} onChange={handleInputChange} onBlur={handleCepBlur} />
                     </div>
                     <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="street">Rua</Label>
-                        <Input id="street" name="address.street" value={formData.address?.street} onChange={handleInputChange} />
+                        <Input id="street" name="address.street" value={formData.address?.street || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="number">Número</Label>
-                        <Input id="number" name="address.number" value={formData.address?.number} onChange={handleInputChange} />
+                        <Input id="number" name="address.number" value={formData.address?.number || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="complement">Complemento</Label>
-                        <Input id="complement" name="address.complement" value={formData.address?.complement} onChange={handleInputChange} />
+                        <Input id="complement" name="address.complement" value={formData.address?.complement || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="neighborhood">Bairro</Label>
-                        <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood} onChange={handleInputChange} />
+                        <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="city">Cidade</Label>
-                        <Input id="city" name="address.city" value={formData.address?.city} onChange={handleInputChange} />
+                        <Input id="city" name="address.city" value={formData.address?.city || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="state">Estado</Label>
-                        <Input id="state" name="address.state" value={formData.address?.state} onChange={handleInputChange} />
+                        <Input id="state" name="address.state" value={formData.address?.state || ''} onChange={handleInputChange} />
                     </div>
                 </div>
                 
