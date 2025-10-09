@@ -35,8 +35,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { assets as initialAssets, companies, segments as allSegments } from '@/lib/data';
-import type { Asset, Company, CompanySegment } from '@/lib/types';
+import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations } from '@/lib/data';
+import type { Asset, Company, CompanySegment, CustomerLocation } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // --- Development Fix: Use a single client for easier debugging ---
@@ -47,6 +47,7 @@ const emptyAsset: Asset = {
   id: '',
   name: '',
   clientId: TEST_CLIENT_ID, // Always default to the test client
+  customerLocationId: '',
   activeSegment: '',
   serialNumber: '',
   location: { lat: 0, lng: 0 },
@@ -59,6 +60,7 @@ export default function AssetsPage() {
   const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null);
   const [formData, setFormData] = React.useState<Asset>(emptyAsset);
   const [availableSegments, setAvailableSegments] = React.useState<CompanySegment[]>([]);
+  const [availableLocations, setAvailableLocations] = React.useState<CustomerLocation[]>([]);
 
   React.useEffect(() => {
     if (testClient) {
@@ -72,13 +74,17 @@ export default function AssetsPage() {
           handleSelectChange('activeSegment', '');
         }
       }
+
+      const clientLocations = allLocations.filter(l => l.clientId === TEST_CLIENT_ID);
+      setAvailableLocations(clientLocations);
     } else {
       setAvailableSegments([]);
+      setAvailableLocations([]);
       handleSelectChange('activeSegment', '');
     }
-  }, [formData.activeSegment]); // Simplified dependency
+  }, [formData.activeSegment, testClient]);
 
-  const getCompanyName = (id: string) => companies.find(c => c.id === id)?.name || 'N/A';
+  const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
   const getSegmentName = (id: string) => allSegments.find(s => s.id === id)?.name || 'N/A';
 
   const openDialog = (asset: Asset | null = null) => {
@@ -134,7 +140,7 @@ export default function AssetsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome do Ativo</TableHead>
-              <TableHead>Cliente</TableHead>
+              <TableHead>Local do Cliente</TableHead>
               <TableHead>Segmento</TableHead>
               <TableHead>Nº de Série</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -144,7 +150,7 @@ export default function AssetsPage() {
             {assets.map(asset => (
               <TableRow key={asset.id}>
                 <TableCell className="font-medium">{asset.name}</TableCell>
-                <TableCell>{getCompanyName(asset.clientId)}</TableCell>
+                <TableCell>{getLocationName(asset.customerLocationId)}</TableCell>
                 <TableCell>{getSegmentName(asset.activeSegment)}</TableCell>
                 <TableCell>{asset.serialNumber}</TableCell>
                 <TableCell className="text-right">
@@ -178,9 +184,17 @@ export default function AssetsPage() {
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
             <form onSubmit={handleSaveAsset} id="asset-form" className="space-y-4 py-4 px-1">
+              
               <div className="space-y-2">
-                <Label htmlFor="clientId">Cliente</Label>
-                <Input id="clientId" name="clientId" value={testClient?.name || ''} disabled />
+                <Label htmlFor="customerLocationId">Local do Cliente</Label>
+                <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o local" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
 
               {availableSegments.length > 0 && (
@@ -218,7 +232,7 @@ export default function AssetsPage() {
           </ScrollArea>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="asset-form" disabled={!formData.activeSegment}>Salvar Ativo</Button>
+            <Button type="submit" form="asset-form" disabled={!formData.activeSegment || !formData.customerLocationId}>Salvar Ativo</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,5 +1,20 @@
 
 
+export type CustomerLocation = {
+  id: string;
+  name: string;
+  clientId: string; // The SaaS client this location belongs to
+  address?: {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
+};
+
 
 export type CompanySegment = {
   id: string;
@@ -88,6 +103,7 @@ export type Asset = {
   id: string;
   name: string;
   clientId: string;
+  customerLocationId: string;
   activeSegment: string;
   serialNumber: string;
   location: {

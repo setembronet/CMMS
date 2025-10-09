@@ -1,7 +1,8 @@
 
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole } from './types';
+
+import type { Company, User, Asset, WorkOrder, Plan, Subscription, Invoice, Addon, CompanySegment, CMMSRole, CustomerLocation } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -115,6 +116,28 @@ export let companies: Company[] = [
   },
 ];
 
+export let customerLocations: CustomerLocation[] = [
+  {
+    id: 'loc-01',
+    clientId: 'client-01',
+    name: 'Condomínio Edifício Central',
+    address: { city: 'São Paulo', state: 'SP' },
+  },
+  {
+    id: 'loc-02',
+    clientId: 'client-01',
+    name: 'Shopping Plaza',
+    address: { city: 'São Paulo', state: 'SP' },
+  },
+  {
+    id: 'loc-03',
+    clientId: 'client-02',
+    name: 'Aeroporto Internacional',
+    address: { city: 'Rio de Janeiro', state: 'RJ' },
+  },
+];
+
+
 export let users: User[] = [
   { id: 'user-01', name: 'Admin Master', email: 'admin@tenantcare.com', role: 'ADMIN', saasRole: 'ADMIN', cmmsRole: null, clientId: null, avatarUrl: userAvatar },
   { id: 'user-02', name: 'Financeiro App', email: 'finance@tenantcare.com', role: 'FINANCEIRO', saasRole: 'FINANCEIRO', cmmsRole: null, clientId: null, avatarUrl: userAvatar },
@@ -127,8 +150,8 @@ export let users: User[] = [
 ];
 
 export let assets: Asset[] = [
-  { id: 'asset-01', clientId: 'client-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', location: { lat: -23.5505, lng: -46.6333 } },
-  { id: 'asset-02', clientId: 'client-02', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', location: { lat: -22.9068, lng: -43.1729 } },
+  { id: 'asset-01', clientId: 'client-01', customerLocationId: 'loc-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', location: { lat: -23.5505, lng: -46.6333 } },
+  { id: 'asset-02', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', location: { lat: -22.9068, lng: -43.1729 } },
 ];
 
 export let workOrders: WorkOrder[] = [

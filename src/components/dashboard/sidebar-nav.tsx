@@ -19,6 +19,7 @@ import {
   Home,
   ClipboardList,
   Wrench,
+  MapPin,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -68,7 +69,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = pathname.startsWith('/dashboard/settings') || pathname === '/dashboard/cmms-users';
-  const isCmmsActive = ['/dashboard/assets', '/dashboard/orders', '/dashboard/users'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/locations'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -180,6 +181,14 @@ export function SidebarNav() {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                         <SidebarMenuSub>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/locations', true)}>
+                                    <Link href="/dashboard/locations">
+                                        <MapPin />
+                                        <span>{t('sidebar.locations')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
                              <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/assets', true)}>
                                     <Link href="/dashboard/assets">
