@@ -6,6 +6,7 @@
 
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 import { format } from 'date-fns';
@@ -654,5 +655,3 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.bankAccounts)) setBankAccounts(data.bankAccounts);
   }
 };
-
-    

@@ -96,7 +96,7 @@ export default function ChecklistTemplatesPage() {
   const handleItemChange = (groupIdx: number, itemIdx: number, value: string) => {
       const newChecklistData = [...formData.checklistData];
       newChecklistData[groupIdx].items[itemIdx].text = value;
-      setFormData(prev => ({ ...prev, checklistData: newChecklistData }));
+      setFormData(prev => ({...prev, checklistData: newChecklistData}));
   };
   
   const addGroup = () => {

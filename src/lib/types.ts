@@ -5,6 +5,7 @@
 
 
 
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
