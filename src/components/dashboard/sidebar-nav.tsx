@@ -1,7 +1,5 @@
 
 
-
-
 'use client';
 
 import Link from 'next/link';
@@ -23,7 +21,6 @@ import {
   ClipboardList,
   Wrench,
   MapPin,
-  Contact,
   PackageSearch,
   Receipt,
   Truck,
@@ -52,12 +49,14 @@ import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { useI18n } from '@/hooks/use-i18n';
+import { useClient } from '@/context/client-provider';
 
-export function SidebarNav() {
+
+function ManagerNav() {
   const pathname = usePathname();
   const { t } = useI18n();
 
-  const settingsLinks = [
+   const settingsLinks = [
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
       { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
       { href: '/dashboard/settings/roles', label: t('sidebar.roles'), icon: Briefcase },
@@ -65,13 +64,10 @@ export function SidebarNav() {
       { href: '/dashboard/settings/backup', label: t('sidebar.backupRestore'), icon: History },
   ];
 
-
   const isActive = (href: string, isSubItem: boolean = false) => {
-    // For sub-items, we want an exact match
-     if (isSubItem) {
+    if (isSubItem) {
         return pathname === href;
     }
-    // For main sections, we check if the path starts with the href
     return pathname.startsWith(href);
   };
   
@@ -81,11 +77,7 @@ export function SidebarNav() {
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
 
   return (
-    <>
-      <SidebarHeader>
-        <Logo />
-      </SidebarHeader>
-      <SidebarContent className="flex flex-col p-2">
+     <>
         <SidebarMenu>
           <Collapsible asChild defaultOpen={isSaaSFinanceActive}>
                 <SidebarMenuItem>
@@ -392,9 +384,59 @@ export function SidebarNav() {
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarContent>
     </>
   );
 }
 
+function TechnicianNav() {
+  const pathname = usePathname();
+  const { t } = useI18n();
 
+  const isActive = (href: string) => pathname.startsWith(href);
+
+  const navItems = [
+    { href: '/dashboard', label: t('sidebar.dashboard'), icon: Home },
+    { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ListChecks },
+    { href: '/dashboard/assets', label: t('sidebar.assets'), icon: Wrench },
+  ];
+
+  return (
+    <SidebarMenu>
+      {navItems.map(item => (
+        <SidebarMenuItem key={item.href}>
+          <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={{ children: item.label }}>
+            <Link href={item.href}>
+              <item.icon />
+              <span>{item.label}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+      <SidebarMenuItem className="mt-auto">
+        <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
+            <Link href="/">
+                <LogOut />
+                <span>{t('sidebar.logout')}</span>
+            </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
+
+export function SidebarNav() {
+  const { currentUser } = useClient();
+  const isTechnician = currentUser?.cmmsRole === 'TECNICO';
+
+  return (
+    <>
+      <SidebarHeader>
+        <Logo />
+      </SidebarHeader>
+      <SidebarContent className="flex flex-col p-2">
+        {isTechnician ? <TechnicianNav /> : <ManagerNav />}
+      </SidebarContent>
+    </>
+  );
+}
