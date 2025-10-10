@@ -17,10 +17,15 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { currentUser } = useClient();
   const pathname = usePathname();
 
-  const isTechnician = currentUser?.cmmsRole === 'TECNICO';
+  // Render nothing or a loading spinner until the user profile is loaded
+  if (!currentUser) {
+    return null; // Or a loading component
+  }
+
+  const isTechnician = currentUser.cmmsRole === 'TECNICO';
   const isOrderDetailPage = pathname.startsWith('/dashboard/orders/');
 
-  // For technician on the order detail page, we want a more focused layout
+  // Technician on order detail page -> focused layout
   if (isTechnician && isOrderDetailPage) {
       return (
         <div className="flex flex-col h-screen bg-background">
@@ -29,6 +34,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       );
   }
   
+  // Technician on any other page -> mobile-first layout
   if (isTechnician) {
     return (
       <div className="flex flex-col h-screen">
@@ -39,7 +45,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Default view for manager/admin
+  // Default view for manager/admin -> full sidebar layout
   return (
     <SidebarProvider>
       <Sidebar variant="sidebar" collapsible="icon">
