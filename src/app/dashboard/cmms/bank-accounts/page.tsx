@@ -3,6 +3,14 @@
 
 import * as React from 'react';
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+} from '@/components/ui/card';
+import {
   Table,
   TableBody,
   TableCell,
@@ -10,12 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -27,10 +29,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { bankAccounts as initialData, setBankAccounts } from '@/lib/data';
-import type { BankAccount } from '@/lib/types';
+import { PlusCircle, Landmark, ArrowUpCircle, ArrowDownCircle, FileText } from 'lucide-react';
+import { bankAccounts as initialData, setBankAccounts, accountsPayable, accountsReceivable } from '@/lib/data';
+import type { BankAccount, AccountsPayable, AccountsReceivable } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+
+type StatementEntry = {
+    date: number;
+    description: string;
+    value: number;
+    type: 'credit' | 'debit';
+};
 
 const emptyAccount: BankAccount = {
   id: '',
@@ -44,25 +57,61 @@ const emptyAccount: BankAccount = {
 export default function BankAccountsPage() {
   const { t } = useI18n();
   const [accounts, setAccounts] = React.useState<BankAccount[]>(initialData);
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<BankAccount | null>(null);
   const [formData, setFormData] = React.useState<BankAccount | null>(null);
   
+  const [isStatementOpen, setIsStatementOpen] = React.useState(false);
+  const [viewingAccount, setViewingAccount] = React.useState<BankAccount | null>(null);
+  const [statement, setStatement] = React.useState<StatementEntry[]>([]);
+
   React.useEffect(() => {
     setAccounts(initialData);
   }, []);
 
-  const openDialog = (account: BankAccount | null = null) => {
+  const openFormDialog = (account: BankAccount | null = null) => {
     setEditingAccount(account);
     const data = account ? { ...account } : { ...emptyAccount, id: `ba-${Date.now()}`};
     setFormData(data);
-    setIsDialogOpen(true);
+    setIsFormOpen(true);
+  };
+  
+  const openStatementDialog = (account: BankAccount) => {
+    setViewingAccount(account);
+
+    const debits = accountsPayable
+      .filter(ap => ap.status === 'Paga' && ap.bankAccountId === account.id && ap.paymentDate)
+      .map(ap => ({
+        date: ap.paymentDate!,
+        description: ap.description,
+        value: -ap.value,
+        type: 'debit' as const,
+      }));
+
+    const credits = accountsReceivable
+      .filter(ar => ar.status === 'Paga' && ar.bankAccountId === account.id && ar.paymentDate)
+      .map(ar => ({
+        date: ar.paymentDate!,
+        description: ar.description,
+        value: ar.value,
+        type: 'credit' as const,
+      }));
+
+    const fullStatement = [...debits, ...credits].sort((a, b) => b.date - a.date);
+    setStatement(fullStatement);
+    setIsStatementOpen(true);
   };
 
-  const closeDialog = () => {
+  const closeFormDialog = () => {
     setEditingAccount(null);
-    setIsDialogOpen(false);
+    setIsFormOpen(false);
     setFormData(null);
+  };
+  
+  const closeStatementDialog = () => {
+    setIsStatementOpen(false);
+    setViewingAccount(null);
+    setStatement([]);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,60 +133,51 @@ export default function BankAccountsPage() {
     }
     setBankAccounts(updatedAccounts);
     setAccounts(updatedAccounts);
-    closeDialog();
+    closeFormDialog();
   };
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold font-headline">{t('sidebar.bankAccounts')}</h1>
-        <Button onClick={() => openDialog()}>
+        <Button onClick={() => openFormDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
           {t('bankAccounts.new')}
         </Button>
       </div>
-      <div className="rounded-lg border shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('bankAccounts.table.name')}</TableHead>
-              <TableHead>{t('bankAccounts.table.bank')}</TableHead>
-              <TableHead>{t('bankAccounts.table.agency')}</TableHead>
-              <TableHead>{t('bankAccounts.table.account')}</TableHead>
-              <TableHead>{t('bankAccounts.table.balance')}</TableHead>
-              <TableHead className="text-right">{t('common.actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {accounts.map(account => (
-              <TableRow key={account.id}>
-                <TableCell className="font-medium">{account.name}</TableCell>
-                <TableCell>{account.bank || 'N/A'}</TableCell>
-                <TableCell>{account.agency || 'N/A'}</TableCell>
-                <TableCell>{account.accountNumber || 'N/A'}</TableCell>
-                <TableCell>R$ {account.balance.toFixed(2)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">{t('common.openMenu')}</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openDialog(account)}>
-                        {t('common.edit')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {accounts.map(account => (
+          <Card key={account.id} className="flex flex-col">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-4">
+                <CardTitle className="text-lg">{account.name}</CardTitle>
+                <Landmark className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <CardDescription>
+                {account.bank ? `${account.bank} | Ag: ${account.agency || 'N/A'} | CC: ${account.accountNumber || 'N/A'}` : 'Conta Interna (Caixa)'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <p className="text-xs text-muted-foreground">Saldo Atual</p>
+              <p className={cn("text-2xl font-bold", account.balance < 0 ? 'text-destructive' : 'text-green-600 dark:text-green-500')}>
+                R$ {account.balance.toFixed(2)}
+              </p>
+            </CardContent>
+            <CardFooter className="flex gap-2">
+              <Button onClick={() => openStatementDialog(account)} className="flex-1">
+                <FileText className="mr-2 h-4 w-4" />
+                Ver Extrato
+              </Button>
+              <Button onClick={() => openFormDialog(account)} variant="outline">
+                {t('common.edit')}
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
 
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editingAccount ? t('bankAccounts.dialog.editTitle') : t('bankAccounts.dialog.newTitle')}</DialogTitle>
@@ -170,11 +210,58 @@ export default function BankAccountsPage() {
               </form>
             )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+              <Button type="button" variant="outline" onClick={closeFormDialog}>{t('common.cancel')}</Button>
               <Button type="submit" form="ba-form">{t('common.save')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        <Dialog open={isStatementOpen} onOpenChange={setIsStatementOpen}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Extrato da Conta: {viewingAccount?.name}</DialogTitle>
+              <DialogDescription>
+                Histórico de movimentações realizadas nesta conta.
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {statement.length > 0 ? statement.map((entry, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{format(new Date(entry.date), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                      <TableCell>{entry.description}</TableCell>
+                      <TableCell className={cn(
+                        "text-right font-medium flex items-center justify-end gap-2",
+                        entry.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                      )}>
+                        {entry.type === 'credit' ? <ArrowUpCircle className="h-4 w-4" /> : <ArrowDownCircle className="h-4 w-4" />}
+                        R$ {Math.abs(entry.value).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="h-24 text-center">Nenhuma movimentação registrada.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+             <DialogFooter>
+              <Button type="button" variant="outline" onClick={closeStatementDialog}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
     </div>
   );
 }
+
+    
