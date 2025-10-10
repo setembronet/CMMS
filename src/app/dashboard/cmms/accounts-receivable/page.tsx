@@ -28,8 +28,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon } from 'lucide-react';
-import { accountsReceivable as initialData, customerLocations, chartOfAccounts, setAccountsReceivable, bankAccounts, setBankAccounts } from '@/lib/data';
+import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
+import { 
+    accountsReceivable as initialData, 
+    customerLocations, 
+    chartOfAccounts, 
+    setAccountsReceivable, 
+    bankAccounts, 
+    setBankAccounts,
+    generateReceivablesFromContracts
+} from '@/lib/data';
 import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount, BankAccount } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { useClient } from '@/context/client-provider';
@@ -172,6 +180,26 @@ export default function AccountsReceivablePage() {
     closeDialog();
   };
 
+  const handleGenerateInvoices = () => {
+      if (!selectedClient) return;
+      const { newReceivables, generatedCount } = generateReceivablesFromContracts(selectedClient.id);
+      if (generatedCount > 0) {
+          setAccountsReceivable(newReceivables);
+          const locationIds = clientLocations.map(l => l.id);
+          setAccounts(newReceivables.filter(ar => locationIds.includes(ar.customerLocationId)).sort((a, b) => b.dueDate - a.dueDate));
+          toast({
+              title: t('receivables.generationSuccessTitle'),
+              description: t('receivables.generationSuccessDescription', { count: generatedCount }),
+          });
+      } else {
+          toast({
+              title: t('receivables.generationNoNewTitle'),
+              description: t('receivables.generationNoNewDescription'),
+          });
+      }
+  }
+
+
   const getLocationName = (id: string) => customerLocations.find(c => c.id === id)?.name || 'N/A';
   const getChartOfAccountName = (id: string) => chartOfAccounts.find(c => c.id === id)?.name || 'N/A';
   
@@ -195,10 +223,16 @@ export default function AccountsReceivablePage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold font-headline">{t('sidebar.accountsReceivable')}</h1>
-        <Button onClick={() => openDialog()}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Lançar Receita
-        </Button>
+        <div className="flex gap-2">
+            <Button onClick={handleGenerateInvoices} variant="secondary">
+                <Sparkles className="mr-2 h-4 w-4" />
+                {t('receivables.generateInvoicesButton')}
+            </Button>
+            <Button onClick={() => openDialog()}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Lançar Receita
+            </Button>
+        </div>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
@@ -357,5 +391,7 @@ export default function AccountsReceivablePage() {
     </div>
   );
 }
+
+    
 
     

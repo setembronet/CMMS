@@ -673,5 +673,14 @@
       "account": "Account Number",
       "balance": "Initial Balance ($)"
     }
+  },
+  "receivables": {
+    "generateInvoicesButton": "Generate Monthly Invoices",
+    "generationSuccessTitle": "Invoices Generated!",
+    "generationSuccessDescription": "{count} new invoices were created from active contracts.",
+    "generationNoNewTitle": "No New Invoices",
+    "generationNoNewDescription": "All invoices for the current period have already been generated."
   }
 }
+
+    

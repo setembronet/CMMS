@@ -673,5 +673,14 @@
       "account": "Número de Cuenta",
       "balance": "Saldo Inicial ($)"
     }
+  },
+  "receivables": {
+    "generateInvoicesButton": "Generar Facturas Mensuales",
+    "generationSuccessTitle": "¡Facturas Generadas!",
+    "generationSuccessDescription": "Se crearon {count} nuevas facturas a partir de los contratos activos.",
+    "generationNoNewTitle": "No hay Facturas Nuevas",
+    "generationNoNewDescription": "Todas las facturas para el período actual ya han sido generadas."
   }
 }
+
+    

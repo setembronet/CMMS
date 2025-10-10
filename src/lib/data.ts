@@ -5,8 +5,10 @@
 
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount } from './types';
 import { PlaceHolderImages } from './placeholder-images';
+import { format } from 'date-fns';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
 
@@ -559,6 +561,41 @@ export const setAccountsReceivable = (newARs: AccountsReceivable[]) => {
   accountsReceivable = newARs;
 };
 
+export const generateReceivablesFromContracts = (clientId: string) => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const clientContracts = contracts.filter(c => {
+        const location = customerLocations.find(l => l.id === c.customerLocationId);
+        return location?.clientId === clientId;
+    }).filter(c => new Date(c.endDate) >= today && new Date(c.startDate) <= today);
+
+    let generatedCount = 0;
+    const newReceivables: AccountsReceivable[] = [...accountsReceivable];
+
+    clientContracts.forEach(contract => {
+        const descriptionPattern = `Fatura Contrato #${contract.id} - ${format(today, 'MM/yyyy')}`;
+        const alreadyExists = accountsReceivable.some(ar => ar.description === descriptionPattern);
+
+        if (!alreadyExists) {
+            const newReceivable: AccountsReceivable = {
+                id: `ar-${contract.id}-${currentYear}-${currentMonth + 1}`,
+                description: descriptionPattern,
+                customerLocationId: contract.customerLocationId,
+                dueDate: new Date(currentYear, currentMonth, 10).getTime(), // default due date to day 10
+                value: contract.monthlyValue,
+                status: 'Pendente',
+                chartOfAccountId: 'coa-3', // Default to 'Contratos de Manutenção'
+            };
+            newReceivables.unshift(newReceivable);
+            generatedCount++;
+        }
+    });
+
+    return { newReceivables, generatedCount };
+}
+
+
 export const setBankAccounts = (newBAs: BankAccount[]) => {
     bankAccounts = newBAs;
 };
@@ -617,3 +654,5 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.bankAccounts)) setBankAccounts(data.bankAccounts);
   }
 };
+
+    
