@@ -35,7 +35,8 @@
     "subscriptions": "Assinaturas",
     "chartOfAccounts": "Plano de Contas",
     "costCenters": "Centros de Custo",
-    "accountsPayable": "Contas a Pagar"
+    "accountsPayable": "Contas a Pagar",
+    "backoffice": "Backoffice"
   },
   "common": {
     "save": "Salvar",
@@ -630,3 +631,4 @@
     "poCreatedDescription": "A OC {poId} para o fornecedor {supplierName} foi criada com sucesso."
   }
 }
+

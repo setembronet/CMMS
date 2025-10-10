@@ -35,7 +35,8 @@
     "subscriptions": "Subscriptions",
     "chartOfAccounts": "Chart of Accounts",
     "costCenters": "Cost Centers",
-    "accountsPayable": "Accounts Payable"
+    "accountsPayable": "Accounts Payable",
+    "backoffice": "Backoffice"
   },
   "common": {
     "save": "Save",
@@ -630,3 +631,4 @@
     "poCreatedDescription": "PO {poId} for supplier {supplierName} has been created successfully."
   }
 }
+

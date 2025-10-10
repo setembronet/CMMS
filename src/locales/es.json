@@ -35,7 +35,8 @@
     "subscriptions": "Suscripciones",
     "chartOfAccounts": "Plan de Cuentas",
     "costCenters": "Centros de Costo",
-    "accountsPayable": "Cuentas por Pagar"
+    "accountsPayable": "Cuentas por Pagar",
+    "backoffice": "Backoffice"
   },
   "common": {
     "save": "Guardar",
@@ -630,3 +631,4 @@
     "poCreatedDescription": "La OC {poId} para el proveedor {supplierName} fue creada con éxito."
   }
 }
+

@@ -109,14 +109,6 @@ export function SidebarNav() {
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
                              <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/accounts-payable', true)}>
-                                    <Link href="/dashboard/finance/accounts-payable">
-                                        <ArrowRightLeft />
-                                        <span>{t('sidebar.accountsPayable')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                             <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/subscriptions', true)}>
                                     <Link href="/dashboard/finance/subscriptions">
                                         <Banknote />
@@ -137,6 +129,17 @@ export function SidebarNav() {
                                     <Link href="/dashboard/finance/addons">
                                         <Puzzle />
                                         <span>{t('sidebar.addons')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                        <SidebarMenuSub>
+                            <div className="text-xs font-medium text-sidebar-foreground/70 px-4 py-2">{t('sidebar.backoffice')}</div>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/accounts-payable', true)}>
+                                    <Link href="/dashboard/finance/accounts-payable">
+                                        <ArrowRightLeft />
+                                        <span>{t('sidebar.accountsPayable')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
@@ -346,3 +349,4 @@ export function SidebarNav() {
     </>
   );
 }
+
