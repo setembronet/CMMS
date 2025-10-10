@@ -48,7 +48,7 @@ import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineContent } from '@/components/ui/timeline';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineContent, TimelineTime } from '@/components/ui/timeline';
 
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
@@ -825,4 +825,3 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
-
