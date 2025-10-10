@@ -302,6 +302,14 @@ export function SidebarNav() {
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-payable', true)}>
+                                    <Link href="/dashboard/cmms/accounts-payable">
+                                        <ArrowRightLeft />
+                                        <span>{t('sidebar.accountsPayable')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
                         </SidebarMenuSub>
                     </CollapsibleContent>
                 </SidebarMenuItem>
@@ -353,3 +361,5 @@ export function SidebarNav() {
   );
 }
 
+
+    
