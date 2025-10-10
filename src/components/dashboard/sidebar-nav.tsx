@@ -71,7 +71,7 @@ export function SidebarNav() {
     return pathname.startsWith(href);
   };
   
-  const isSaaSMainDashboardActive = pathname.startsWith('/dashboard/finance');
+  const isSaaSFinanceActive = pathname.startsWith('/dashboard/finance');
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/cmms'].some(p => pathname.startsWith(p));
@@ -83,11 +83,11 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent className="flex flex-col p-2">
         <SidebarMenu>
-          <Collapsible asChild defaultOpen={isSaaSMainDashboardActive}>
+          <Collapsible asChild defaultOpen={isSaaSFinanceActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                          <SidebarMenuButton
-                            isActive={isSaaSMainDashboardActive}
+                            isActive={isSaaSFinanceActive}
                             className="justify-between"
                             tooltip={{ children: t('sidebar.finance') }}
                          >
@@ -95,7 +95,7 @@ export function SidebarNav() {
                                 <DollarSign />
                                 <span>{t('sidebar.finance')}</span>
                             </div>
-                            <ChevronDown className={cn("transition-transform duration-200", isSaaSMainDashboardActive && "rotate-180")} />
+                            <ChevronDown className={cn("transition-transform duration-200", isSaaSFinanceActive && "rotate-180")} />
                         </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
@@ -134,7 +134,7 @@ export function SidebarNav() {
                              </SidebarMenuSubItem>
                         </SidebarMenuSub>
                         <SidebarMenuSub>
-                            <div className="text-xs font-medium text-sidebar-foreground/70 px-4 py-2">{t('sidebar.backoffice')}</div>
+                            <div className="text-xs font-medium text-sidebar-foreground/70 px-4 py-2">{t('sidebar.backoffice')} (SaaS)</div>
                              <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/accounts-payable', true)}>
                                     <Link href="/dashboard/finance/accounts-payable">
@@ -285,7 +285,7 @@ export function SidebarNav() {
                              </SidebarMenuSubItem>
                         </SidebarMenuSub>
                         <SidebarMenuSub>
-                            <div className="text-xs font-medium text-sidebar-foreground/70 px-4 py-2">{t('sidebar.backoffice')}</div>
+                            <div className="text-xs font-medium text-sidebar-foreground/70 px-4 py-2">{t('sidebar.backoffice')} (CMMS)</div>
                              <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/chart-of-accounts', true)}>
                                     <Link href="/dashboard/cmms/chart-of-accounts">
