@@ -74,7 +74,7 @@ export function SidebarNav() {
   const isSaaSMainDashboardActive = pathname.startsWith('/dashboard/finance');
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion'].some(p => pathname.startsWith(p));
+  const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/cmms'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -140,22 +140,6 @@ export function SidebarNav() {
                                     <Link href="/dashboard/finance/accounts-payable">
                                         <ArrowRightLeft />
                                         <span>{t('sidebar.accountsPayable')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                             <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/chart-of-accounts', true)}>
-                                    <Link href="/dashboard/finance/chart-of-accounts">
-                                        <Library />
-                                        <span>{t('sidebar.chartOfAccounts')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                              <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/cost-centers', true)}>
-                                    <Link href="/dashboard/finance/cost-centers">
-                                        <Target />
-                                        <span>{t('sidebar.costCenters')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
@@ -296,6 +280,25 @@ export function SidebarNav() {
                                     <Link href="/dashboard/purchase-orders">
                                         <ShoppingCart />
                                         <span>{t('sidebar.purchaseOrders')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                        <SidebarMenuSub>
+                            <div className="text-xs font-medium text-sidebar-foreground/70 px-4 py-2">{t('sidebar.backoffice')}</div>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/chart-of-accounts', true)}>
+                                    <Link href="/dashboard/cmms/chart-of-accounts">
+                                        <Library />
+                                        <span>{t('sidebar.chartOfAccounts')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/cost-centers', true)}>
+                                    <Link href="/dashboard/cmms/cost-centers">
+                                        <Target />
+                                        <span>{t('sidebar.costCenters')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
