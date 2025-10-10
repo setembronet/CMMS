@@ -16,7 +16,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, AlertCircle, Users, PieChart } from 'lucide-react';
+import { DollarSign, AlertCircle, Users } from 'lucide-react';
 import { kpis, companies, customerLocations, plans, addons } from '@/lib/data';
 import { 
     ResponsiveContainer,
@@ -28,7 +28,8 @@ import {
     Legend,
     Line,
     Pie,
-    Cell
+    Cell,
+    PieChart,
 } from 'recharts';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -81,9 +82,9 @@ const totalIotAddonRevenue = activeClients.reduce((total, company) => {
 }, 0);
 
 const revenueByModuleData = [
-    { name: 'Planos Base', value: totalPlanRevenue },
-    { name: 'Módulo IA', value: totalIaAddonRevenue },
-    { name: 'Módulo IoT', value: totalIotAddonRevenue },
+    { name: 'planosbase', value: totalPlanRevenue },
+    { name: 'móduloia', value: totalIaAddonRevenue },
+    { name: 'móduloiot', value: totalIotAddonRevenue },
 ].filter(d => d.value > 0);
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
@@ -224,3 +225,5 @@ export default function SaaSMainDashboard() {
     </div>
   );
 }
+
+    
