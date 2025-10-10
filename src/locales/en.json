@@ -57,7 +57,9 @@
     "observation": "Observation",
     "optional": "Optional",
     "required": "required",
-    "search": "Search"
+    "search": "Search",
+    "description": "Description",
+    "date": "Date"
   },
   "address": {
     "zipCode": "Zip Code",
@@ -273,6 +275,22 @@
       "planosbase": "Base Plans",
       "móduloia": "AI Module",
       "móduloiot": "IoT Module"
+    }
+  },
+  "cmms": {
+    "finance": {
+        "dashboardTitle": "CMMS Finance Dashboard",
+        "receivableTitle": "Pendente a Receber",
+        "receivableDescription": "Total de receitas aguardando pagamento",
+        "payableTitle": "Pendente a Pagar",
+        "payableDescription": "Total de despesas aguardando pagamento",
+        "balanceTitle": "Balanço Projetado",
+        "balanceDescription": "Diferença entre pendente a receber e a pagar",
+        "cashflowTitle": "Fluxo de Caixa (Últimos 6 Meses)",
+        "cashflowDescription": "Visão consolidada de entradas e saídas realizadas.",
+        "upcomingTitle": "Próximos Lançamentos",
+        "upcomingDescription": "Visão geral das próximas 5 contas a pagar/receber.",
+        "noUpcoming": "Nenhum lançamento futuro."
     }
   },
   "months": {

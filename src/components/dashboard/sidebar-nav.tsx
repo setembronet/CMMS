@@ -287,6 +287,14 @@ export function SidebarNav() {
                         <SidebarMenuSub>
                             <div className="text-xs font-medium text-sidebar-foreground/70 px-4 py-2">{t('sidebar.backoffice')} (CMMS)</div>
                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/finance', true)}>
+                                    <Link href="/dashboard/cmms/finance">
+                                        <DollarSign />
+                                        <span>{t('cmms.finance.dashboardTitle')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/chart-of-accounts', true)}>
                                     <Link href="/dashboard/cmms/chart-of-accounts">
                                         <Library />

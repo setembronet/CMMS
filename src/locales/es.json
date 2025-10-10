@@ -57,7 +57,9 @@
     "observation": "Observación",
     "optional": "Opcional",
     "required": "requerido",
-    "search": "Buscar"
+    "search": "Buscar",
+    "description": "Descripción",
+    "date": "Fecha"
   },
   "address": {
     "zipCode": "Código Postal",
@@ -273,6 +275,22 @@
       "planosbase": "Planes Base",
       "móduloia": "Módulo IA",
       "móduloiot": "Módulo IoT"
+    }
+  },
+  "cmms": {
+    "finance": {
+        "dashboardTitle": "Dashboard Financiero GMAO",
+        "receivableTitle": "Pendiente de Cobro",
+        "receivableDescription": "Total de ingresos esperando pago",
+        "payableTitle": "Pendiente de Pago",
+        "payableDescription": "Total de gastos esperando pago",
+        "balanceTitle": "Balance Proyectado",
+        "balanceDescription": "Diferencia entre pendiente de cobro y de pago",
+        "cashflowTitle": "Flujo de Caja (Últimos 6 Meses)",
+        "cashflowDescription": "Visión consolidada de entradas y salidas realizadas.",
+        "upcomingTitle": "Próximos Lanzamientos",
+        "upcomingDescription": "Resumen de las próximas 5 cuentas por pagar/cobrar.",
+        "noUpcoming": "No hay lanzamientos futuros."
     }
   },
   "months": {
