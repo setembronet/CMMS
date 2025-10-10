@@ -539,7 +539,8 @@
     "new": "New Supplier",
     "table": {
       "name": "Supplier Name",
-      "contact": "Main Contact"
+      "contact": "Main Contact",
+      "categories": "Categories"
     },
     "dialog": {
       "editTitle": "Edit Supplier",
@@ -548,7 +549,13 @@
       "newDescription": "Fill in the new supplier details.",
       "registrationData": "Registration Data",
       "name": "Company Name",
-      "rolePlaceholder": "e.g., Sales Rep, Manager..."
+      "rolePlaceholder": "e.g., Sales Rep, Manager...",
+      "classification": "Classification"
+    },
+     "categories": {
+      "peças": "Parts",
+      "serviços": "Services",
+      "materiais": "Materials"
     }
   }
 }

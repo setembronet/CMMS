@@ -539,7 +539,8 @@
     "new": "Novo Fornecedor",
     "table": {
       "name": "Nome do Fornecedor",
-      "contact": "Contato Principal"
+      "contact": "Contato Principal",
+      "categories": "Categorias"
     },
     "dialog": {
       "editTitle": "Editar Fornecedor",
@@ -548,7 +549,13 @@
       "newDescription": "Preencha os detalhes do novo fornecedor.",
       "registrationData": "Dados Cadastrais",
       "name": "Razão Social",
-      "rolePlaceholder": "Ex: Vendedor, Gerente..."
+      "rolePlaceholder": "Ex: Vendedor, Gerente...",
+      "classification": "Classificação"
+    },
+    "categories": {
+      "peças": "Peças",
+      "serviços": "Serviços",
+      "materiais": "Materiais"
     }
   }
 }

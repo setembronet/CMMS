@@ -29,10 +29,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus } from 'lucide-react';
 import { suppliers as initialSuppliers, setSuppliers } from '@/lib/data';
-import type { Supplier, SupplierContact } from '@/lib/types';
+import type { Supplier, SupplierContact, SupplierCategory } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/use-i18n';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 
 const emptyContact: SupplierContact = {
   id: '',
@@ -48,6 +50,7 @@ const emptySupplier: Supplier = {
   cnpj: '',
   email: '',
   phone: '',
+  categories: [],
   address: {
     street: '',
     number: '',
@@ -59,6 +62,12 @@ const emptySupplier: Supplier = {
   },
   contacts: [],
 };
+
+const supplierCategories: { id: SupplierCategory, label: string }[] = [
+    { id: 'PEÇAS', label: 'Peças' },
+    { id: 'SERVIÇOS', label: 'Serviços' },
+    { id: 'MATERIAIS', label: 'Materiais' },
+];
 
 export default function SuppliersPage() {
   const { t } = useI18n();
@@ -95,6 +104,19 @@ export default function SuppliersPage() {
     } else {
       setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
     }
+  };
+
+  const handleCategoryChange = (categoryId: SupplierCategory, checked: boolean) => {
+    if (!formData) return;
+    setFormData(prev => {
+        if (!prev) return null;
+        const currentCategories = prev.categories || [];
+        if (checked) {
+            return { ...prev, categories: [...currentCategories, categoryId] };
+        } else {
+            return { ...prev, categories: currentCategories.filter(c => c !== categoryId) };
+        }
+    });
   };
 
   const handleContactChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,6 +189,11 @@ export default function SuppliersPage() {
     setLocalSuppliers(updatedSuppliers);
     closeDialog();
   };
+  
+  const getCategoryLabel = (id: SupplierCategory) => {
+      const category = supplierCategories.find(c => c.id === id);
+      return category ? t(`suppliers.categories.${id.toLowerCase()}`) : id;
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -184,6 +211,7 @@ export default function SuppliersPage() {
               <TableHead>{t('suppliers.table.name')}</TableHead>
               <TableHead>{t('suppliers.table.contact')}</TableHead>
               <TableHead>{t('common.phone')}</TableHead>
+              <TableHead>{t('suppliers.table.categories')}</TableHead>
               <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -193,6 +221,13 @@ export default function SuppliersPage() {
                 <TableCell className="font-medium">{supplier.name}</TableCell>
                 <TableCell>{supplier.contacts && supplier.contacts[0] ? supplier.contacts[0].name : 'N/A'}</TableCell>
                 <TableCell>{supplier.phone || 'N/A'}</TableCell>
+                <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                        {(supplier.categories || []).map(cat => (
+                            <Badge key={cat} variant="secondary">{getCategoryLabel(cat)}</Badge>
+                        ))}
+                    </div>
+                </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -248,6 +283,25 @@ export default function SuppliersPage() {
                             <Input id="phone" name="phone" value={formData.phone || ''} onChange={handleInputChange} />
                         </div>
                     </div>
+                    
+                    <Separator />
+
+                    <div className="space-y-2">
+                        <Label>{t('suppliers.dialog.classification')}</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4">
+                            {supplierCategories.map(cat => (
+                                <div key={cat.id} className="flex items-center gap-2">
+                                    <Checkbox
+                                        id={`cat-${cat.id}`}
+                                        checked={(formData.categories || []).includes(cat.id)}
+                                        onCheckedChange={(checked) => handleCategoryChange(cat.id, !!checked)}
+                                    />
+                                    <Label htmlFor={`cat-${cat.id}`} className="font-normal">{t(`suppliers.categories.${cat.id.toLowerCase()}`)}</Label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
 
                     <Separator />
                     <h3 className="text-lg font-medium">{t('common.address')}</h3>

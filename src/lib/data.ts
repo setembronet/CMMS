@@ -1,5 +1,6 @@
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, Checklist, Supplier } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -218,6 +219,7 @@ export let suppliers: Supplier[] = [
         cnpj: '11.222.333/0001-44',
         email: 'vendas@fornecedorgenerico.com',
         phone: '11 2233-4455',
+        categories: ['PEÇAS', 'MATERIAIS'],
         address: {
             street: 'Rua das Peças',
             number: '123',
@@ -236,6 +238,7 @@ export let suppliers: Supplier[] = [
         cnpj: '44.555.666/0001-77',
         email: 'contato@importadoracomponentes.com',
         phone: '21 3344-5566',
+        categories: ['PEÇAS'],
         address: {
             street: 'Avenida das Américas',
             number: '5000',
@@ -243,6 +246,23 @@ export let suppliers: Supplier[] = [
             city: 'Rio de Janeiro',
             state: 'RJ',
             zipCode: '22640-102',
+        },
+        contacts: []
+    },
+     {
+        id: 'supp-03',
+        name: 'Serviços Terceirizados de Limpeza',
+        cnpj: '77.888.999/0001-00',
+        email: 'comercial@limpezatop.com',
+        phone: '41 3030-4040',
+        categories: ['SERVIÇOS'],
+        address: {
+            street: 'Rua da Glória',
+            number: '789',
+            neighborhood: 'Centro Cívico',
+            city: 'Curitiba',
+            state: 'PR',
+            zipCode: '80530-000',
         },
         contacts: []
     },
