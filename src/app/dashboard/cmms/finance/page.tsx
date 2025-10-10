@@ -232,8 +232,8 @@ export default function CmmsFinanceDashboardPage() {
                         <YAxis tickFormatter={(value) => `R$ ${value / 1000}k`}/>
                         <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
                         <Legend />
-                        <Bar dataKey="Entradas" fill="var(--color-chart-2)" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="Saídas" fill="var(--color-chart-5)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="Entradas" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="Saídas" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -319,7 +319,7 @@ export default function CmmsFinanceDashboardPage() {
                                 <YAxis type="category" dataKey="name" width={150} tick={{fontSize: 12}} />
                                 <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`}/>
                                 <Legend />
-                                <Bar dataKey="value" name="Valor" fill="var(--color-chart-3)" radius={[0, 4, 4, 0]} />
+                                <Bar dataKey="value" name="Valor" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
