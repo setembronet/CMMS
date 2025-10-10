@@ -74,7 +74,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -166,31 +166,6 @@ export function SidebarNav() {
                 </SidebarMenuItem>
            </Collapsible>
 
-           <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive('/dashboard/products')}
-                tooltip={{ children: t('products.title') }}
-              >
-                <Link href="/dashboard/products">
-                  <PackageSearch />
-                  <span>{t('products.title')}</span>
-                </Link>
-              </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive('/dashboard/suppliers')}
-                tooltip={{ children: t('sidebar.suppliers') }}
-              >
-                <Link href="/dashboard/suppliers">
-                  <Truck />
-                  <span>{t('sidebar.suppliers')}</span>
-                </Link>
-              </SidebarMenuButton>
-          </SidebarMenuItem>
-
         </SidebarMenu>
       </SidebarContent>
       <SidebarContent className="p-2 mt-auto">
@@ -257,6 +232,22 @@ export function SidebarNav() {
                                     <Link href="/dashboard/users">
                                         <Users />
                                         <span>{t('sidebar.users')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/products', true)}>
+                                    <Link href="/dashboard/products">
+                                        <PackageSearch />
+                                        <span>{t('products.title')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/suppliers', true)}>
+                                    <Link href="/dashboard/suppliers">
+                                        <Truck />
+                                        <span>{t('sidebar.suppliers')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
