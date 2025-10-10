@@ -49,7 +49,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineTime } from '@/components/ui/timeline';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineTime, TimelineContent } from '@/components/ui/timeline';
 
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
@@ -864,3 +864,6 @@ export default function WorkOrdersPage() {
   );
 }
 
+
+
+    
