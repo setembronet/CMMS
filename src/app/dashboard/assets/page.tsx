@@ -267,7 +267,6 @@ export default function AssetsPage() {
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          {/* This link is a placeholder for future functionality */}
                           <Link href="/dashboard/orders"> 
                               <History className="mr-2 h-4 w-4" />
                               Ver Histórico de OS
