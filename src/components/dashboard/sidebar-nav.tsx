@@ -392,35 +392,65 @@ function TechnicianNav() {
   const pathname = usePathname();
   const { t } = useI18n();
 
-  const isActive = (href: string) => pathname.startsWith(href);
-
+  const isActive = (href: string, isSubItem: boolean = false) => {
+    if (isSubItem) {
+        return pathname === href;
+    }
+    return pathname.startsWith(href);
+  };
+  
   const navItems = [
     { href: '/dashboard', label: t('sidebar.dashboard'), icon: Home },
-    { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ListChecks },
+    { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ClipboardList },
     { href: '/dashboard/assets', label: t('sidebar.assets'), icon: Wrench },
   ];
 
   return (
-    <SidebarMenu>
-      {navItems.map(item => (
-        <SidebarMenuItem key={item.href}>
-          <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={{ children: item.label }}>
-            <Link href={item.href}>
-              <item.icon />
-              <span>{item.label}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-      <SidebarMenuItem className="mt-auto">
-        <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
-            <Link href="/">
-                <LogOut />
-                <span>{t('sidebar.logout')}</span>
-            </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <>
+        <SidebarMenu>
+            <Collapsible asChild defaultOpen>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                         <SidebarMenuButton
+                            isActive={true}
+                            className="justify-between"
+                            tooltip={{ children: "Portal do Técnico" }}
+                         >
+                            <div className="flex items-center gap-2">
+                                <UserSquare />
+                                <span>Portal do Técnico</span>
+                            </div>
+                            <ChevronDown className="transition-transform duration-200 rotate-180" />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {navItems.map(item => (
+                                <SidebarMenuSubItem key={item.href}>
+                                    <SidebarMenuSubButton asChild isActive={isActive(item.href, item.href === '/dashboard')}>
+                                        <Link href={item.href}>
+                                            <item.icon />
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                            ))}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+           </Collapsible>
+        </SidebarMenu>
+        <SidebarMenu className="mt-auto">
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
+                    <Link href="/">
+                        <LogOut />
+                        <span>{t('sidebar.logout')}</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
+    </>
   );
 }
 
