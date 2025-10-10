@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, elevatorChecklistTemplate, rootCauses, recommendedActions } from '@/lib/data';
+import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -178,7 +178,7 @@ export default function WorkOrdersPage() {
 
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
-  const getAssetSegment = (id: string) => allAssets.find(a => a.id === id)?.activeSegment;
+  const getAssetSegmentId = (id: string) => allAssets.find(a => a.id === id)?.activeSegment;
   const getTechnicianName = (id?: string) => id ? allUsers.find(u => u.id === id)?.name : 'N/A';
   
   const getProduct = (id: string) => products.find(p => p.id === id);
@@ -197,8 +197,12 @@ export default function WorkOrdersPage() {
         orderData = JSON.parse(JSON.stringify(emptyWorkOrder));
     }
 
-    if (!orderData.checklist && getAssetSegment(orderData.assetId) === 'ELEVATOR') {
-      orderData.checklist = JSON.parse(JSON.stringify(elevatorChecklistTemplate));
+    if (!orderData.checklist && orderData.assetId) {
+      const segmentId = getAssetSegmentId(orderData.assetId);
+      const segment = segments.find(s => s.id === segmentId);
+      if(segment?.checklistTemplate) {
+        orderData.checklist = JSON.parse(JSON.stringify(segment.checklistTemplate));
+      }
     }
     
     setFormData(orderData);
@@ -230,9 +234,11 @@ export default function WorkOrdersPage() {
 
         if (name === 'assetId') {
           const asset = allAssets.find(a => a.id === value);
-          if (asset && asset.activeSegment === 'ELEVATOR' && !prev.checklist) {
-            newChecklist = JSON.parse(JSON.stringify(elevatorChecklistTemplate));
-          } else if (asset && asset.activeSegment !== 'ELEVATOR') {
+          const segmentId = asset?.activeSegment;
+          const segment = segments.find(s => s.id === segmentId);
+          if (segment?.checklistTemplate) {
+            newChecklist = JSON.parse(JSON.stringify(segment.checklistTemplate));
+          } else {
             newChecklist = undefined;
           }
         }
@@ -739,5 +745,3 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
-
-    

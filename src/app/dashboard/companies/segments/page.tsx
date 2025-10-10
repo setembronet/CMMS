@@ -30,18 +30,21 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { segments as initialSegments, cmmsRoles as initialCmmsRoles, setSegments as setGlobalSegments } from '@/lib/data';
-import type { CompanySegment, CMMSRole, CustomField, CustomFieldType } from '@/lib/types';
+import type { CompanySegment, CMMSRole, CustomField, CustomFieldType, Checklist, ChecklistGroup, ChecklistItem } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useI18n } from '@/hooks/use-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Textarea } from '@/components/ui/textarea';
 
 const emptySegment: CompanySegment = {
   id: '',
   name: '',
   customFields: [],
   applicableRoles: [],
+  checklistTemplate: [],
 };
 
 const customFieldTypes: { value: CustomFieldType, label: string }[] = [
@@ -65,9 +68,9 @@ export default function SegmentsPage() {
         ? JSON.parse(JSON.stringify(segment)) 
         : JSON.parse(JSON.stringify(emptySegment));
 
-    // Ensure customFields and applicableRoles are arrays
     initialData.customFields = initialData.customFields || [];
     initialData.applicableRoles = initialData.applicableRoles || [];
+    initialData.checklistTemplate = initialData.checklistTemplate || [];
     
     setFormData(initialData);
     setIsDialogOpen(true);
@@ -128,6 +131,32 @@ export default function SegmentsPage() {
     }));
   };
 
+  const handleAddChecklistGroup = () => {
+    const newGroup: ChecklistGroup = { id: `group_${Date.now()}`, title: '', items: [] };
+    setFormData(prev => ({...prev, checklistTemplate: [...(prev.checklistTemplate || []), newGroup]}));
+  };
+
+  const handleRemoveChecklistGroup = (groupId: string) => {
+    setFormData(prev => ({...prev, checklistTemplate: (prev.checklistTemplate || []).filter(g => g.id !== groupId)}));
+  };
+
+  const handleChecklistGroupTitleChange = (groupId: string, value: string) => {
+    setFormData(prev => ({...prev, checklistTemplate: (prev.checklistTemplate || []).map(g => g.id === groupId ? {...g, title: value} : g)}));
+  };
+
+  const handleAddChecklistItem = (groupId: string) => {
+    const newItem: Omit<ChecklistItem, 'status'> = { id: `item_${Date.now()}`, text: ''};
+    setFormData(prev => ({...prev, checklistTemplate: (prev.checklistTemplate || []).map(g => g.id === groupId ? {...g, items: [...g.items, {...newItem, status: 'OK'}]} : g)}));
+  };
+
+
+  const handleRemoveChecklistItem = (groupId: string, itemId: string) => {
+    setFormData(prev => ({...prev, checklistTemplate: (prev.checklistTemplate || []).map(g => g.id === groupId ? {...g, items: g.items.filter(i => i.id !== itemId)} : g)}));
+  };
+
+  const handleChecklistItemTextChange = (groupId: string, itemId: string, value: string) => {
+    setFormData(prev => ({...prev, checklistTemplate: (prev.checklistTemplate || []).map(g => g.id === groupId ? {...g, items: g.items.map(i => i.id === itemId ? {...i, text: value} : i)} : g)}));
+  };
 
   const handleSaveSegment = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -136,6 +165,7 @@ export default function SegmentsPage() {
       id: editingSegment?.id || formData.name.toUpperCase().replace(/\s/g, '_'),
       customFields: formData.customFields || [],
       applicableRoles: formData.applicableRoles || [],
+      checklistTemplate: formData.checklistTemplate || [],
     };
 
     let updatedSegments;
@@ -201,14 +231,14 @@ export default function SegmentsPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editingSegment ? t('segments.dialog.editTitle') : t('segments.dialog.newTitle')}</DialogTitle>
             <DialogDescription>
               {editingSegment ? t('segments.dialog.editDescription') : t('segments.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+          <ScrollArea className="max-h-[70vh] -mx-6 px-6">
             <form onSubmit={handleSaveSegment} id="segment-form" className="space-y-6 py-4">
                 <div className="space-y-2 px-1">
                     <Label htmlFor="name">{t('segments.dialog.name')}</Label>
@@ -284,6 +314,60 @@ export default function SegmentsPage() {
                       ))}
                   </div>
                 </div>
+
+                <Separator />
+                
+                <div className="space-y-4 px-1">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="font-medium">Modelo de Checklist</h3>
+                            <p className="text-sm text-muted-foreground">Defina o checklist padrão para este segmento.</p>
+                        </div>
+                        <Button type="button" size="sm" variant="outline" onClick={handleAddChecklistGroup}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Adicionar Grupo
+                        </Button>
+                    </div>
+
+                    <Accordion type="multiple" className="w-full space-y-4">
+                        {(formData.checklistTemplate || []).map((group, groupIndex) => (
+                            <AccordionItem value={`group-${groupIndex}`} key={group.id} className="border rounded-lg px-4 bg-background">
+                                <AccordionTrigger className="py-3 hover:no-underline">
+                                    <div className="flex-1 flex items-center gap-2">
+                                        <Input 
+                                            value={group.title} 
+                                            onChange={(e) => handleChecklistGroupTitleChange(group.id, e.target.value)} 
+                                            placeholder="Título do Grupo"
+                                            className="font-semibold text-base"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleRemoveChecklistGroup(group.id)}}>
+                                            <Trash2 className="h-4 w-4 text-destructive"/>
+                                        </Button>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-2 pb-4 space-y-3">
+                                    {group.items.map((item, itemIndex) => (
+                                        <div key={item.id} className="flex items-center gap-2">
+                                            <Input 
+                                                value={item.text}
+                                                onChange={(e) => handleChecklistItemTextChange(group.id, item.id, e.target.value)}
+                                                placeholder={`Item de checklist #${itemIndex + 1}`}
+                                            />
+                                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => handleRemoveChecklistItem(group.id, item.id)}>
+                                                <Trash2 className="h-4 w-4 text-destructive"/>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => handleAddChecklistItem(group.id)}>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Adicionar Item
+                                    </Button>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </div>
             </form>
           </ScrollArea>
           <DialogFooter>
@@ -295,5 +379,3 @@ export default function SegmentsPage() {
     </div>
   );
 }
-
-    

@@ -54,6 +54,7 @@ export type CompanySegment = {
   name: string;
   customFields?: CustomField[];
   applicableRoles?: string[]; // IDs of CMMSRole
+  checklistTemplate?: Checklist;
 };
 
 export type CompanyStatus = 'active' | 'inactive';
