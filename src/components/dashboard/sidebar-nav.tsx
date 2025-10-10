@@ -28,6 +28,8 @@ import {
   Lightbulb,
   DollarSign,
   Banknote,
+  Library,
+  Target,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -125,6 +127,22 @@ export function SidebarNav() {
                                     <Link href="/dashboard/finance/addons">
                                         <Puzzle />
                                         <span>{t('sidebar.addons')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/chart-of-accounts', true)}>
+                                    <Link href="/dashboard/finance/chart-of-accounts">
+                                        <Library />
+                                        <span>{t('sidebar.chartOfAccounts')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/cost-centers', true)}>
+                                    <Link href="/dashboard/finance/cost-centers">
+                                        <Target />
+                                        <span>{t('sidebar.costCenters')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>

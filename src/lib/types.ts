@@ -83,7 +83,7 @@ export type User = {
   name: string;
   email: string;
   role: UserRole;
-  saasRole: SaaSUserRole;
+  saasRole: SaaSUserole;
   cmmsRole: CMMSRole['id'] | null;
   clientId: string | null;
   clientName?: string; 
@@ -277,4 +277,23 @@ export type PurchaseOrder = {
   creationDate: number; // timestamp
   items: PurchaseOrderItem[];
   totalValue: number;
+};
+
+// Types for General Financial Management (Overhead)
+
+export type AccountType = 'RECEITA' | 'CUSTO' | 'DESPESA';
+
+export type ChartOfAccount = {
+  id: string;
+  code: string;
+  name: string;
+  type: AccountType;
+  parentCode?: string;
+  isGroup: boolean; // True if it's a parent account (e.g., "1.0.0.0 Receitas")
+};
+
+export type CostCenter = {
+  id: string;
+  name: string;
+  description?: string;
 };

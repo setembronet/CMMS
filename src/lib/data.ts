@@ -1,9 +1,39 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
+
+export let costCenters: CostCenter[] = [
+    { id: 'cc-01', name: 'Administrativo', description: 'Despesas gerais da administração' },
+    { id: 'cc-02', name: 'Comercial', description: 'Despesas da equipe de vendas e marketing' },
+    { id: 'cc-03', name: 'Operacional', description: 'Custos ligados à operação de manutenção' },
+    { id: 'cc-04', name: 'RH', description: 'Despesas com pessoal e recursos humanos' },
+];
+
+export let chartOfAccounts: ChartOfAccount[] = [
+    // Receitas
+    { id: 'coa-1', code: '1.0.0.0', name: 'Receitas', type: 'RECEITA', isGroup: true },
+    { id: 'coa-2', code: '1.1.0.0', name: 'Receita de Serviços', type: 'RECEITA', parentCode: '1.0.0.0', isGroup: true },
+    { id: 'coa-3', code: '1.1.1.0', name: 'Contratos de Manutenção', type: 'RECEITA', parentCode: '1.1.0.0', isGroup: false },
+    { id: 'coa-4', code: '1.1.2.0', name: 'Serviços Avulsos', type: 'RECEITA', parentCode: '1.1.0.0', isGroup: false },
+
+    // Custos
+    { id: 'coa-5', code: '2.0.0.0', name: 'Custos Operacionais', type: 'CUSTO', isGroup: true },
+    { id: 'coa-6', code: '2.1.0.0', name: 'Custo com Peças', type: 'CUSTO', parentCode: '2.0.0.0', isGroup: false },
+    { id: 'coa-7', code: '2.2.0.0', name: 'Custo com Mão de Obra', type: 'CUSTO', parentCode: '2.0.0.0', isGroup: true },
+    { id: 'coa-8', code: '2.2.1.0', name: 'Salários - Técnicos', type: 'CUSTO', parentCode: '2.2.0.0', isGroup: false },
+    
+    // Despesas
+    { id: 'coa-9', code: '3.0.0.0', name: 'Despesas', type: 'DESPESA', isGroup: true },
+    { id: 'coa-10', code: '3.1.0.0', name: 'Despesas Administrativas', type: 'DESPESA', parentCode: '3.0.0.0', isGroup: true },
+    { id: 'coa-11', code: '3.1.1.0', name: 'Aluguel', type: 'DESPESA', parentCode: '3.1.0.0', isGroup: false },
+    { id: 'coa-12', code: '3.1.2.0', name: 'Contas de Consumo', type: 'DESPESA', parentCode: '3.1.0.0', isGroup: false },
+    { id: 'coa-13', code: '3.2.0.0', name: 'Despesas com Pessoal', type: 'DESPESA', parentCode: '3.0.0.0', isGroup: true },
+    { id: 'coa-14', code: '3.2.1.0', name: 'Salários - Administrativo', type: 'DESPESA', parentCode: '3.2.0.0', isGroup: false },
+];
+
 
 export let cmmsRoles: CMMSRole[] = [
   { id: 'GESTOR', name: 'Gestor' },
@@ -429,6 +459,8 @@ export const getBackupData = () => ({
   suppliers,
   purchaseOrders,
   checklistTemplates,
+  costCenters,
+  chartOfAccounts,
 });
 
 // Function to restore all data
@@ -450,5 +482,7 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.suppliers)) setSuppliers(data.suppliers);
     if (Array.isArray(data.purchaseOrders)) setPurchaseOrders(data.purchaseOrders);
     if (Array.isArray(data.checklistTemplates)) setChecklistTemplates(data.checklistTemplates);
+    if (Array.isArray(data.costCenters)) costCenters = data.costCenters;
+    if (Array.isArray(data.chartOfAccounts)) chartOfAccounts = data.chartOfAccounts;
   }
 };

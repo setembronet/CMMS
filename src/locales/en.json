@@ -31,7 +31,9 @@
     "purchaseOrders": "Purchase Orders",
     "purchaseSuggestion": "Purchase Suggestion",
     "checklistTemplates": "Checklist Templates",
-    "subscriptions": "Subscriptions"
+    "subscriptions": "Subscriptions",
+    "chartOfAccounts": "Chart of Accounts",
+    "costCenters": "Cost Centers"
   },
   "common": {
     "save": "Save",

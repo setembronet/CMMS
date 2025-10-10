@@ -31,7 +31,9 @@
     "purchaseOrders": "Ordens de Compra",
     "purchaseSuggestion": "Sugestão de Compra",
     "checklistTemplates": "Modelos de Checklist",
-    "subscriptions": "Assinaturas"
+    "subscriptions": "Assinaturas",
+    "chartOfAccounts": "Plano de Contas",
+    "costCenters": "Centros de Custo"
   },
   "common": {
     "save": "Salvar",
