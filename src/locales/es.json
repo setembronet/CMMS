@@ -193,8 +193,10 @@
       "cost": "Costo",
       "stock": "Stock",
       "noParts": "No se han añadido piezas.",
-      "totalPartsCost": "Costo Total de Piezas",
-      "internalObservation": "Observación Interna (visible solo para el equipo)",
+      "partsCost": "Costo Piezas",
+      "laborCost": "Costo Mano de Obra",
+      "totalCost": "Costo Total OS",
+      "internalObservation": "Observación (Uso Interno)",
       "internalObservationPlaceholder": "Detalles técnicos, historial relevante, etc.",
       "reopen": "Reabrir OS",
       "close": "Cerrar"
