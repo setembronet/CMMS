@@ -49,20 +49,10 @@ import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { useI18n } from '@/hooks/use-i18n';
-import { useClient } from '@/context/client-provider';
 
-
-function ManagerNav() {
+export function SidebarNav() {
   const pathname = usePathname();
   const { t } = useI18n();
-
-   const settingsLinks = [
-      { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
-      { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
-      { href: '/dashboard/settings/roles', label: t('sidebar.roles'), icon: Briefcase },
-      { href: '/dashboard/settings/checklists', label: t('sidebar.checklistTemplates'), icon: ClipboardList },
-      { href: '/dashboard/settings/backup', label: t('sidebar.backupRestore'), icon: History },
-  ];
 
   const isActive = (href: string, isSubItem: boolean = false) => {
     if (isSubItem) {
@@ -75,10 +65,31 @@ function ManagerNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
+  
+  const technicianNavItems = [
+    { href: '/dashboard', label: t('sidebar.dashboard'), icon: Home },
+    { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ClipboardList },
+    { href: '/dashboard/assets', label: t('sidebar.assets'), icon: Wrench },
+  ];
+  const isTechnicianPortalActive = technicianNavItems.some(item => isActive(item.href, item.href === '/dashboard'));
+
+
+  const settingsLinks = [
+      { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
+      { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
+      { href: '/dashboard/settings/roles', label: t('sidebar.roles'), icon: Briefcase },
+      { href: '/dashboard/settings/checklists', label: t('sidebar.checklistTemplates'), icon: ClipboardList },
+      { href: '/dashboard/settings/backup', label: t('sidebar.backupRestore'), icon: History },
+  ];
 
   return (
-     <>
-        <SidebarMenu>
+    <>
+      <SidebarHeader>
+        <Logo />
+      </SidebarHeader>
+      <SidebarContent className="flex flex-col p-2">
+         <SidebarMenu>
+          {/* Manager/Admin Menus */}
           <Collapsible asChild defaultOpen={isSaaSFinanceActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
@@ -342,6 +353,40 @@ function ManagerNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
+           
+           {/* Technician Portal Menu */}
+            <Collapsible asChild defaultOpen={isTechnicianPortalActive}>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                         <SidebarMenuButton
+                            isActive={isTechnicianPortalActive}
+                            className="justify-between"
+                            tooltip={{ children: "Portal do Técnico" }}
+                         >
+                            <div className="flex items-center gap-2">
+                                <UserSquare />
+                                <span>Portal do Técnico</span>
+                            </div>
+                            <ChevronDown className={cn("transition-transform duration-200", isTechnicianPortalActive && "rotate-180")} />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {technicianNavItems.map(item => (
+                                <SidebarMenuSubItem key={item.href}>
+                                    <SidebarMenuSubButton asChild isActive={isActive(item.href, item.href === '/dashboard')}>
+                                        <Link href={item.href}>
+                                            <item.icon />
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                            ))}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+           </Collapsible>
+
         </SidebarMenu>
         <SidebarMenu className="mt-auto">
           <Collapsible asChild defaultOpen={isSettingsActive}>
@@ -384,88 +429,6 @@ function ManagerNav() {
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
-    </>
-  );
-}
-
-function TechnicianNav() {
-  const pathname = usePathname();
-  const { t } = useI18n();
-
-  const isActive = (href: string, isSubItem: boolean = false) => {
-    if (isSubItem) {
-        return pathname === href;
-    }
-    return pathname.startsWith(href);
-  };
-  
-  const navItems = [
-    { href: '/dashboard', label: t('sidebar.dashboard'), icon: Home },
-    { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ClipboardList },
-    { href: '/dashboard/assets', label: t('sidebar.assets'), icon: Wrench },
-  ];
-
-  return (
-    <>
-        <SidebarMenu>
-            <Collapsible asChild defaultOpen>
-                <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                         <SidebarMenuButton
-                            isActive={true}
-                            className="justify-between"
-                            tooltip={{ children: "Portal do Técnico" }}
-                         >
-                            <div className="flex items-center gap-2">
-                                <UserSquare />
-                                <span>Portal do Técnico</span>
-                            </div>
-                            <ChevronDown className="transition-transform duration-200 rotate-180" />
-                        </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                            {navItems.map(item => (
-                                <SidebarMenuSubItem key={item.href}>
-                                    <SidebarMenuSubButton asChild isActive={isActive(item.href, item.href === '/dashboard')}>
-                                        <Link href={item.href}>
-                                            <item.icon />
-                                            <span>{item.label}</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                            ))}
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </SidebarMenuItem>
-           </Collapsible>
-        </SidebarMenu>
-        <SidebarMenu className="mt-auto">
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
-                    <Link href="/">
-                        <LogOut />
-                        <span>{t('sidebar.logout')}</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
-    </>
-  );
-}
-
-
-export function SidebarNav() {
-  const { currentUser } = useClient();
-  const isTechnician = currentUser?.cmmsRole === 'TECNICO';
-
-  return (
-    <>
-      <SidebarHeader>
-        <Logo />
-      </SidebarHeader>
-      <SidebarContent className="flex flex-col p-2">
-        {isTechnician ? <TechnicianNav /> : <ManagerNav />}
       </SidebarContent>
     </>
   );

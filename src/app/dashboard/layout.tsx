@@ -15,7 +15,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { currentUser } = useClient();
 
   if (!currentUser) {
-    return null; // Or a loading component
+    // Or a loading spinner, or some other placeholder
+    return null;
   }
   
   return (
