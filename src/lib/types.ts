@@ -1,6 +1,5 @@
 
 
-
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -236,7 +235,7 @@ export type Supplier = {
   cnpj: string;
   email?: string;
   phone?: string;
-  categories?: SupplierCategory[];
+  categories: SupplierCategory[];
   address: {
     street: string;
     number: string;
