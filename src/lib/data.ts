@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -117,7 +117,7 @@ export let companies: Company[] = [
     id: 'client-04', 
     name: 'Tecno-Lift', 
     cnpj: '33.333.333/0001-33', 
-    email: 'vendas@tecnolift.com.br', 
+    email: 'vendas@tecnolift.com.br', DADOS
     status: 'active', 
     planId: 'plan_free',
     activeAddons: [],
@@ -183,6 +183,12 @@ export let workOrders: WorkOrder[] = [
   { id: 'os-03', clientId: 'client-02', assetId: 'asset-03', title: 'Degrau quebrado', status: 'EM ANDAMENTO', priority: 'Urgente', creationDate: new Date(2024, 6, 22).getTime(), createdByUserId: 'user-06', startDate: new Date(2024, 6, 22, 14).getTime(), responsibleId: 'user-07', squad: 'Equipe Beta' },
 ];
 
+export let products: Product[] = [
+    { id: 'prod-01', name: 'Óleo Lubrificante XPTO', sku: 'LUB-001', manufacturer: 'Castrol', stock: 150 },
+    { id: 'prod-02', name: 'Correia Dentada 5M', sku: 'COR-005', manufacturer: 'Gates', stock: 80 },
+    { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', stock: 10 },
+];
+
 export let kpis = {
     activeUsers: users.length,
     mockMrr: 1250, // This will be replaced by dynamic calculation
@@ -227,6 +233,10 @@ export const setWorkOrders = (newWorkOrders: WorkOrder[]) => {
   workOrders = newWorkOrders;
 };
 
+export const setProducts = (newProducts: Product[]) => {
+  products = newProducts;
+};
+
 export const setKpis = (newKpis: typeof kpis) => {
     kpis = newKpis;
 };
@@ -243,6 +253,7 @@ export const getBackupData = () => ({
   workOrders,
   cmmsRoles,
   kpis,
+  products,
 });
 
 // Function to restore all data
@@ -259,5 +270,6 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.workOrders)) setWorkOrders(data.workOrders);
     if (Array.isArray(data.cmmsRoles)) setCmmsRoles(data.cmmsRoles);
     if (data.kpis) setKpis(data.kpis);
+    if (Array.isArray(data.products)) setProducts(data.products);
   }
 };

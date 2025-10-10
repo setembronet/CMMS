@@ -22,6 +22,7 @@ import {
   Wrench,
   MapPin,
   Contact,
+  PackageSearch,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -72,7 +73,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/products'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -205,6 +206,14 @@ export function SidebarNav() {
                                     <Link href="/dashboard/assets">
                                         <Package />
                                         <span>{t('sidebar.assets')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/products', true)}>
+                                    <Link href="/dashboard/products">
+                                        <PackageSearch />
+                                        <span>Peças</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>

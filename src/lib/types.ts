@@ -158,3 +158,11 @@ export type WorkOrder = {
   internalObservation?: string;
   squad?: string;
 };
+
+export type Product = {
+  id: string;
+  name: string;
+  sku: string;
+  manufacturer: string;
+  stock: number;
+};
