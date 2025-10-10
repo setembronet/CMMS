@@ -167,11 +167,6 @@ export function SidebarNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
-
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarContent className="p-2 mt-auto">
-        <SidebarMenu>
             <Collapsible asChild defaultOpen={isCmmsActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
@@ -273,6 +268,10 @@ export function SidebarNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarContent className="p-2 mt-auto">
+        <SidebarMenu>
 
           <Collapsible asChild defaultOpen={isSettingsActive}>
                 <SidebarMenuItem>
