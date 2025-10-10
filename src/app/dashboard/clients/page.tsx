@@ -28,9 +28,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit, MessageSquarePlus, Clock } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit, MessageSquarePlus, Clock, Receipt } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles, assets, workOrders, segments, users } from '@/lib/data';
+import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles, assets, workOrders, segments, users, products } from '@/lib/data';
 import type { CustomerLocation, Contact, CMMSRole, WorkOrder, ContractStatus, Interaction, InteractionType } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -88,6 +88,8 @@ export default function ClientsPage() {
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
   const [formData, setFormData] = React.useState<CustomerLocation>(emptyLocation);
   const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>([]);
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = React.useState(false);
+  const [invoicingLocation, setInvoicingLocation] = React.useState<CustomerLocation | null>(null);
   
   React.useEffect(() => {
     // This will keep the local state in sync if the global data changes.
@@ -120,6 +122,11 @@ export default function ClientsPage() {
 
     setFormData(locationData);
     setIsDialogOpen(true);
+  };
+  
+  const openInvoiceDialog = (location: CustomerLocation) => {
+    setInvoicingLocation(location);
+    setIsInvoiceDialogOpen(true);
   };
 
   const closeDialog = () => {
@@ -274,6 +281,24 @@ export default function ClientsPage() {
     const correctiveOrders = locationWorkOrders.filter(wo => ['Alta', 'Urgente'].includes(wo.priority)).length;
     return (correctiveOrders / locationWorkOrders.length) * 100;
   }
+
+  const getPartsCostLast90Days = (locationId: string) => {
+    const ninetyDaysAgo = new Date().setDate(new Date().getDate() - 90);
+    const locationAssets = assets.filter(a => a.customerLocationId === locationId).map(a => a.id);
+    const recentWorkOrders = workOrders.filter(wo => 
+        locationAssets.includes(wo.assetId) && 
+        wo.creationDate >= ninetyDaysAgo &&
+        wo.partsUsed && wo.partsUsed.length > 0
+    );
+
+    return recentWorkOrders.reduce((totalCost, wo) => {
+        const orderCost = (wo.partsUsed || []).reduce((cost, part) => {
+            const product = products.find(p => p.id === part.productId);
+            return cost + (product ? product.price * part.quantity : 0);
+        }, 0);
+        return totalCost + orderCost;
+    }, 0);
+  };
   
   const getStatusBadgeVariant = (status: ContractStatus) => {
       switch (status) {
@@ -285,6 +310,13 @@ export default function ClientsPage() {
 
   const getUserName = (id: string) => users.find(u => u.id === id)?.name || 'Usuário';
 
+  const getWorkOrdersForInvoice = (locationId: string | null) => {
+    if (!locationId) return [];
+    const locationAssets = assets.filter(a => a.customerLocationId === locationId).map(a => a.id);
+    return workOrders.filter(wo => locationAssets.includes(wo.assetId) && wo.partsUsed && wo.partsUsed.length > 0)
+        .sort((a,b) => b.creationDate - a.creationDate)
+        .slice(0, 10); // get last 10 for simplicity
+  };
 
   return (
     <TooltipProvider>
@@ -304,6 +336,7 @@ export default function ClientsPage() {
                 <TableHead>Ativos</TableHead>
                 <TableHead>OS Abertas</TableHead>
                 <TableHead>Status Contrato</TableHead>
+                <TableHead>Custo Peças (90d)</TableHead>
                 <TableHead>Criticidade</TableHead>
                 <TableHead>Add-ons</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -314,6 +347,7 @@ export default function ClientsPage() {
                 const assetCount = getAssetCount(location.id);
                 const openWOs = getOpenWorkOrders(location.id);
                 const correctiveRatio = getCorrectiveRatio(location.id);
+                const partsCost = getPartsCostLast90Days(location.id);
 
                 return (
                 <TableRow key={location.id}>
@@ -328,6 +362,9 @@ export default function ClientsPage() {
                       <FileText className="mr-1.5 h-3 w-3" />
                       {location.contractStatus}
                     </Badge>
+                  </TableCell>
+                   <TableCell>
+                      {partsCost > 0 ? `R$ ${partsCost.toFixed(2)}` : 'R$ 0,00'}
                   </TableCell>
                   <TableCell>
                       {correctiveRatio > 50 && (
@@ -370,6 +407,10 @@ export default function ClientsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openDialog(location)}>
                           Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openInvoiceDialog(location)}>
+                           <Receipt className="mr-2 h-4 w-4" />
+                           Gerar Fatura
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -564,7 +605,73 @@ export default function ClientsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Gerar Fatura para {invoicingLocation?.name}</DialogTitle>
+                    <DialogDescription>
+                        Esta é uma simulação de fatura baseada nas peças usadas em Ordens de Serviço recentes.
+                    </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+                    <div className="py-4 px-1 space-y-4">
+                        {getWorkOrdersForInvoice(invoicingLocation?.id || null).map(wo => {
+                            const totalCost = (wo.partsUsed || []).reduce((acc, part) => {
+                                const product = products.find(p => p.id === part.productId);
+                                return acc + (product ? product.price * part.quantity : 0);
+                            }, 0);
+
+                            return (
+                                <div key={wo.id} className="border rounded-lg p-4">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h4 className="font-semibold">{wo.title} (OS: {wo.id})</h4>
+                                        <span className="font-bold">R$ {totalCost.toFixed(2)}</span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">Data: {format(new Date(wo.creationDate), "dd/MM/yyyy")}</p>
+                                    <Separator className="my-2" />
+                                    <ul className="text-sm space-y-1">
+                                        {(wo.partsUsed || []).map(part => {
+                                            const product = products.find(p => p.id === part.productId);
+                                            return (
+                                                <li key={part.productId} className="flex justify-between">
+                                                    <span>{product?.name || 'Peça desconhecida'} (x{part.quantity})</span>
+                                                    <span>R$ {( (product?.price || 0) * part.quantity).toFixed(2)}</span>
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
+                                </div>
+                            )
+                        })}
+                         {getWorkOrdersForInvoice(invoicingLocation?.id || null).length === 0 && (
+                            <p className="text-muted-foreground text-center py-8">Nenhuma ordem de serviço com peças para faturar.</p>
+                         )}
+                    </div>
+                </ScrollArea>
+                <DialogFooter>
+                    <div className="w-full flex justify-between items-center">
+                        <span className="font-bold text-lg">
+                            Total a Faturar: R$ {
+                                getWorkOrdersForInvoice(invoicingLocation?.id || null).reduce((total, wo) => {
+                                    return total + (wo.partsUsed || []).reduce((acc, part) => {
+                                        const product = products.find(p => p.id === part.productId);
+                                        return acc + (product ? product.price * part.quantity : 0);
+                                    }, 0);
+                                }, 0).toFixed(2)
+                            }
+                        </span>
+                        <div>
+                            <Button variant="outline" onClick={() => setIsInvoiceDialogOpen(false)}>Fechar</Button>
+                            <Button className="ml-2">Enviar Fatura (Simulado)</Button>
+                        </div>
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );
 }
+
+    

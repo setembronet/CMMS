@@ -23,6 +23,7 @@ import {
   MapPin,
   Contact,
   PackageSearch,
+  Receipt,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -58,10 +59,6 @@ export function SidebarNav() {
 
 
   const isActive = (href: string, isSubItem: boolean = false) => {
-    // Exact match for root dashboard
-    if (href === '/dashboard') {
-        return pathname === href;
-    }
     // For sub-items, we want an exact match
      if (isSubItem) {
         return pathname === href;
@@ -69,6 +66,9 @@ export function SidebarNav() {
     // For main sections, we check if the path starts with the href
     return pathname.startsWith(href);
   };
+  
+  // Custom check for the main SaaS dashboard
+  const isSaaSMainDashboardActive = pathname === '/dashboard';
 
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
@@ -85,11 +85,11 @@ export function SidebarNav() {
           <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={isActive('/dashboard')}
+                isActive={isSaaSMainDashboardActive}
                 tooltip={{ children: t('sidebar.dashboard') }}
               >
                 <Link href="/dashboard">
-                  <Home />
+                  <TrendingUp />
                   <span>{t('sidebar.dashboard')}</span>
                 </Link>
               </SidebarMenuButton>
@@ -142,7 +142,7 @@ export function SidebarNav() {
                             tooltip={{ children: t('sidebar.finance') }}
                          >
                             <div className="flex items-center gap-2">
-                                <TrendingUp />
+                                <Receipt />
                                 <span>{t('sidebar.finance')}</span>
                             </div>
                             <ChevronDown className={cn("transition-transform duration-200", isFinanceActive && "rotate-180")} />
@@ -282,3 +282,5 @@ export function SidebarNav() {
     </>
   );
 }
+
+    
