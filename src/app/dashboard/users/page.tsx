@@ -83,6 +83,7 @@ export default function CMMSUsersPage() {
       avatarUrl: '',
       password: '',
       confirmPassword: '',
+      costPerHour: 0,
   }), [selectedClient]);
 
   React.useEffect(() => {
@@ -150,10 +151,10 @@ export default function CMMSUsersPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!formData) return;
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     setFormData(prev => {
         if (!prev) return null;
-        const newFormData = { ...prev, [name]: value };
+        const newFormData = { ...prev, [name]: type === 'number' ? parseFloat(value) || 0 : value };
         if (name === 'password') {
             setPasswordStrength(value ? calculatePasswordStrength(value) : null);
         }
@@ -351,21 +352,27 @@ export default function CMMSUsersPage() {
                       <Input value={selectedClient?.name || ''} disabled />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="cmmsRole">{t('users.dialog.role')}</Label>
-                      <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder={availableRoles.length > 0 ? t('users.dialog.rolePlaceholder') : t('users.dialog.noRoles')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableRoles.map(role => (
-                            <SelectItem key={role.id} value={role.id} disabled={role.id === 'TECNICO' && hasReachedTechnicianLimit && !editingUser}>{role.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit && !editingUser && (
-                          <p className="text-sm text-destructive">{t('users.dialog.technicianLimitReached')}</p>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="cmmsRole">{t('users.dialog.role')}</Label>
+                        <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} required>
+                          <SelectTrigger>
+                            <SelectValue placeholder={availableRoles.length > 0 ? t('users.dialog.rolePlaceholder') : t('users.dialog.noRoles')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableRoles.map(role => (
+                              <SelectItem key={role.id} value={role.id} disabled={role.id === 'TECNICO' && hasReachedTechnicianLimit && !editingUser}>{role.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit && !editingUser && (
+                            <p className="text-sm text-destructive">{t('users.dialog.technicianLimitReached')}</p>
+                        )}
+                      </div>
+                       <div className="space-y-2">
+                        <Label htmlFor="costPerHour">{t('users.dialog.costPerHour')}</Label>
+                        <Input id="costPerHour" name="costPerHour" type="number" value={formData.costPerHour || 0} onChange={handleInputChange} />
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
@@ -386,5 +393,3 @@ export default function CMMSUsersPage() {
     </TooltipProvider>
   );
 }
-
-    

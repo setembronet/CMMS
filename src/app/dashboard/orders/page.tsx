@@ -38,12 +38,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronRight } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight } from 'lucide-react';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations, checklistTemplates } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { format, addDays, addMonths, addWeeks, addQuarters, addYears } from 'date-fns';
+import { format, addDays, addMonths, addWeeks, addQuarters, addYears, differenceInMilliseconds } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -194,7 +194,8 @@ export default function WorkOrdersPage() {
 
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
-  const getTechnicianName = (id?: string) => id ? allUsers.find(u => u.id === id)?.name : 'N/A';
+  const getTechnician = (id?: string) => id ? allUsers.find(u => u.id === id) : null;
+  const getTechnicianName = (id?: string) => getTechnician(id)?.name || 'N/A';
   
   const getProduct = (id: string) => products.find(p => p.id === id);
   const getProductName = (id: string) => getProduct(id)?.name || 'N/A';
@@ -315,12 +316,23 @@ export default function WorkOrdersPage() {
     setFormData(prev => prev ? ({...prev, checklist: newChecklist}) : null);
   };
 
-  const calculateTotalCost = () => {
-    if (!formData) return 0;
-    return (formData.partsUsed || []).reduce((total, part) => {
+  const calculatePartsCost = (order: WorkOrder | null) => {
+    if (!order) return 0;
+    return (order.partsUsed || []).reduce((total, part) => {
       const product = products.find(p => p.id === part.productId);
       return total + (product ? product.price * part.quantity : 0);
     }, 0);
+  };
+
+  const calculateLaborCost = (order: WorkOrder | null) => {
+    if (!order || !order.startDate || !order.endDate || !order.responsibleId) return 0;
+    const technician = getTechnician(order.responsibleId);
+    if (!technician || !technician.costPerHour) return 0;
+
+    const durationInMillis = differenceInMilliseconds(new Date(order.endDate), new Date(order.startDate));
+    const durationInHours = durationInMillis / (1000 * 60 * 60);
+
+    return durationInHours * technician.costPerHour;
   };
 
 
@@ -476,6 +488,10 @@ export default function WorkOrdersPage() {
       
       return events.sort((a,b) => b.date - a.date);
   }
+  
+  const laborCost = calculateLaborCost(formData);
+  const partsCost = calculatePartsCost(formData);
+  const totalCost = laborCost + partsCost;
 
   if (!selectedClient) {
     return (
@@ -793,8 +809,10 @@ export default function WorkOrdersPage() {
                                 </TableBody>
                             </Table>
                         </div>
-                        <div className="flex justify-end font-medium">
-                            {t('workOrders.dialog.totalPartsCost')}: R$ {calculateTotalCost().toFixed(2)}
+                        <div className="grid grid-cols-3 gap-4 text-right font-medium">
+                            <span>{t('workOrders.dialog.partsCost')}: R$ {partsCost.toFixed(2)}</span>
+                            <span>{t('workOrders.dialog.laborCost')}: R$ {laborCost.toFixed(2)}</span>
+                            <span className="text-lg font-bold">{t('workOrders.dialog.totalCost')}: R$ {totalCost.toFixed(2)}</span>
                         </div>
                     </div>
 
@@ -811,9 +829,9 @@ export default function WorkOrdersPage() {
               <ScrollArea className="border-l -ml-3 pl-3">
                   <div className="px-4 py-4 space-y-4">
                       <Collapsible defaultOpen>
-                        <CollapsibleTrigger className="flex w-full items-center justify-between">
-                            <h3 className="text-base font-medium">Linha do Tempo</h3>
-                            <ChevronRight className="h-5 w-5 transition-transform data-[state=open]:rotate-90" />
+                        <CollapsibleTrigger className="flex w-full items-center justify-between text-base font-medium">
+                            Linha do Tempo
+                            <ChevronDown className="h-5 w-5 transition-transform data-[state=open]:-rotate-180" />
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                             <Timeline className="mt-4">
@@ -863,7 +881,3 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
-
-
-
-    

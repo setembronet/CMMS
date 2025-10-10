@@ -514,7 +514,8 @@
       "noRoles": "No applicable roles",
       "technicianLimitReached": "The technician limit for this plan has been reached.",
       "squad": "Squad",
-      "squadPlaceholder": "Optional for technicians"
+      "squadPlaceholder": "Optional for technicians",
+      "costPerHour": "Cost per Hour ($)"
     }
   },
   "products": {

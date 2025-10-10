@@ -192,11 +192,11 @@ export let users: User[] = [
   { id: 'user-01', name: 'Admin Master', email: 'admin@tenantcare.com', role: 'ADMIN', saasRole: 'ADMIN', cmmsRole: null, clientId: null, avatarUrl: userAvatar },
   { id: 'user-02', name: 'Financeiro App', email: 'finance@tenantcare.com', role: 'FINANCEIRO', saasRole: 'FINANCEIRO', cmmsRole: null, clientId: null, avatarUrl: userAvatar },
   { id: 'user-03', name: 'Suporte App', email: 'support@tenantcare.com', role: 'SUPORTE', saasRole: 'SUPORTE', cmmsRole: null, clientId: null, avatarUrl: userAvatar },
-  { id: 'user-04', name: 'João Silva', email: 'joao.silva@atlas.com', role: 'GESTOR', saasRole: 'VIEWER', cmmsRole: 'GESTOR', clientId: 'client-01', clientName: 'Elevadores Atlas', avatarUrl: userAvatar },
-  { id: 'user-05', name: 'Maria Santos', email: 'maria.santos@atlas.com', role: 'TECNICO', saasRole: 'VIEWER', cmmsRole: 'TECNICO', clientId: 'client-01', clientName: 'Elevadores Atlas', squad: 'Equipe Alpha', avatarUrl: userAvatar },
-  { id: 'user-06', name: 'Carlos Pereira', email: 'carlos@escadasbr.com', role: 'GESTOR', saasRole: 'VIEWER', cmmsRole: 'GESTOR', clientId: 'client-02', clientName: 'Escadas Brasil', avatarUrl: userAvatar },
-  { id: 'user-07', name: 'Ana Costa', email: 'ana.costa@escadasbr.com', role: 'TECNICO', saasRole: 'VIEWER', cmmsRole: 'TECNICO', clientId: 'client-02', clientName: 'Escadas Brasil', squad: 'Equipe Beta', avatarUrl: userAvatar },
-  { id: 'user-08', name: 'Pedro Lima', email: 'pedro@xyz.com', role: 'SINDICO', saasRole: 'VIEWER', cmmsRole: 'SINDICO', clientId: 'client-03', clientName: 'Manutenção Predial XYZ', avatarUrl: userAvatar },
+  { id: 'user-04', name: 'João Silva', email: 'joao.silva@atlas.com', role: 'GESTOR', saasRole: 'VIEWER', cmmsRole: 'GESTOR', clientId: 'client-01', clientName: 'Elevadores Atlas', avatarUrl: userAvatar, costPerHour: 100 },
+  { id: 'user-05', name: 'Maria Santos', email: 'maria.santos@atlas.com', role: 'TECNICO', saasRole: 'VIEWER', cmmsRole: 'TECNICO', clientId: 'client-01', clientName: 'Elevadores Atlas', squad: 'Equipe Alpha', avatarUrl: userAvatar, costPerHour: 75 },
+  { id: 'user-06', name: 'Carlos Pereira', email: 'carlos@escadasbr.com', role: 'GESTOR', saasRole: 'VIEWER', cmmsRole: 'GESTOR', clientId: 'client-02', clientName: 'Escadas Brasil', avatarUrl: userAvatar, costPerHour: 100 },
+  { id: 'user-07', name: 'Ana Costa', email: 'ana.costa@escadasbr.com', role: 'TECNICO', saasRole: 'VIEWER', cmmsRole: 'TECNICO', clientId: 'client-02', clientName: 'Escadas Brasil', squad: 'Equipe Beta', avatarUrl: userAvatar, costPerHour: 80 },
+  { id: 'user-08', name: 'Pedro Lima', email: 'pedro@xyz.com', role: 'SINDICO', saasRole: 'VIEWER', cmmsRole: 'SINDICO', clientId: 'client-03', clientName: 'Manutenção Predial XYZ', avatarUrl: userAvatar, costPerHour: 0 },
 ];
 
 export let assets: Asset[] = [

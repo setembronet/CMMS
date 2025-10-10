@@ -514,7 +514,8 @@
       "noRoles": "No hay roles aplicables",
       "technicianLimitReached": "Se ha alcanzado el límite de técnicos para este plan.",
       "squad": "Equipo",
-      "squadPlaceholder": "Opcional para técnicos"
+      "squadPlaceholder": "Opcional para técnicos",
+      "costPerHour": "Costo por Hora ($)"
     }
   },
   "products": {

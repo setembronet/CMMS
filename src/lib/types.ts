@@ -90,6 +90,7 @@ export type User = {
   squad?: string;
   avatarUrl: string;
   password?: string;
+  costPerHour?: number;
 };
 
 export type Plan = {
