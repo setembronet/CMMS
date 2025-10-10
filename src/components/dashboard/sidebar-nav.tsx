@@ -44,7 +44,6 @@ export function SidebarNav() {
   const { t } = useI18n();
 
   const financeLinks = [
-      { href: '/dashboard/finance', label: t('sidebar.financeDashboard'), icon: LayoutGrid },
       { href: '/dashboard/finance/plans', label: t('sidebar.plans'), icon: Package },
       { href: '/dashboard/finance/addons', label: t('sidebar.addons'), icon: Puzzle },
   ];
@@ -58,19 +57,22 @@ export function SidebarNav() {
 
 
   const isActive = (href: string, isSubItem: boolean = false) => {
+    // Exact match for root dashboard
     if (href === '/dashboard') {
         return pathname === href;
     }
+    // For sub-items, we want an exact match
      if (isSubItem) {
         return pathname === href;
     }
+    // For main sections, we check if the path starts with the href
     return pathname.startsWith(href);
   };
 
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
-  const isFinanceActive = pathname.startsWith('/dashboard/finance') && !pathname.includes('subscriptions');
+  const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -182,6 +184,14 @@ export function SidebarNav() {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                         <SidebarMenuSub>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms', true)}>
+                                    <Link href="/dashboard/cmms">
+                                        <LayoutGrid />
+                                        <span>{t('sidebar.cmmsDashboard')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
                              <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/clients', true)}>
                                     <Link href="/dashboard/clients">
