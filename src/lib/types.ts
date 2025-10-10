@@ -142,6 +142,7 @@ export type Asset = {
   brand?: string;
   model?: string;
   observation?: string;
+  gallery?: string[];
   location: {
     lat: number;
     lng: number;

@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Table,
   TableBody,
@@ -36,7 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, MoreHorizontal, History } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, History, Trash2, Camera, QrCode } from 'lucide-react';
 import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations, workOrders, plans } from '@/lib/data';
 import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -76,6 +77,7 @@ export default function AssetsPage() {
     brand: '',
     model: '',
     observation: '',
+    gallery: [],
     location: { lat: 0, lng: 0 },
     customData: {},
   }), [selectedClient]);
@@ -144,6 +146,7 @@ export default function AssetsPage() {
     const assetData = asset ? JSON.parse(JSON.stringify(asset)) : JSON.parse(JSON.stringify(emptyAsset));
     
     assetData.customData = assetData.customData || {};
+    assetData.gallery = assetData.gallery || [];
 
     if (!asset && availableSegments.length === 1) {
         assetData.activeSegment = availableSegments[0].id;
@@ -187,6 +190,23 @@ export default function AssetsPage() {
     setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
+  const handleGalleryChange = (index: number, value: string) => {
+    if (!formData) return;
+    const newGallery = [...(formData.gallery || [])];
+    newGallery[index] = value;
+    setFormData(prev => prev ? { ...prev, gallery: newGallery } : null);
+  };
+
+  const addGalleryItem = () => {
+    if (!formData) return;
+    setFormData(prev => prev ? { ...prev, gallery: [...(prev.gallery || []), ''] } : null);
+  };
+
+  const removeGalleryItem = (index: number) => {
+    if (!formData) return;
+    setFormData(prev => prev ? { ...prev, gallery: (prev.gallery || []).filter((_, i) => i !== index) } : null);
+  };
+
   const handleSaveAsset = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData) return;
@@ -195,6 +215,7 @@ export default function AssetsPage() {
       ...formData,
       clientId: selectedClient?.id || '',
       id: editingAsset?.id || `asset-0${assets.length + 1}`,
+      gallery: (formData.gallery || []).filter(url => url.trim() !== ''),
     };
 
     if (editingAsset) {
@@ -299,7 +320,7 @@ export default function AssetsPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>{editingAsset ? t('assets.dialog.editTitle') : t('assets.dialog.newTitle')}</DialogTitle>
               <DialogDescription>
@@ -308,7 +329,7 @@ export default function AssetsPage() {
             </DialogHeader>
             {formData && (
               <>
-              <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+              <ScrollArea className="max-h-[70vh] -mx-6 px-6">
                 <form onSubmit={handleSaveAsset} id="asset-form" className="space-y-4 py-4 px-1">
                   
                   <div className="space-y-2">
@@ -392,6 +413,54 @@ export default function AssetsPage() {
                     <Label htmlFor="observation">{t('common.observation')}</Label>
                     <Textarea id="observation" name="observation" value={formData.observation || ''} onChange={handleInputChange} placeholder={t('assets.dialog.observationPlaceholder')}/>
                   </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                          <h3 className="text-base font-medium flex items-center gap-2"><Camera /> Galeria de Fotos</h3>
+                          <Button type="button" size="sm" variant="outline" onClick={addGalleryItem}>
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Adicionar Foto
+                          </Button>
+                      </div>
+                      <div className="space-y-2">
+                          {(formData.gallery || []).map((url, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                  <Input 
+                                      type="url"
+                                      value={url}
+                                      onChange={(e) => handleGalleryChange(index, e.target.value)}
+                                      placeholder="https://exemplo.com/imagem.png"
+                                  />
+                                  <Button type="button" variant="ghost" size="icon" onClick={() => removeGalleryItem(index)}>
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                              </div>
+                          ))}
+                          {(formData.gallery || []).length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-2">Nenhuma foto adicionada.</p>
+                          )}
+                      </div>
+                  </div>
+
+                  {editingAsset && (
+                    <>
+                      <Separator />
+                      <div className="space-y-4">
+                        <h3 className="text-base font-medium flex items-center gap-2"><QrCode /> QR Code do Ativo</h3>
+                        <div className="flex flex-col items-center justify-center p-4 border rounded-lg bg-muted/50">
+                          <Image 
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(editingAsset.id)}`}
+                            alt={`QR Code para ${editingAsset.name}`}
+                            width={150}
+                            height={150}
+                          />
+                          <p className="mt-2 text-xs text-muted-foreground">Aponte a câmera para identificar o ativo.</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </form>
               </ScrollArea>
               <DialogFooter>
@@ -406,5 +475,3 @@ export default function AssetsPage() {
     </TooltipProvider>
   );
 }
-
-    

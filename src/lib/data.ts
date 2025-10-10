@@ -194,7 +194,24 @@ export let users: User[] = [
 ];
 
 export let assets: Asset[] = [
-  { id: 'asset-01', clientId: 'client-01', customerLocationId: 'loc-01', name: 'Elevador Social 1', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-A01', brand: 'Atlas Schindler', model: '5500 MRL', observation: 'Instalado em 2020. Contrato de manutenção platinum.', location: { lat: -23.5505, lng: -46.6333 }, customData: { numero_de_paradas: 15, data_ultima_vistoria: '2024-07-01' } },
+  { 
+    id: 'asset-01', 
+    clientId: 'client-01', 
+    customerLocationId: 'loc-01', 
+    name: 'Elevador Social 1', 
+    activeSegment: 'ELEVADOR', 
+    serialNumber: 'SN-ELEV-A01', 
+    brand: 'Atlas Schindler', 
+    model: '5500 MRL', 
+    observation: 'Instalado em 2020. Contrato de manutenção platinum.', 
+    gallery: [
+      'https://picsum.photos/seed/elev1/800/600',
+      'https://picsum.photos/seed/elev2/800/600',
+      'https://picsum.photos/seed/elev3/800/600'
+    ],
+    location: { lat: -23.5505, lng: -46.6333 }, 
+    customData: { numero_de_paradas: 15, data_ultima_vistoria: '2024-07-01' } 
+  },
   { id: 'asset-02', clientId: 'client-01', customerLocationId: 'loc-02', name: 'Elevador de Carga', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-C01', brand: 'Thyssenkrupp', model: 'Synergy', observation: 'Utilizado para abastecimento do shopping.', location: { lat: -23.5505, lng: -46.6333 } },
   { id: 'asset-03', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', brand: 'Thyssenkrupp', model: 'Velino', observation: 'Fluxo intenso em horários de pico.', location: { lat: -22.9068, lng: -43.1729 } },
 ];
