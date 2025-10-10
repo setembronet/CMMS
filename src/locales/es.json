@@ -28,7 +28,8 @@
     "cmmsDashboard": "Dashboard GMAO",
     "suppliers": "Proveedores",
     "products": "Piezas",
-    "purchaseOrders": "Órdenes de Compra"
+    "purchaseOrders": "Órdenes de Compra",
+    "purchaseSuggestion": "Sugerencia de Compra"
   },
   "common": {
     "save": "Guardar",
@@ -601,5 +602,22 @@
       "Recebida": "Recibida",
       "Cancelada": "Cancelada"
     }
+  },
+   "purchaseSuggestion": {
+    "title": "Sugerencia de Compra",
+    "allGoodTitle": "¡Todo en orden!",
+    "allGoodDescription": "Su stock está saludable. Ninguna pieza necesita reposición en este momento.",
+    "table": {
+      "item": "Ítem",
+      "supplier": "Proveedor Predeterminado",
+      "stock": "Stock Actual",
+      "minStock": "Stock Mínimo",
+      "suggestedQty": "Cant. Sugerida"
+    },
+    "createPO": "Crear OC",
+    "noSupplierTitle": "Proveedor No Definido",
+    "noSupplierDescription": "La pieza '{itemName}' no tiene un proveedor predeterminado. Edite el registro de la pieza para continuar.",
+    "poCreatedTitle": "¡Orden de Compra Creada!",
+    "poCreatedDescription": "La OC {poId} para el proveedor {supplierName} fue creada con éxito."
   }
 }

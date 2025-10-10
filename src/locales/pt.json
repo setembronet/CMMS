@@ -28,7 +28,8 @@
     "cmmsDashboard": "Dashboard CMMS",
     "suppliers": "Fornecedores",
     "products": "Peças",
-    "purchaseOrders": "Ordens de Compra"
+    "purchaseOrders": "Ordens de Compra",
+    "purchaseSuggestion": "Sugestão de Compra"
   },
   "common": {
     "save": "Salvar",
@@ -601,5 +602,22 @@
       "Recebida": "Recebida",
       "Cancelada": "Cancelada"
     }
+  },
+   "purchaseSuggestion": {
+    "title": "Sugestão de Compra",
+    "allGoodTitle": "Tudo em ordem!",
+    "allGoodDescription": "Seu estoque está saudável. Nenhuma peça precisa de reposição no momento.",
+    "table": {
+      "item": "Item",
+      "supplier": "Fornecedor Padrão",
+      "stock": "Estoque Atual",
+      "minStock": "Estoque Mínimo",
+      "suggestedQty": "Qtd. Sugerida"
+    },
+    "createPO": "Criar OC",
+    "noSupplierTitle": "Fornecedor Não Definido",
+    "noSupplierDescription": "A peça '{itemName}' não possui um fornecedor padrão. Edite o cadastro da peça para continuar.",
+    "poCreatedTitle": "Ordem de Compra Criada!",
+    "poCreatedDescription": "A OC {poId} para o fornecedor {supplierName} foi criada com sucesso."
   }
 }

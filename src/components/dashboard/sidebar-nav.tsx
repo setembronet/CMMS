@@ -26,6 +26,7 @@ import {
   Receipt,
   Truck,
   ShoppingCart,
+  Lightbulb,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -35,7 +36,6 @@ import {
   SidebarMenuButton,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Logo } from '@/components/logo';
@@ -75,7 +75,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -249,6 +249,14 @@ export function SidebarNav() {
                                     <Link href="/dashboard/suppliers">
                                         <Truck />
                                         <span>{t('sidebar.suppliers')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/purchase-suggestion', true)}>
+                                    <Link href="/dashboard/purchase-suggestion">
+                                        <Lightbulb />
+                                        <span>{t('sidebar.purchaseSuggestion')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>

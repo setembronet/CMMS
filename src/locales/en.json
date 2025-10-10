@@ -28,7 +28,8 @@
     "cmmsDashboard": "CMMS Dashboard",
     "suppliers": "Suppliers",
     "products": "Parts",
-    "purchaseOrders": "Purchase Orders"
+    "purchaseOrders": "Purchase Orders",
+    "purchaseSuggestion": "Purchase Suggestion"
   },
   "common": {
     "save": "Save",
@@ -601,5 +602,22 @@
       "Recebida": "Received",
       "Cancelada": "Canceled"
     }
+  },
+   "purchaseSuggestion": {
+    "title": "Purchase Suggestion",
+    "allGoodTitle": "All good!",
+    "allGoodDescription": "Your stock is healthy. No parts need restocking at the moment.",
+    "table": {
+      "item": "Item",
+      "supplier": "Default Supplier",
+      "stock": "Current Stock",
+      "minStock": "Min. Stock",
+      "suggestedQty": "Suggested Qty"
+    },
+    "createPO": "Create PO",
+    "noSupplierTitle": "Supplier Not Set",
+    "noSupplierDescription": "The part '{itemName}' does not have a default supplier. Edit the part's record to continue.",
+    "poCreatedTitle": "Purchase Order Created!",
+    "poCreatedDescription": "PO {poId} for supplier {supplierName} has been created successfully."
   }
 }
