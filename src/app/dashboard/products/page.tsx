@@ -27,11 +27,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, AlertTriangle } from 'lucide-react';
 import { products as initialProducts, setProducts, suppliers } from '@/lib/data';
 import type { Product, Supplier } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const emptyProduct: Product = {
   id: '',
@@ -39,6 +40,7 @@ const emptyProduct: Product = {
   sku: '',
   manufacturer: '',
   stock: 0,
+  stockMin: 0,
   price: 0,
   supplierId: '',
 };
@@ -122,35 +124,45 @@ export default function ProductsPage() {
               <TableHead>{t('products.table.sku')}</TableHead>
               <TableHead>{t('products.table.supplier')}</TableHead>
               <TableHead>{t('products.table.stock')}</TableHead>
+              <TableHead>{t('products.table.stockMin')}</TableHead>
               <TableHead>{t('products.table.price')}</TableHead>
               <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map(product => (
-              <TableRow key={product.id}>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.sku}</TableCell>
-                <TableCell>{getSupplierName(product.supplierId)}</TableCell>
-                <TableCell>{product.stock}</TableCell>
-                <TableCell>{product.price.toFixed(2)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">{t('common.openMenu')}</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openDialog(product)}>
-                        {t('common.edit')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+            {products.map(product => {
+                const isLowStock = product.stock <= product.stockMin;
+                return (
+                  <TableRow key={product.id}>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>{product.sku}</TableCell>
+                    <TableCell>{getSupplierName(product.supplierId)}</TableCell>
+                    <TableCell className={cn(isLowStock && "text-destructive")}>
+                        <div className="flex items-center gap-2">
+                           {isLowStock && <AlertTriangle className="h-4 w-4" />}
+                           {product.stock}
+                        </div>
+                    </TableCell>
+                    <TableCell>{product.stockMin}</TableCell>
+                    <TableCell>{product.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">{t('common.openMenu')}</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openDialog(product)}>
+                            {t('common.edit')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+            })}
           </TableBody>
         </Table>
       </div>
@@ -178,13 +190,19 @@ export default function ProductsPage() {
                     <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleInputChange} required />
                 </div>
               </div>
+               <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="stockMin">{t('products.dialog.stockMin')}</Label>
+                    <Input id="stockMin" name="stockMin" type="number" value={formData.stockMin} onChange={handleInputChange} required />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="price">{t('products.dialog.price')}</Label>
+                    <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
+                </div>
+              </div>
               <div className="space-y-2">
                   <Label htmlFor="manufacturer">{t('products.dialog.manufacturer')}</Label>
                   <Input id="manufacturer" name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} />
-              </div>
-               <div className="space-y-2">
-                  <Label htmlFor="price">{t('products.dialog.price')}</Label>
-                  <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
               </div>
                <div className="space-y-2">
                   <Label htmlFor="supplierId">{t('products.dialog.supplier')}</Label>

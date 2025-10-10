@@ -26,7 +26,8 @@
     "cmms": "CMMS",
     "contracts": "Contratos",
     "cmmsDashboard": "Dashboard CMMS",
-    "suppliers": "Fornecedores"
+    "suppliers": "Fornecedores",
+    "products": "Peças"
   },
   "common": {
     "save": "Salvar",
@@ -518,10 +519,10 @@
     "table": {
       "name": "Nome da Peça",
       "sku": "SKU",
-      "manufacturer": "Fabricante",
+      "supplier": "Fornecedor",
       "stock": "Estoque",
-      "price": "Preço (R$)",
-      "supplier": "Fornecedor"
+      "stockMin": "Estoque Mín.",
+      "price": "Preço (R$)"
     },
     "dialog": {
       "editTitle": "Editar Peça",
@@ -531,6 +532,7 @@
       "name": "Nome da Peça",
       "sku": "SKU (Código)",
       "stock": "Estoque",
+      "stockMin": "Estoque Mínimo",
       "manufacturer": "Fabricante",
       "price": "Preço (R$)",
       "supplier": "Fornecedor Padrão",

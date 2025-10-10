@@ -26,7 +26,8 @@
     "cmms": "GMAO",
     "contracts": "Contratos",
     "cmmsDashboard": "Dashboard GMAO",
-    "suppliers": "Proveedores"
+    "suppliers": "Proveedores",
+    "products": "Piezas"
   },
   "common": {
     "save": "Guardar",
@@ -518,10 +519,10 @@
     "table": {
       "name": "Nombre de la Pieza",
       "sku": "SKU",
-      "manufacturer": "Fabricante",
+      "supplier": "Proveedor",
       "stock": "Stock",
-      "price": "Precio ($)",
-      "supplier": "Proveedor"
+      "stockMin": "Stock Mín.",
+      "price": "Precio ($)"
     },
     "dialog": {
       "editTitle": "Editar Pieza",
@@ -531,6 +532,7 @@
       "name": "Nombre de la Pieza",
       "sku": "SKU (Código)",
       "stock": "Stock",
+      "stockMin": "Stock Mínimo",
       "manufacturer": "Fabricante",
       "price": "Precio ($)",
       "supplier": "Proveedor Predeterminado",

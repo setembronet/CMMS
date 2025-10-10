@@ -26,7 +26,8 @@
     "cmms": "CMMS",
     "contracts": "Contracts",
     "cmmsDashboard": "CMMS Dashboard",
-    "suppliers": "Suppliers"
+    "suppliers": "Suppliers",
+    "products": "Parts"
   },
   "common": {
     "save": "Save",
@@ -518,10 +519,10 @@
     "table": {
       "name": "Part Name",
       "sku": "SKU",
-      "manufacturer": "Manufacturer",
+      "supplier": "Supplier",
       "stock": "Stock",
-      "price": "Price ($)",
-      "supplier": "Supplier"
+      "stockMin": "Min. Stock",
+      "price": "Price ($)"
     },
     "dialog": {
       "editTitle": "Edit Part",
@@ -531,6 +532,7 @@
       "name": "Part Name",
       "sku": "SKU (Code)",
       "stock": "Stock",
+      "stockMin": "Min. Stock",
       "manufacturer": "Manufacturer",
       "price": "Price ($)",
       "supplier": "Default Supplier",
