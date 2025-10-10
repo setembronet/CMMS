@@ -33,13 +33,15 @@ import { accountsPayable as initialData, costCenters, chartOfAccounts, setAccoun
 import type { AccountsPayable, AccountsPayableStatus, CostCenter, ChartOfAccount } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 
 const emptyAP: AccountsPayable = {
   id: '',
@@ -50,6 +52,9 @@ const emptyAP: AccountsPayable = {
   status: 'Pendente',
   costCenterId: '',
   chartOfAccountId: '',
+  isRecurring: false,
+  recurrenceFrequency: 'MENSAL',
+  recurrenceInstallments: 1,
 };
 
 export default function AccountsPayablePage() {
@@ -63,11 +68,16 @@ export default function AccountsPayablePage() {
 
   React.useEffect(() => {
     setSelectableAccounts(chartOfAccounts.filter(acc => !acc.isGroup));
+    setAccounts(initialData.sort((a,b) => b.dueDate - a.dueDate));
   }, []);
 
   const openDialog = (account: AccountsPayable | null = null) => {
     setEditingAccount(account);
-    setFormData(account ? { ...account } : { ...emptyAP, id: `ap-${Date.now()}` });
+    const data = account ? { ...account } : { ...emptyAP, id: `ap-${Date.now()}` };
+    if(account?.isRecurring) {
+        data.isRecurring = false; // Don't allow editing recurrence after creation
+    }
+    setFormData(data);
     setIsDialogOpen(true);
   };
 
@@ -80,13 +90,22 @@ export default function AccountsPayablePage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (!formData) return;
     const { name, value, type } = e.target;
-    setFormData(prev => (prev ? { ...prev, [name]: type === 'number' ? parseFloat(value) || 0 : value } : null));
+    let finalValue: string | number = value;
+    if (type === 'number') {
+      finalValue = name === 'value' ? parseFloat(value) || 0 : parseInt(value, 10) || 1;
+    }
+    setFormData(prev => (prev ? { ...prev, [name]: finalValue } : null));
   };
   
   const handleSelectChange = (name: keyof AccountsPayable, value: string) => {
     if (!formData) return;
     setFormData(prev => (prev ? { ...prev, [name]: value } : null));
   };
+  
+  const handleSwitchChange = (name: keyof AccountsPayable, checked: boolean) => {
+    if (!formData) return;
+    setFormData(prev => (prev ? ({...prev, [name]: checked }) : null));
+  }
 
   const handleDateChange = (name: keyof AccountsPayable, date: Date | undefined) => {
     if (date && formData) {
@@ -97,13 +116,38 @@ export default function AccountsPayablePage() {
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData) return;
-    
-    const updatedAccounts = editingAccount
-      ? accounts.map(acc => (acc.id === formData.id ? formData : acc))
-      : [formData, ...accounts];
-      
-    setAccountsPayable(updatedAccounts);
-    setAccounts(updatedAccounts);
+
+    if (editingAccount) {
+        // Editing a single account
+        const updatedAccounts = accounts.map(acc => (acc.id === formData.id ? formData : acc));
+        setAccountsPayable(updatedAccounts);
+        setAccounts(updatedAccounts.sort((a,b) => b.dueDate - a.dueDate));
+    } else if (formData.isRecurring && formData.recurrenceInstallments > 1) {
+        // Creating new recurring accounts
+        const newAccounts: AccountsPayable[] = [];
+        const baseDescription = formData.description;
+        const firstDueDate = new Date(formData.dueDate);
+
+        for(let i = 0; i < formData.recurrenceInstallments; i++) {
+            const newAccount: AccountsPayable = {
+                ...formData,
+                id: `ap-${Date.now()}-${i}`,
+                isRecurring: false, // Only the parent "idea" is recurring
+                description: `${baseDescription} (Parcela ${i + 1}/${formData.recurrenceInstallments})`,
+                dueDate: addMonths(firstDueDate, i).getTime(),
+            };
+            newAccounts.push(newAccount);
+        }
+        const updatedAccounts = [...newAccounts, ...accounts];
+        setAccountsPayable(updatedAccounts);
+        setAccounts(updatedAccounts.sort((a,b) => b.dueDate - a.dueDate));
+    } else {
+        // Creating a single new account
+        const updatedAccounts = [formData, ...accounts];
+        setAccountsPayable(updatedAccounts);
+        setAccounts(updatedAccounts.sort((a,b) => b.dueDate - a.dueDate));
+    }
+
     closeDialog();
   };
 
@@ -247,6 +291,41 @@ export default function AccountsPayablePage() {
                             </Select>
                         </div>
                     </div>
+
+                    {!editingAccount && (
+                        <>
+                            <Separator />
+                            <div className="space-y-4">
+                                 <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="isRecurring">Lançamento Recorrente</Label>
+                                        <p className="text-xs text-muted-foreground">Gerar automaticamente as próximas parcelas desta despesa.</p>
+                                    </div>
+                                    <Switch id="isRecurring" name="isRecurring" checked={formData.isRecurring} onCheckedChange={(checked) => handleSwitchChange('isRecurring', checked)} />
+                                </div>
+                                {formData.isRecurring && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="recurrenceFrequency">Frequência</Label>
+                                            <Select name="recurrenceFrequency" value={formData.recurrenceFrequency} onValueChange={(v) => handleSelectChange('recurrenceFrequency', v as 'MENSAL')}>
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="MENSAL">Mensal</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="recurrenceInstallments">Nº de Parcelas</Label>
+                                            <Input id="recurrenceInstallments" name="recurrenceInstallments" type="number" min="2" value={formData.recurrenceInstallments} onChange={handleInputChange} />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    <Separator />
+
                     <div className="space-y-2">
                         <Label htmlFor="notes">Observações</Label>
                         <Textarea id="notes" name="notes" value={formData.notes || ''} onChange={handleInputChange} placeholder="Detalhes adicionais, número da nota fiscal, etc."/>
@@ -273,3 +352,5 @@ export default function AccountsPayablePage() {
     </div>
   );
 }
+
+    

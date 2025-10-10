@@ -1,6 +1,7 @@
 
 
 
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -300,6 +301,7 @@ export type CostCenter = {
 };
 
 export type AccountsPayableStatus = 'Pendente' | 'Paga' | 'Vencida';
+export type RecurrenceFrequency = 'MENSAL';
 
 export type AccountsPayable = {
   id: string;
@@ -313,4 +315,9 @@ export type AccountsPayable = {
   chartOfAccountId: string;
   notes?: string;
   documentUrl?: string; // for invoice/boleto
+  isRecurring: boolean;
+  recurrenceFrequency: RecurrenceFrequency;
+  recurrenceInstallments: number;
 };
+
+    
