@@ -30,8 +30,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit, MessageSquarePlus, Clock, Receipt } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles, assets, workOrders, segments, users, products } from '@/lib/data';
-import type { CustomerLocation, Contact, CMMSRole, WorkOrder, ContractStatus, Interaction, InteractionType } from '@/lib/types';
+import { companies, customerLocations as initialLocations, setCustomerLocations, assets, workOrders, users, products } from '@/lib/data';
+import type { CustomerLocation, Contact, WorkOrder, ContractStatus, Interaction, InteractionType } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -75,7 +75,7 @@ const emptyLocation: CustomerLocation = {
 const emptyContact: Contact = {
   id: '',
   name: '',
-  cmmsRoleId: '',
+  role: '',
   email: '',
   phone: '',
   observation: ''
@@ -87,7 +87,6 @@ export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
   const [formData, setFormData] = React.useState<CustomerLocation>(emptyLocation);
-  const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>([]);
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = React.useState(false);
   const [invoicingLocation, setInvoicingLocation] = React.useState<CustomerLocation | null>(null);
   
@@ -95,22 +94,6 @@ export default function ClientsPage() {
     // This will keep the local state in sync if the global data changes.
     const currentLocations = initialLocations.filter(l => l.clientId === TEST_CLIENT_ID)
     setLocations(currentLocations);
-
-    // Determine available roles for the contacts based on the main client's segments
-    if (testClient) {
-      const company = testClient;
-      if (company.activeSegments.length > 0) {
-        const applicableRoleIds = new Set<string>();
-        company.activeSegments.forEach(segmentId => {
-          const segment = segments.find(s => s.id === segmentId);
-          (segment?.applicableRoles || []).forEach(roleId => applicableRoleIds.add(roleId));
-        });
-        const filteredRoles = allRoles.filter(role => applicableRoleIds.has(role.id));
-        setAvailableRoles(filteredRoles);
-      } else {
-        setAvailableRoles([]);
-      }
-    }
   }, []);
 
   const openDialog = (location: CustomerLocation | null = null) => {
@@ -161,12 +144,6 @@ export default function ClientsPage() {
     const newContacts = [...(formData.contacts || [])];
     // @ts-ignore
     newContacts[index][name] = value;
-    setFormData(prev => ({ ...prev, contacts: newContacts }));
-  };
-
-  const handleContactSelectChange = (index: number, value: string) => {
-    const newContacts = [...(formData.contacts || [])];
-    newContacts[index].cmmsRoleId = value;
     setFormData(prev => ({ ...prev, contacts: newContacts }));
   };
 
@@ -513,16 +490,7 @@ export default function ClientsPage() {
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor={`contact-role-${index}`}>Função</Label>
-                               <Select name="cmmsRoleId" value={contact.cmmsRoleId} onValueChange={(value) => handleContactSelectChange(index, value)} required>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione uma função" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableRoles.map(role => (
-                                    <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <Input id={`contact-role-${index}`} name="role" value={contact.role} onChange={e => handleContactChange(index, e)} required placeholder="Ex: Síndico, Zelador..."/>
                             </div>
                           </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -673,5 +641,3 @@ export default function ClientsPage() {
     </TooltipProvider>
   );
 }
-
-    

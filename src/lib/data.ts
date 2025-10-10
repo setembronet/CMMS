@@ -116,7 +116,7 @@ export let companies: Company[] = [
   { 
     id: 'client-04', 
     name: 'Tecno-Lift', 
-    cnpj: '33.333.333/0001-33', 
+    cnpj: '33.333.333/0001-33',
     email: 'vendas@tecnolift.com.br',
     status: 'active', 
     planId: 'plan_free',
@@ -133,7 +133,7 @@ export let customerLocations: CustomerLocation[] = [
     address: { street: 'Av. Paulista', number: '1000', city: 'São Paulo', state: 'SP', zipCode: '01310-100' },
     contractStatus: 'Vigente',
     contacts: [
-      { id: 'contact-01', name: 'Sr. Roberto', cmmsRoleId: 'SINDICO', phone: '11987654321', email: 'roberto.sindico@email.com', observation: 'Ligar apenas em emergências.' }
+      { id: 'contact-01', name: 'Sr. Roberto', role: 'Síndico', phone: '11987654321', email: 'roberto.sindico@email.com', observation: 'Ligar apenas em emergências.' }
     ],
     interactions: [
         { id: 'int-01', date: new Date(2024, 6, 15).getTime(), type: 'LIGAÇÃO', description: 'Cliente ligou para relatar barulho no elevador social. OS-01 foi aberta.', userId: 'user-04' }

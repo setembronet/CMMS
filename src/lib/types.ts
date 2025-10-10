@@ -15,7 +15,7 @@ export type Interaction = {
 export type Contact = {
   id: string;
   name: string;
-  cmmsRoleId: string; 
+  role: string; 
   phone?: string;
   email?: string;
   observation?: string;
