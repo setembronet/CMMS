@@ -93,7 +93,7 @@ const generatePreventiveWorkOrders = (existingWorkOrders: WorkOrder[]): WorkOrde
                  const alreadyExists = existingWorkOrders.some(wo => 
                     wo.isPreventive && 
                     wo.assetId === plan.assetId && 
-                    wo.description === plan.description &&
+                    wo.description === `Manutenção preventiva programada conforme plano: ${plan.description}` &&
                     format(new Date(wo.scheduledDate || 0), 'yyyy-MM-dd') === format(nextDueDate, 'yyyy-MM-dd')
                 );
 
@@ -101,7 +101,7 @@ const generatePreventiveWorkOrders = (existingWorkOrders: WorkOrder[]): WorkOrde
                     const newWo: WorkOrder = {
                         ...emptyWorkOrder,
                         id: `os-prev-${plan.id}-${format(nextDueDate, 'yyyyMMdd')}`,
-                        title: `Manutenção Preventiva - ${plan.description}`,
+                        title: `Preventiva: ${plan.description}`,
                         description: `Manutenção preventiva programada conforme plano: ${plan.description}`,
                         assetId: plan.assetId,
                         priority: 'Média',
@@ -602,3 +602,5 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
+
+    
