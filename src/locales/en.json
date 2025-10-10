@@ -624,7 +624,8 @@
       "total": "Total",
       "removeItem": "Remove Item",
       "noItems": "No items added.",
-      "totalOrderValue": "Total PO Value"
+      "totalOrderValue": "Total PO Value",
+      "launchAP": "Launch Invoice"
     },
     "statusLabels": {
       "Pendente": "Pending",

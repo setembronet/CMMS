@@ -4,6 +4,7 @@
 
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -533,6 +534,25 @@ export const setPurchaseOrders = (newPOs: PurchaseOrder[]) => {
 
 export const setAccountsPayable = (newAPs: AccountsPayable[]) => {
   accountsPayable = newAPs;
+};
+
+export const createAccountPayableFromPO = (po: PurchaseOrder): AccountsPayable => {
+    const supplier = suppliers.find(s => s.id === po.supplierId);
+    const newAP: AccountsPayable = {
+        id: `ap-${Date.now()}`,
+        description: `Fatura referente à OC #${po.id}`,
+        supplierOrCreditor: supplier?.name || 'Fornecedor Desconhecido',
+        dueDate: new Date().getTime(), // Default due date, user should edit this
+        value: po.totalValue,
+        status: 'Pendente',
+        costCenterId: 'cc-03', // Default to 'Operational'
+        chartOfAccountId: 'coa-6', // Default to 'Custo com Peças'
+        isRecurring: false,
+        recurrenceFrequency: 'MENSAL',
+        recurrenceInstallments: 1
+    };
+    accountsPayable.unshift(newAP);
+    return newAP;
 };
 
 export const setAccountsReceivable = (newARs: AccountsReceivable[]) => {

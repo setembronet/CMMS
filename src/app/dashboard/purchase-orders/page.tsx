@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -35,13 +36,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, MoreHorizontal, Trash2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, FileOutput } from 'lucide-react';
 import { 
   purchaseOrders as initialPurchaseOrders, 
   setPurchaseOrders, 
   suppliers, 
   products as allProducts,
   setProducts,
+  createAccountPayableFromPO
 } from '@/lib/data';
 import type { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Supplier, Product } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -55,6 +57,7 @@ const poStatuses: PurchaseOrderStatus[] = ['Pendente', 'Aprovada', 'Recebida', '
 export default function PurchaseOrdersPage() {
   const { t } = useI18n();
   const { toast } = useToast();
+  const router = useRouter();
   const [purchaseOrders, setLocalPurchaseOrders] = React.useState<PurchaseOrder[]>(initialPurchaseOrders);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<PurchaseOrder | null>(null);
@@ -171,6 +174,20 @@ export default function PurchaseOrdersPage() {
     setLocalPurchaseOrders(updatedPOs);
     closeDialog();
   };
+  
+  const handleLaunchAP = () => {
+    if (!formData) return;
+    
+    const newAP = createAccountPayableFromPO(formData);
+
+    toast({
+        title: "Conta a Pagar Lançada!",
+        description: `A fatura para a OC #${formData.id} foi pré-lançada. Redirecionando...`,
+    });
+
+    closeDialog();
+    router.push('/dashboard/cmms/accounts-payable');
+  };
 
   const getStatusBadgeVariant = (status: PurchaseOrderStatus) => {
     switch (status) {
@@ -248,91 +265,103 @@ export default function PurchaseOrdersPage() {
             <DialogDescription>{t('purchaseOrders.dialog.description')}</DialogDescription>
           </DialogHeader>
           {formData && (
-            <form id="po-form" onSubmit={handleSaveOrder}>
-              <ScrollArea className="max-h-[60vh] -mx-6 px-6">
-                <div className="space-y-4 py-4 px-1">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="supplierId">{t('purchaseOrders.dialog.supplier')}</Label>
-                        <Select name="supplierId" value={formData.supplierId} onValueChange={(v) => handleSelectChange('supplierId', v)} required>
-                            <SelectTrigger><SelectValue placeholder={t('purchaseOrders.dialog.supplierPlaceholder')} /></SelectTrigger>
-                            <SelectContent>
-                                {partsSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+            <>
+              <form id="po-form" onSubmit={handleSaveOrder}>
+                <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+                  <div className="space-y-4 py-4 px-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="supplierId">{t('purchaseOrders.dialog.supplier')}</Label>
+                          <Select name="supplierId" value={formData.supplierId} onValueChange={(v) => handleSelectChange('supplierId', v)} required>
+                              <SelectTrigger><SelectValue placeholder={t('purchaseOrders.dialog.supplierPlaceholder')} /></SelectTrigger>
+                              <SelectContent>
+                                  {partsSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="status">{t('purchaseOrders.dialog.status')}</Label>
+                          <Select name="status" value={formData.status} onValueChange={(v) => handleSelectChange('status', v as PurchaseOrderStatus)} required>
+                              <SelectTrigger><SelectValue/></SelectTrigger>
+                              <SelectContent>
+                                  {poStatuses.map(s => <SelectItem key={s} value={s}>{t(`purchaseOrders.statusLabels.${s}`)}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="status">{t('purchaseOrders.dialog.status')}</Label>
-                        <Select name="status" value={formData.status} onValueChange={(v) => handleSelectChange('status', v as PurchaseOrderStatus)} required>
-                            <SelectTrigger><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                                {poStatuses.map(s => <SelectItem key={s} value={s}>{t(`purchaseOrders.statusLabels.${s}`)}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h3 className="font-medium">{t('purchaseOrders.dialog.items')}</h3>
-                        <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={!formData.supplierId}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            {t('purchaseOrders.dialog.addItem')}
-                        </Button>
-                    </div>
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[50%]">{t('purchaseOrders.dialog.item')}</TableHead>
-                            <TableHead>{t('purchaseOrders.dialog.quantity')}</TableHead>
-                            <TableHead>{t('purchaseOrders.dialog.unitPrice')}</TableHead>
-                            <TableHead>{t('purchaseOrders.dialog.total')}</TableHead>
-                            <TableHead className="w-[50px]"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {formData.items.map((item, index) => (
-                            <TableRow key={index}>
-                              <TableCell>
-                                <Select value={item.productId} onValueChange={(v) => handleItemChange(index, 'productId', v)}>
-                                  <SelectTrigger><SelectValue placeholder={t('purchaseOrders.dialog.itemPlaceholder')} /></SelectTrigger>
-                                  <SelectContent>
-                                    {availableProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Input type="number" min="1" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} />
-                              </TableCell>
-                              <TableCell>R$ {item.unitPrice.toFixed(2)}</TableCell>
-                              <TableCell>R$ {(item.unitPrice * item.quantity).toFixed(2)}</TableCell>
-                              <TableCell>
-                                <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(index)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                          {formData.items.length === 0 && (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                          <h3 className="font-medium">{t('purchaseOrders.dialog.items')}</h3>
+                          <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={!formData.supplierId}>
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              {t('purchaseOrders.dialog.addItem')}
+                          </Button>
+                      </div>
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center h-24">{t('purchaseOrders.dialog.noItems')}</TableCell>
+                              <TableHead className="w-[50%]">{t('purchaseOrders.dialog.item')}</TableHead>
+                              <TableHead>{t('purchaseOrders.dialog.quantity')}</TableHead>
+                              <TableHead>{t('purchaseOrders.dialog.unitPrice')}</TableHead>
+                              <TableHead>{t('purchaseOrders.dialog.total')}</TableHead>
+                              <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {formData.items.map((item, index) => (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  <Select value={item.productId} onValueChange={(v) => handleItemChange(index, 'productId', v)}>
+                                    <SelectTrigger><SelectValue placeholder={t('purchaseOrders.dialog.itemPlaceholder')} /></SelectTrigger>
+                                    <SelectContent>
+                                      {availableProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Input type="number" min="1" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} />
+                                </TableCell>
+                                <TableCell>R$ {item.unitPrice.toFixed(2)}</TableCell>
+                                <TableCell>R$ {(item.unitPrice * item.quantity).toFixed(2)}</TableCell>
+                                <TableCell>
+                                  <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(index)}>
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {formData.items.length === 0 && (
+                              <TableRow>
+                                  <TableCell colSpan={5} className="text-center h-24">{t('purchaseOrders.dialog.noItems')}</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                       <div className="text-right font-bold text-lg">
+                          {t('purchaseOrders.dialog.totalOrderValue')}: R$ {formData.totalValue.toFixed(2)}
+                       </div>
                     </div>
-                     <div className="text-right font-bold text-lg">
-                        {t('purchaseOrders.dialog.totalOrderValue')}: R$ {formData.totalValue.toFixed(2)}
-                     </div>
                   </div>
-                </div>
-              </ScrollArea>
-            </form>
+                </ScrollArea>
+              </form>
+            </>
           )}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
-            <Button type="submit" form="po-form">{t('common.save')}</Button>
+          <DialogFooter className="sm:justify-between">
+            <div>
+              {formData?.status === 'Recebida' && (
+                <Button variant="secondary" onClick={handleLaunchAP}>
+                  <FileOutput className="mr-2 h-4 w-4" />
+                  {t('purchaseOrders.dialog.launchAP')}
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+              <Button type="submit" form="po-form">{t('common.save')}</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -340,4 +369,3 @@ export default function PurchaseOrdersPage() {
   );
 }
 
-    

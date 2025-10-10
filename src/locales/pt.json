@@ -624,7 +624,8 @@
       "total": "Total",
       "removeItem": "Remover Item",
       "noItems": "Nenhum item adicionado.",
-      "totalOrderValue": "Valor Total da OC"
+      "totalOrderValue": "Valor Total da OC",
+      "launchAP": "Lançar Fatura"
     },
     "statusLabels": {
       "Pendente": "Pendente",
