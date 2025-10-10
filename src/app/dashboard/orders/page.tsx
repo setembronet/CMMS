@@ -39,18 +39,20 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders } from '@/lib/data';
-import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenancePlan, MaintenanceFrequency } from '@/lib/types';
+import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, elevatorChecklistTemplate, rootCauses, recommendedActions } from '@/lib/data';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format, addDays, addMonths, addWeeks, addQuarters, addYears } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const TEST_CLIENT_ID = 'client-01';
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
 
 const orderStatuses: OrderStatus[] = ['ABERTO', 'EM ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
 const orderPriorities: OrderPriority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
+const checklistStatuses: ChecklistItemStatus[] = ['OK', 'NÃO OK', 'N/A'];
 
 const emptyWorkOrder: WorkOrder = {
   id: '',
@@ -158,6 +160,7 @@ export default function WorkOrdersPage() {
 
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
+  const getAssetSegment = (id: string) => allAssets.find(a => a.id === id)?.activeSegment;
   const getTechnicianName = (id?: string) => id ? allUsers.find(u => u.id === id)?.name : 'N/A';
   
   const getProduct = (id: string) => products.find(p => p.id === id);
@@ -169,14 +172,22 @@ export default function WorkOrdersPage() {
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
     if (order) {
-        setFormData(JSON.parse(JSON.stringify(order))); // Deep copy
+        const orderData = JSON.parse(JSON.stringify(order));
+        // If checklist doesn't exist, and asset is an elevator, add template
+        if (!orderData.checklist && getAssetSegment(orderData.assetId) === 'ELEVATOR') {
+          orderData.checklist = JSON.parse(JSON.stringify(elevatorChecklistTemplate));
+        }
+        setFormData(orderData);
     } else {
-        // When creating new, ensure it has the current user ID and client ID
-        setFormData(JSON.parse(JSON.stringify({...emptyWorkOrder, createdByUserId: CURRENT_USER_ID, clientId: TEST_CLIENT_ID})));
+        const newOrderData = JSON.parse(JSON.stringify({...emptyWorkOrder, createdByUserId: CURRENT_USER_ID, clientId: TEST_CLIENT_ID}));
+        if (getAssetSegment(newOrderData.assetId) === 'ELEVATOR') {
+          newOrderData.checklist = JSON.parse(JSON.stringify(elevatorChecklistTemplate));
+        }
+        setFormData(newOrderData);
     }
     setIsDialogOpen(true);
   };
-
+  
   const closeDialog = () => {
     setEditingOrder(null);
     setIsDialogOpen(false);
@@ -195,6 +206,16 @@ export default function WorkOrdersPage() {
     setFormData(prev => {
         let newStartDate = prev.startDate;
         let newEndDate = prev.endDate;
+        let newChecklist = prev.checklist;
+
+        if (name === 'assetId') {
+          const asset = allAssets.find(a => a.id === value);
+          if (asset && asset.activeSegment === 'ELEVATOR' && !prev.checklist) {
+            newChecklist = JSON.parse(JSON.stringify(elevatorChecklistTemplate));
+          } else if (asset && asset.activeSegment !== 'ELEVATOR') {
+            newChecklist = undefined;
+          }
+        }
 
         if (name === 'status') {
             if (newStatus === 'EM ANDAMENTO' && oldStatus !== 'EM ANDAMENTO') {
@@ -213,6 +234,7 @@ export default function WorkOrdersPage() {
             [name]: value,
             startDate: newStartDate,
             endDate: newEndDate,
+            checklist: newChecklist,
         };
     });
   };
@@ -235,6 +257,13 @@ export default function WorkOrdersPage() {
 
   const handleRemovePart = (index: number) => {
     setFormData(prev => ({ ...prev, partsUsed: (prev.partsUsed || []).filter((_, i) => i !== index) }));
+  };
+
+  const handleChecklistItemChange = (groupIndex: number, itemIndex: number, field: keyof ChecklistItem, value: string) => {
+    const newChecklist = JSON.parse(JSON.stringify(formData.checklist)) as Checklist;
+    // @ts-ignore
+    newChecklist[groupIndex].items[itemIndex][field] = value;
+    setFormData(prev => ({...prev, checklist: newChecklist}));
   };
 
   const calculateTotalCost = () => {
@@ -397,15 +426,15 @@ export default function WorkOrdersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>{editingOrder ? 'Detalhes da Ordem de Serviço' : 'Nova Ordem de Serviço'}</DialogTitle>
             <DialogDescription>
              {editingOrder ? `OS #${editingOrder.id} - Criada por ${getCreatorName(editingOrder.createdByUserId)} em: ${formatDateTime(editingOrder.creationDate)}` : 'Preencha os detalhes da ordem de serviço.'}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[60vh] -mx-6 px-6">
-            <form onSubmit={handleSaveOrder} id="order-form" className="space-y-4 py-4 px-1">
+          <ScrollArea className="max-h-[65vh] -mx-6 px-6">
+            <form onSubmit={handleSaveOrder} id="order-form" className="space-y-6 py-4 px-1">
               
               <fieldset disabled={isFormDisabled} className="space-y-4">
                 <div className="space-y-2">
@@ -498,9 +527,79 @@ export default function WorkOrdersPage() {
                     </div>
                 </div>
 
+                {formData.checklist && (
+                  <>
+                    <Separator />
+                    <Accordion type="single" collapsible defaultValue='item-0' className="w-full">
+                       <h3 className="text-base font-medium mb-2">Checklist de Execução</h3>
+                        {formData.checklist.map((group, groupIndex) => (
+                           <AccordionItem value={`item-${groupIndex}`} key={group.id}>
+                             <AccordionTrigger>{group.title}</AccordionTrigger>
+                             <AccordionContent className="space-y-4 pt-4">
+                                {group.items.map((item, itemIndex) => (
+                                    <div key={item.id} className="grid grid-cols-1 gap-4 rounded-md border p-4">
+                                        <Label className="font-medium">{item.text}</Label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">Status</Label>
+                                                <Select value={item.status} onValueChange={(value) => handleChecklistItemChange(groupIndex, itemIndex, 'status', value)}>
+                                                    <SelectTrigger id={`checklist-status-${groupIndex}-${itemIndex}`}>
+                                                        <SelectValue/>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {checklistStatuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">Comentário</Label>
+                                                <Input 
+                                                    id={`checklist-comment-${groupIndex}-${itemIndex}`}
+                                                    value={item.comment || ''}
+                                                    onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'comment', e.target.value)}
+                                                    placeholder="Se 'NÃO OK', detalhe aqui..."
+                                                    required={item.status === 'NÃO OK'}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                             </AccordionContent>
+                           </AccordionItem>
+                        ))}
+                    </Accordion>
+                  </>
+                )}
 
                 <Separator />
                 
+                <h3 className="text-base font-medium">Encerramento do Serviço</h3>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="rootCause">Causa da Falha (se aplicável)</Label>
+                        <Select name="rootCause" value={formData.rootCause || ''} onValueChange={(value) => handleSelectChange('rootCause', value as RootCause)}>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Selecione a causa raiz" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {rootCauses.map(cause => <SelectItem key={cause.value} value={cause.value}>{cause.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="recommendedAction">Ação Recomendada</Label>
+                        <Select name="recommendedAction" value={formData.recommendedAction || ''} onValueChange={(value) => handleSelectChange('recommendedAction', value as RecommendedAction)}>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Selecione a próxima ação" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {recommendedActions.map(action => <SelectItem key={action.value} value={action.value}>{action.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="text-base font-medium">Peças Utilizadas</h3>
@@ -602,5 +701,3 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
-
-    

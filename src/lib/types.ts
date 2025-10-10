@@ -61,6 +61,9 @@ export type OrderStatus = 'ABERTO' | 'EM ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 export type MaintenanceFrequency = 'DIARIA' | 'SEMANAL' | 'QUINZENAL' | 'MENSAL' | 'TRIMESTRAL' | 'SEMESTRAL' | 'ANUAL';
 export type ContractType = 'Integral' | 'Mão de Obra';
+export type ChecklistItemStatus = 'OK' | 'NÃO OK' | 'N/A';
+export type RootCause = 'Desgaste Natural' | 'Falha Humana' | 'Falha Elétrica' | 'Vandalismo' | 'Outro';
+export type RecommendedAction = 'Criar OS de Follow-up' | 'Monitorar' | 'Nenhuma Ação Necessária';
 
 
 // Roles for SaaS management (internal users)
@@ -149,8 +152,24 @@ export type WorkOrderPart = {
   quantity: number;
 };
 
-export type WorkOrder = {
+export type ChecklistItem = {
   id: string;
+  text: string;
+  status: ChecklistItemStatus;
+  comment?: string;
+  photoUrl?: string; // For future use
+};
+
+export type ChecklistGroup = {
+  id: string;
+  title: string;
+  items: ChecklistItem[];
+};
+
+export type Checklist = ChecklistGroup[];
+
+export type WorkOrder = {
+  id:string;
   title: string;
   description?: string;
   clientId: string;
@@ -167,6 +186,9 @@ export type WorkOrder = {
   squad?: string;
   partsUsed?: WorkOrderPart[];
   isPreventive?: boolean;
+  checklist?: Checklist;
+  rootCause?: RootCause;
+  recommendedAction?: RecommendedAction;
 };
 
 export type Product = {

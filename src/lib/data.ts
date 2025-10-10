@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, Checklist } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -177,8 +177,30 @@ export let assets: Asset[] = [
   { id: 'asset-03', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', brand: 'Thyssenkrupp', model: 'Velino', observation: 'Fluxo intenso em horários de pico.', location: { lat: -22.9068, lng: -43.1729 } },
 ];
 
+export const elevatorChecklistTemplate: Checklist = [
+  {
+    id: 'group_1',
+    title: 'Casa de Máquinas',
+    items: [
+      { id: 'item_1_1', text: 'Verificar nível de óleo do motor', status: 'OK', comment: '' },
+      { id: 'item_1_2', text: 'Inspecionar quadro de comando', status: 'OK', comment: '' },
+      { id: 'item_1_3', text: 'Verificar desgaste das polias', status: 'OK', comment: '' },
+    ]
+  },
+  {
+    id: 'group_2',
+    title: 'Cabine e Portas',
+    items: [
+      { id: 'item_2_1', text: 'Verificar funcionamento da botoeira', status: 'OK', comment: '' },
+      { id: 'item_2_2', text: 'Inspecionar alinhamento das portas', status: 'OK', comment: '' },
+      { id: 'item_2_3', text: 'Testar iluminação de emergência', status: 'OK', comment: '' },
+    ]
+  }
+];
+
+
 export let workOrders: WorkOrder[] = [
-  { id: 'os-01', clientId: 'client-01', assetId: 'asset-01', title: 'Verificar ruído no motor', status: 'ABERTO', priority: 'Alta', creationDate: new Date(2024, 6, 20).getTime(), createdByUserId: 'user-04', scheduledDate: new Date(2024, 6, 24).getTime(), description: 'Cliente relatou ruído estranho vindo da casa de máquinas durante a operação.', responsibleId: 'user-05', squad: 'Equipe Alpha' },
+  { id: 'os-01', clientId: 'client-01', assetId: 'asset-01', title: 'Verificar ruído no motor', status: 'ABERTO', priority: 'Alta', creationDate: new Date(2024, 6, 20).getTime(), createdByUserId: 'user-04', scheduledDate: new Date(2024, 6, 24).getTime(), description: 'Cliente relatou ruído estranho vindo da casa de máquinas durante a operação.', responsibleId: 'user-05', squad: 'Equipe Alpha', checklist: JSON.parse(JSON.stringify(elevatorChecklistTemplate)) },
   { id: 'os-02', clientId: 'client-01', assetId: 'asset-02', title: 'Manutenção preventiva mensal', status: 'CONCLUIDO', priority: 'Média', creationDate: new Date(2024, 5, 15).getTime(), createdByUserId: 'user-04', startDate: new Date(2024, 5, 15, 9).getTime(), endDate: new Date(2024, 5, 15, 11).getTime(), responsibleId: 'user-05', internalObservation: 'Troca de óleo realizada.', squad: 'Equipe Alpha', partsUsed: [{productId: 'prod-01', quantity: 1}] },
   { id: 'os-03', clientId: 'client-02', assetId: 'asset-03', title: 'Degrau quebrado', status: 'EM ANDAMENTO', priority: 'Urgente', creationDate: new Date(2024, 6, 22).getTime(), createdByUserId: 'user-06', startDate: new Date(2024, 6, 22, 14).getTime(), responsibleId: 'user-07', squad: 'Equipe Beta' },
 ];
@@ -197,6 +219,20 @@ export const maintenanceFrequencies: { value: MaintenanceFrequency, label: strin
     { value: 'TRIMESTRAL', label: 'Trimestral' },
     { value: 'SEMESTRAL', label: 'Semestral' },
     { value: 'ANUAL', label: 'Anual' },
+];
+
+export const rootCauses: { value: string, label: string }[] = [
+    { value: 'Desgaste Natural', label: 'Desgaste Natural' },
+    { value: 'Falha Humana', label: 'Falha Humana' },
+    { value: 'Falha Elétrica', label: 'Falha Elétrica' },
+    { value: 'Vandalismo', label: 'Vandalismo' },
+    { value: 'Outro', label: 'Outro' },
+];
+
+export const recommendedActions: { value: string, label: string }[] = [
+    { value: 'Criar OS de Follow-up', label: 'Criar OS de Follow-up' },
+    { value: 'Monitorar', label: 'Monitorar' },
+    { value: 'Nenhuma Ação Necessária', label: 'Nenhuma Ação Necessária' },
 ];
 
 
