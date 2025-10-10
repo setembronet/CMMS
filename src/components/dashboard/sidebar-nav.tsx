@@ -27,6 +27,7 @@ import {
   ShoppingCart,
   Lightbulb,
   DollarSign,
+  Banknote,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -66,7 +67,7 @@ export function SidebarNav() {
     return pathname.startsWith(href);
   };
   
-  const isSaaSMainDashboardActive = pathname === '/dashboard/finance';
+  const isSaaSMainDashboardActive = pathname.startsWith('/dashboard/finance');
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion'].some(p => pathname.startsWith(p));
@@ -78,18 +79,59 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent className="flex flex-col p-2">
         <SidebarMenu>
-          <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isSaaSMainDashboardActive}
-                tooltip={{ children: t('sidebar.financeDashboard') }}
-              >
-                <Link href="/dashboard/finance">
-                  <DollarSign />
-                  <span>{t('sidebar.financeDashboard')}</span>
-                </Link>
-              </SidebarMenuButton>
-          </SidebarMenuItem>
+          <Collapsible asChild defaultOpen={isSaaSMainDashboardActive}>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                         <SidebarMenuButton
+                            isActive={isSaaSMainDashboardActive}
+                            className="justify-between"
+                            tooltip={{ children: t('sidebar.finance') }}
+                         >
+                            <div className="flex items-center gap-2">
+                                <DollarSign />
+                                <span>{t('sidebar.finance')}</span>
+                            </div>
+                            <ChevronDown className={cn("transition-transform duration-200", isSaaSMainDashboardActive && "rotate-180")} />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance', true)}>
+                                    <Link href="/dashboard/finance">
+                                        <LayoutGrid />
+                                        <span>{t('sidebar.financeDashboard')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/subscriptions', true)}>
+                                    <Link href="/dashboard/finance/subscriptions">
+                                        <Banknote />
+                                        <span>{t('sidebar.subscriptions')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/plans', true)}>
+                                    <Link href="/dashboard/finance/plans">
+                                        <Package />
+                                        <span>{t('sidebar.plans')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/addons', true)}>
+                                    <Link href="/dashboard/finance/addons">
+                                        <Puzzle />
+                                        <span>{t('sidebar.addons')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+           </Collapsible>
 
           <Collapsible asChild defaultOpen={isCompaniesActive}>
                 <SidebarMenuItem>
@@ -121,22 +163,6 @@ export function SidebarNav() {
                                     <Link href="/dashboard/companies/segments">
                                         <Puzzle />
                                         <span>{t('sidebar.segments')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                              <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/plans', true)}>
-                                    <Link href="/dashboard/finance/plans">
-                                        <Package />
-                                        <span>{t('sidebar.plans')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                             <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/addons', true)}>
-                                    <Link href="/dashboard/finance/addons">
-                                        <Puzzle />
-                                        <span>{t('sidebar.addons')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>

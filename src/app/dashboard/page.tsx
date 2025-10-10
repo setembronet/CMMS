@@ -1,22 +1,162 @@
 
 'use client';
-
-import { useClient } from '@/context/client-provider';
-import CmmsDashboardPage from './cmms/page';
+import * as React from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Wrench, AlertTriangle, Users, Package } from 'lucide-react';
+import { workOrders, assets, users } from '@/lib/data';
 import { useI18n } from '@/hooks/use-i18n';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/types';
+import { format } from 'date-fns';
+import { useClient } from '@/context/client-provider';
 
 export default function DashboardPage() {
-  const { selectedClient } = useClient();
   const { t } = useI18n();
+  const { selectedClient } = useClient();
+
+  const {
+    openWorkOrders,
+    urgentWorkOrders,
+    assetsInMaintenance,
+    activeTechnicians,
+    recentActivities,
+  } = React.useMemo(() => {
+    if (!selectedClient) {
+      return { openWorkOrders: [], urgentWorkOrders: [], assetsInMaintenance: [], activeTechnicians: [], recentActivities: [] };
+    }
+    const clientWorkOrders = workOrders.filter(wo => wo.clientId === selectedClient.id);
+    const clientAssets = assets.filter(a => a.clientId === selectedClient.id);
+    const clientUsers = users.filter(u => u.clientId === selectedClient.id);
+
+    const openWorkOrders = clientWorkOrders.filter(wo => wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO');
+    const urgentWorkOrders = clientWorkOrders.filter(wo => wo.priority === 'Urgente' && wo.status !== 'CONCLUIDO' && wo.status !== 'CANCELADO');
+    const assetsInMaintenance = clientAssets.filter(asset => 
+      clientWorkOrders.some(wo => wo.assetId === asset.id && (wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO'))
+    );
+    const activeTechnicians = clientUsers.filter(u => u.cmmsRole === 'TECNICO');
+
+    const recentActivities = [...clientWorkOrders]
+      .sort((a, b) => b.creationDate - a.creationDate)
+      .slice(0, 5);
+      
+    return { openWorkOrders, urgentWorkOrders, assetsInMaintenance, activeTechnicians, recentActivities };
+  }, [selectedClient]);
+  
+  const getAssetName = (id: string) => assets.find(a => a.id === id)?.name || 'N/A';
+
+  const getStatusBadgeVariant = (status: OrderStatus) => {
+    switch (status) {
+      case 'ABERTO': return 'secondary';
+      case 'EM ANDAMENTO': return 'default';
+      case 'CONCLUIDO': return 'outline';
+      case 'CANCELADO': return 'destructive';
+      default: return 'secondary';
+    }
+  };
+  
+  const formatDate = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy') : 'N/A';
 
   if (!selectedClient) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center">
-          <h1 className="text-3xl font-bold font-headline mb-4">{t('sidebar.dashboard')}</h1>
-          <p className="text-muted-foreground">Selecione um cliente no menu superior para ver o dashboard operacional.</p>
-      </div>
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <h1 className="text-3xl font-bold font-headline mb-4">{t('sidebar.dashboard')}</h1>
+            <p className="text-muted-foreground">{t('cmmsDashboard.selectClientPrompt')}</p>
+        </div>
     )
   }
 
-  return <CmmsDashboardPage />;
+  return (
+    <div className="flex flex-col gap-8">
+      <h1 className="text-3xl font-bold font-headline">{t('cmmsDashboard.title')}</h1>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('cmmsDashboard.openWorkOrders')}</CardTitle>
+            <Wrench className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{openWorkOrders.length}</div>
+            <p className="text-xs text-muted-foreground">{t('cmmsDashboard.totalOpen')}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('cmmsDashboard.urgentAlerts')}</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{urgentWorkOrders.length}</div>
+            <p className="text-xs text-muted-foreground">{t('cmmsDashboard.urgentPriority')}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('cmmsDashboard.assetsInMaintenance')}</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{assetsInMaintenance.length}</div>
+            <p className="text-xs text-muted-foreground">{t('cmmsDashboard.currentlyInIntervention')}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('cmmsDashboard.activeTechnicians')}</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeTechnicians.length}</div>
+             <p className="text-xs text-muted-foreground">{t('cmmsDashboard.availableTeam')}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('cmmsDashboard.recentActivity')}</CardTitle>
+          <CardDescription>{t('cmmsDashboard.latestWorkOrders')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('workOrders.title')}</TableHead>
+                <TableHead>{t('assets.title')}</TableHead>
+                <TableHead>{t('workOrders.priority')}</TableHead>
+                <TableHead>{t('workOrders.creationDate')}</TableHead>
+                <TableHead>{t('workOrders.status')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentActivities.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell className="font-medium">{order.title}</TableCell>
+                  <TableCell>{getAssetName(order.assetId)}</TableCell>
+                  <TableCell>{order.priority}</TableCell>
+                   <TableCell>{formatDate(order.creationDate)}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
