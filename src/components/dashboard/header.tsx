@@ -17,32 +17,39 @@ import { companies } from '@/lib/data';
 
 export function Header() {
   const { setLocale, t } = useI18n();
-  const { selectedClient, setSelectedClientId } = useClient();
+  const { selectedClient, setSelectedClientId, currentUser } = useClient();
+
+  const isTechnician = currentUser?.cmmsRole === 'TECNICO';
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-      <div className="md:hidden">
-        <SidebarTrigger />
-      </div>
+      {!isTechnician && (
+        <div className="md:hidden">
+          <SidebarTrigger />
+        </div>
+      )}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="w-[220px] justify-between">
-            {selectedClient ? selectedClient.name : t('header.selectClient')}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[220px]">
-          {companies.map((company) => (
-            <DropdownMenuItem
-              key={company.id}
-              onClick={() => setSelectedClientId(company.id)}
-            >
-              {company.name}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {!isTechnician && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-[220px] justify-between">
+              {selectedClient ? selectedClient.name : t('header.selectClient')}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[220px]">
+            {companies.map((company) => (
+              <DropdownMenuItem
+                key={company.id}
+                onClick={() => setSelectedClientId(company.id)}
+              >
+                {company.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
 
       <div className="flex w-full items-center justify-end gap-4">
         <DropdownMenu>
@@ -64,5 +71,3 @@ export function Header() {
     </header>
   );
 }
-
-    
