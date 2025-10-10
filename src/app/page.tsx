@@ -10,7 +10,6 @@ import { Logo } from '@/components/logo';
 import { useI18n } from '@/hooks/use-i18n';
 import { I18nProvider } from '@/context/i18n-provider';
 
-
 function LoginPageContent() {
   const { t } = useI18n();
 
