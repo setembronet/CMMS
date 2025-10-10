@@ -40,18 +40,21 @@ import {
   purchaseOrders as initialPurchaseOrders, 
   setPurchaseOrders, 
   suppliers, 
-  products as allProducts 
+  products as allProducts,
+  setProducts,
 } from '@/lib/data';
 import type { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Supplier, Product } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useI18n } from '@/hooks/use-i18n';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const poStatuses: PurchaseOrderStatus[] = ['Pendente', 'Aprovada', 'Recebida', 'Cancelada'];
 
 export default function PurchaseOrdersPage() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [purchaseOrders, setLocalPurchaseOrders] = React.useState<PurchaseOrder[]>(initialPurchaseOrders);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<PurchaseOrder | null>(null);
@@ -134,11 +137,34 @@ export default function PurchaseOrdersPage() {
     e.preventDefault();
     if (!formData) return;
 
+    // Logic to update stock on receiving goods
+    if (editingOrder && editingOrder.status !== 'Recebida' && formData.status === 'Recebida') {
+        const updatedProducts = [...allProducts];
+        let stockUpdated = false;
+        
+        formData.items.forEach(item => {
+            const productIndex = updatedProducts.findIndex(p => p.id === item.productId);
+            if (productIndex !== -1 && updatedProducts[productIndex].manageStock) {
+                updatedProducts[productIndex].stock += item.quantity;
+                stockUpdated = true;
+            }
+        });
+
+        if (stockUpdated) {
+            setProducts(updatedProducts);
+            toast({
+                title: "Estoque Atualizado!",
+                description: "O estoque das peças recebidas foi atualizado com sucesso.",
+            });
+        }
+    }
+
+
     let updatedPOs;
     if (editingOrder) {
-      updatedPOs = purchaseOrders.map(po => (po.id === formData.id ? formData : po));
+      updatedPOs = initialPurchaseOrders.map(po => (po.id === formData.id ? formData : po));
     } else {
-      updatedPOs = [formData, ...purchaseOrders];
+      updatedPOs = [formData, ...initialPurchaseOrders];
     }
     
     setPurchaseOrders(updatedPOs);
@@ -314,3 +340,4 @@ export default function PurchaseOrdersPage() {
   );
 }
 
+    
