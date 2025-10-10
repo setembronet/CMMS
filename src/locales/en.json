@@ -516,6 +516,7 @@
   "products": {
     "title": "Parts Management",
     "new": "New Part",
+    "notManaged": "Not managed",
     "table": {
       "name": "Part Name",
       "sku": "SKU",
@@ -531,8 +532,10 @@
       "newDescription": "Fill in the new part details.",
       "name": "Part Name",
       "sku": "SKU (Code)",
-      "stock": "Stock",
-      "stockMin": "Min. Stock",
+      "manageStock": "Manage Stock",
+      "manageStockDescription": "Enable to control stock and minimum stock levels.",
+      "stock": "Current Stock",
+      "stockMin": "Minimum Stock",
       "manufacturer": "Manufacturer",
       "price": "Price ($)",
       "supplier": "Default Supplier",
@@ -564,5 +567,3 @@
     }
   }
 }
-
-    

@@ -516,6 +516,7 @@
   "products": {
     "title": "Gestión de Piezas",
     "new": "Nueva Pieza",
+    "notManaged": "No gestionado",
     "table": {
       "name": "Nombre de la Pieza",
       "sku": "SKU",
@@ -531,7 +532,9 @@
       "newDescription": "Rellene los detalles de la nueva pieza.",
       "name": "Nombre de la Pieza",
       "sku": "SKU (Código)",
-      "stock": "Stock",
+      "manageStock": "Gestionar Stock",
+      "manageStockDescription": "Active para controlar el stock y el stock mínimo.",
+      "stock": "Stock Actual",
       "stockMin": "Stock Mínimo",
       "manufacturer": "Fabricante",
       "price": "Precio ($)",
@@ -564,5 +567,3 @@
     }
   }
 }
-
-    

@@ -516,6 +516,7 @@
   "products": {
     "title": "Cadastro de Peças",
     "new": "Nova Peça",
+    "notManaged": "Não gerenciado",
     "table": {
       "name": "Nome da Peça",
       "sku": "SKU",
@@ -531,7 +532,9 @@
       "newDescription": "Preencha os detalhes da nova peça.",
       "name": "Nome da Peça",
       "sku": "SKU (Código)",
-      "stock": "Estoque",
+      "manageStock": "Gerenciar Estoque",
+      "manageStockDescription": "Ative para controlar o estoque e o estoque mínimo.",
+      "stock": "Estoque Atual",
       "stockMin": "Estoque Mínimo",
       "manufacturer": "Fabricante",
       "price": "Preço (R$)",
@@ -564,5 +567,3 @@
     }
   }
 }
-
-    

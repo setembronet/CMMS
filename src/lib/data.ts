@@ -206,9 +206,9 @@ export let workOrders: WorkOrder[] = [
 ];
 
 export let products: Product[] = [
-    { id: 'prod-01', name: 'Óleo Lubrificante XPTO', sku: 'LUB-001', manufacturer: 'Castrol', stock: 149, stockMin: 10, price: 50.00, supplierId: 'supp-01' },
-    { id: 'prod-02', name: 'Correia Dentada 5M', sku: 'COR-005', manufacturer: 'Gates', stock: 80, stockMin: 20, price: 120.50, supplierId: 'supp-02' },
-    { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', stock: 5, stockMin: 5, price: 2500.00, supplierId: 'supp-02' },
+    { id: 'prod-01', name: 'Óleo Lubrificante XPTO', sku: 'LUB-001', manufacturer: 'Castrol', manageStock: true, stock: 149, stockMin: 10, price: 50.00, supplierId: 'supp-01' },
+    { id: 'prod-02', name: 'Correia Dentada 5M', sku: 'COR-005', manufacturer: 'Gates', manageStock: true, stock: 80, stockMin: 20, price: 120.50, supplierId: 'supp-02' },
+    { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', manageStock: false, stock: 5, stockMin: 5, price: 2500.00, supplierId: 'supp-02' },
 ];
 
 export let suppliers: Supplier[] = [

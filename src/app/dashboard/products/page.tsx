@@ -27,18 +27,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { PlusCircle, MoreHorizontal, AlertTriangle } from 'lucide-react';
 import { products as initialProducts, setProducts, suppliers } from '@/lib/data';
 import type { Product, Supplier } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 const emptyProduct: Product = {
   id: '',
   name: '',
   sku: '',
   manufacturer: '',
+  manageStock: true,
   stock: 0,
   stockMin: 0,
   price: 0,
@@ -77,6 +80,10 @@ export default function ProductsPage() {
       ...prev,
       [name]: type === 'number' ? parseFloat(value) || 0 : value,
     }));
+  };
+
+  const handleSwitchChange = (name: keyof Product, checked: boolean) => {
+    setFormData(prev => ({ ...prev, [name]: checked }));
   };
   
   const handleSelectChange = (name: keyof Product, value: string) => {
@@ -124,26 +131,28 @@ export default function ProductsPage() {
               <TableHead>{t('products.table.sku')}</TableHead>
               <TableHead>{t('products.table.supplier')}</TableHead>
               <TableHead>{t('products.table.stock')}</TableHead>
-              <TableHead>{t('products.table.stockMin')}</TableHead>
               <TableHead>{t('products.table.price')}</TableHead>
               <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {products.map(product => {
-                const isLowStock = product.stock <= product.stockMin;
+                const isLowStock = product.manageStock && product.stock <= product.stockMin;
                 return (
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.sku}</TableCell>
                     <TableCell>{getSupplierName(product.supplierId)}</TableCell>
                     <TableCell className={cn(isLowStock && "text-destructive")}>
-                        <div className="flex items-center gap-2">
-                           {isLowStock && <AlertTriangle className="h-4 w-4" />}
-                           {product.stock}
-                        </div>
+                        {product.manageStock ? (
+                            <div className="flex items-center gap-2">
+                               {isLowStock && <AlertTriangle className="h-4 w-4" />}
+                               {product.stock}
+                            </div>
+                        ) : (
+                            <span className="text-muted-foreground">{t('products.notManaged')}</span>
+                        )}
                     </TableCell>
-                    <TableCell>{product.stockMin}</TableCell>
                     <TableCell>{product.price.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -186,16 +195,6 @@ export default function ProductsPage() {
                     <Input id="sku" name="sku" value={formData.sku} onChange={handleInputChange} required />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="stock">{t('products.dialog.stock')}</Label>
-                    <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleInputChange} required />
-                </div>
-              </div>
-               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="stockMin">{t('products.dialog.stockMin')}</Label>
-                    <Input id="stockMin" name="stockMin" type="number" value={formData.stockMin} onChange={handleInputChange} required />
-                </div>
-                 <div className="space-y-2">
                     <Label htmlFor="price">{t('products.dialog.price')}</Label>
                     <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
                 </div>
@@ -216,6 +215,31 @@ export default function ProductsPage() {
                       ))}
                     </SelectContent>
                   </Select>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                      <Label htmlFor="manageStock">{t('products.dialog.manageStock')}</Label>
+                      <p className="text-xs text-muted-foreground">{t('products.dialog.manageStockDescription')}</p>
+                  </div>
+                  <Switch id="manageStock" checked={formData.manageStock} onCheckedChange={(checked) => handleSwitchChange('manageStock', checked)} />
+                </div>
+
+                {formData.manageStock && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="stock">{t('products.dialog.stock')}</Label>
+                        <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleInputChange} required={formData.manageStock} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="stockMin">{t('products.dialog.stockMin')}</Label>
+                        <Input id="stockMin" name="stockMin" type="number" value={formData.stockMin} onChange={handleInputChange} required={formData.manageStock} />
+                    </div>
+                  </div>
+                )}
               </div>
           </form>
           <DialogFooter>

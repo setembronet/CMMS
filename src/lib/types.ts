@@ -196,6 +196,7 @@ export type Product = {
   name: string;
   sku: string;
   manufacturer: string;
+  manageStock: boolean;
   stock: number;
   stockMin: number;
   price: number;
