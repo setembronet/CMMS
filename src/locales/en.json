@@ -1,4 +1,5 @@
 
+
 {
   "header": {
     "changeLanguage": "Change language",
@@ -33,7 +34,8 @@
     "checklistTemplates": "Checklist Templates",
     "subscriptions": "Subscriptions",
     "chartOfAccounts": "Chart of Accounts",
-    "costCenters": "Cost Centers"
+    "costCenters": "Cost Centers",
+    "accountsPayable": "Accounts Payable"
   },
   "common": {
     "save": "Save",

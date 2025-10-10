@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -30,6 +31,7 @@ import {
   Banknote,
   Library,
   Target,
+  ArrowRightLeft,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -103,6 +105,14 @@ export function SidebarNav() {
                                     <Link href="/dashboard/finance">
                                         <LayoutGrid />
                                         <span>{t('sidebar.financeDashboard')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/accounts-payable', true)}>
+                                    <Link href="/dashboard/finance/accounts-payable">
+                                        <ArrowRightLeft />
+                                        <span>{t('sidebar.accountsPayable')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>

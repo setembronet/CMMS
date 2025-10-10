@@ -1,6 +1,7 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter } from './types';
+
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -32,6 +33,51 @@ export let chartOfAccounts: ChartOfAccount[] = [
     { id: 'coa-12', code: '3.1.2.0', name: 'Contas de Consumo', type: 'DESPESA', parentCode: '3.1.0.0', isGroup: false },
     { id: 'coa-13', code: '3.2.0.0', name: 'Despesas com Pessoal', type: 'DESPESA', parentCode: '3.0.0.0', isGroup: true },
     { id: 'coa-14', code: '3.2.1.0', name: 'Salários - Administrativo', type: 'DESPESA', parentCode: '3.2.0.0', isGroup: false },
+];
+
+export let accountsPayable: AccountsPayable[] = [
+    {
+        id: 'ap-01',
+        description: 'Aluguel do escritório - Julho/2024',
+        supplierOrCreditor: 'Imobiliária Central',
+        dueDate: new Date(2024, 6, 10).getTime(),
+        value: 4500.00,
+        status: 'Paga',
+        paymentDate: new Date(2024, 6, 8).getTime(),
+        costCenterId: 'cc-01',
+        chartOfAccountId: 'coa-11',
+    },
+    {
+        id: 'ap-02',
+        description: 'Conta de Energia Elétrica - Junho/2024',
+        supplierOrCreditor: 'Companhia de Energia Local',
+        dueDate: new Date(2024, 6, 20).getTime(),
+        value: 850.75,
+        status: 'Pendente',
+        costCenterId: 'cc-01',
+        chartOfAccountId: 'coa-12',
+    },
+    {
+        id: 'ap-03',
+        description: 'Salários Administrativo - Junho/2024',
+        supplierOrCreditor: 'Folha de Pagamento',
+        dueDate: new Date(2024, 6, 5).getTime(),
+        value: 12500.00,
+        status: 'Paga',
+        paymentDate: new Date(2024, 6, 5).getTime(),
+        costCenterId: 'cc-04',
+        chartOfAccountId: 'coa-14',
+    },
+     {
+        id: 'ap-04',
+        description: 'Serviços de Marketing Digital',
+        supplierOrCreditor: 'Agência Impulso',
+        dueDate: new Date(2024, 5, 15).getTime(),
+        value: 3200.00,
+        status: 'Vencida',
+        costCenterId: 'cc-02',
+        chartOfAccountId: '3.1.2.0', // Mocking another expense type
+    },
 ];
 
 
@@ -438,6 +484,10 @@ export const setPurchaseOrders = (newPOs: PurchaseOrder[]) => {
   purchaseOrders = newPOs;
 };
 
+export const setAccountsPayable = (newAPs: AccountsPayable[]) => {
+  accountsPayable = newAPs;
+};
+
 export const setKpis = (newKpis: typeof kpis) => {
     kpis = newKpis;
 };
@@ -461,6 +511,7 @@ export const getBackupData = () => ({
   checklistTemplates,
   costCenters,
   chartOfAccounts,
+  accountsPayable,
 });
 
 // Function to restore all data
@@ -484,5 +535,6 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.checklistTemplates)) setChecklistTemplates(data.checklistTemplates);
     if (Array.isArray(data.costCenters)) costCenters = data.costCenters;
     if (Array.isArray(data.chartOfAccounts)) chartOfAccounts = data.chartOfAccounts;
+    if (Array.isArray(data.accountsPayable)) setAccountsPayable(data.accountsPayable);
   }
 };

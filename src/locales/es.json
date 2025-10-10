@@ -1,4 +1,5 @@
 
+
 {
   "header": {
     "changeLanguage": "Cambiar idioma",
@@ -33,7 +34,8 @@
     "checklistTemplates": "Plantillas de Checklist",
     "subscriptions": "Suscripciones",
     "chartOfAccounts": "Plan de Cuentas",
-    "costCenters": "Centros de Costo"
+    "costCenters": "Centros de Costo",
+    "accountsPayable": "Cuentas por Pagar"
   },
   "common": {
     "save": "Guardar",
