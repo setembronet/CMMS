@@ -57,5 +57,3 @@ export default function LoginPage() {
     </I18nProvider>
   )
 }
-
-    
