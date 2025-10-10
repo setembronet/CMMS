@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments } from '@/lib/data';
+import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -745,3 +745,5 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
+
+    
