@@ -28,21 +28,31 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit, MessageSquarePlus, Clock } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles, assets, workOrders, segments } from '@/lib/data';
-import type { CustomerLocation, Contact, CMMSRole, WorkOrder, ContractStatus } from '@/lib/types';
+import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles, assets, workOrders, segments, users } from '@/lib/data';
+import type { CustomerLocation, Contact, CMMSRole, WorkOrder, ContractStatus, Interaction, InteractionType } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 // --- Development Fix: Use a single client for easier debugging ---
 const TEST_CLIENT_ID = 'client-01';
+const CURRENT_USER_ID = 'user-04'; // Mock logged-in user
 const testClient = companies.find(c => c.id === TEST_CLIENT_ID);
 
 const contractStatuses: ContractStatus[] = ['Vigente', 'Próximo a Vencer', 'Vencido'];
+const interactionTypes: {value: InteractionType, label: string}[] = [
+    { value: 'LIGAÇÃO', label: 'Ligação' },
+    { value: 'EMAIL', label: 'Email' },
+    { value: 'REUNIÃO', label: 'Reunião' },
+    { value: 'VISITA', label: 'Visita' },
+    { value: 'OUTRO', label: 'Outro' },
+];
 
 const emptyLocation: CustomerLocation = {
   id: '',
@@ -59,6 +69,7 @@ const emptyLocation: CustomerLocation = {
     zipCode: '',
   },
   contacts: [],
+  interactions: [],
 };
 
 const emptyContact: Contact = {
@@ -167,6 +178,42 @@ export default function ClientsPage() {
     }));
   }
 
+  const addInteraction = () => {
+      const newInteraction: Interaction = {
+          id: `int-${Date.now()}`,
+          date: new Date().getTime(),
+          type: 'LIGAÇÃO',
+          description: '',
+          userId: CURRENT_USER_ID,
+      };
+      setFormData(prev => ({
+          ...prev,
+          interactions: [newInteraction, ...(prev.interactions || [])],
+      }));
+  };
+
+  const removeInteraction = (index: number) => {
+      setFormData(prev => ({
+          ...prev,
+          interactions: (prev.interactions || []).filter((_, i) => i !== index),
+      }));
+  };
+  
+  const handleInteractionChange = (index: number, e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      const newInteractions = [...(formData.interactions || [])];
+      // @ts-ignore
+      newInteractions[index][name] = value;
+      setFormData(prev => ({...prev, interactions: newInteractions}));
+  };
+  
+  const handleInteractionTypeChange = (index: number, value: InteractionType) => {
+      const newInteractions = [...(formData.interactions || [])];
+      newInteractions[index].type = value;
+      setFormData(prev => ({...prev, interactions: newInteractions}));
+  }
+
+
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
     if (cep.length !== 8) return;
@@ -235,6 +282,8 @@ export default function ClientsPage() {
           case 'Vencido': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
       }
   }
+
+  const getUserName = (id: string) => users.find(u => u.id === id)?.name || 'Usuário';
 
 
   return (
@@ -332,7 +381,7 @@ export default function ClientsPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-3xl">
+          <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
               <DialogTitle>{editingLocation ? 'Editar Cliente Final' : 'Novo Cliente Final'}</DialogTitle>
               <DialogDescription>
@@ -453,6 +502,60 @@ export default function ClientsPage() {
                     ))}
                   </div>
                 </div>
+
+                <Separator />
+                
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium">Histórico de Interações (CRM)</h3>
+                      <Button type="button" variant="outline" size="sm" onClick={addInteraction}>
+                          <MessageSquarePlus className="mr-2 h-4 w-4" />
+                          Registrar Interação
+                      </Button>
+                  </div>
+                   <div className="space-y-4">
+                      {(formData.interactions || []).map((interaction, index) => (
+                          <div key={interaction.id} className="p-4 border rounded-lg space-y-3 relative">
+                              <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeInteraction(index)}>
+                                  <Trash2 className="h-4 w-4 text-destructive"/>
+                                  <span className="sr-only">Remover Interação</span>
+                              </Button>
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="h-3 w-3"/>
+                                    <span>{format(new Date(interaction.date), "dd/MM/yyyy HH:mm", { locale: ptBR })} por {getUserName(interaction.userId)}</span>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
+                                <div className="space-y-2 sm:col-span-2">
+                                  <Label htmlFor={`interaction-type-${index}`}>Tipo</Label>
+                                  <Select value={interaction.type} onValueChange={(value) => handleInteractionTypeChange(index, value as InteractionType)}>
+                                      <SelectTrigger id={`interaction-type-${index}`}>
+                                          <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                          {interactionTypes.map(type => (
+                                              <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                                          ))}
+                                      </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2 sm:col-span-4">
+                                  <Label htmlFor={`interaction-desc-${index}`}>Descrição</Label>
+                                  <Textarea 
+                                      id={`interaction-desc-${index}`} 
+                                      name="description" 
+                                      value={interaction.description}
+                                      onChange={(e) => handleInteractionChange(index, e)}
+                                      placeholder="Descreva a interação..."
+                                  />
+                                </div>
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+                </div>
+
               </form>
             </ScrollArea>
             <DialogFooter>

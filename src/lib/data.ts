@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -134,6 +134,9 @@ export let customerLocations: CustomerLocation[] = [
     contractStatus: 'Vigente',
     contacts: [
       { id: 'contact-01', name: 'Sr. Roberto', cmmsRoleId: 'SINDICO', phone: '11987654321', email: 'roberto.sindico@email.com', observation: 'Ligar apenas em emergências.' }
+    ],
+    interactions: [
+        { id: 'int-01', date: new Date(2024, 6, 15).getTime(), type: 'LIGAÇÃO', description: 'Cliente ligou para relatar barulho no elevador social. OS-01 foi aberta.', userId: 'user-04' }
     ]
   },
   {
@@ -142,7 +145,8 @@ export let customerLocations: CustomerLocation[] = [
     name: 'Shopping Plaza',
     address: { street: 'Rua das Flores', number: 'S/N', city: 'São Paulo', state: 'SP', zipCode: '01001-000' },
     contractStatus: 'Próximo a Vencer',
-    contacts: []
+    contacts: [],
+    interactions: []
   },
   {
     id: 'loc-03',
@@ -150,7 +154,8 @@ export let customerLocations: CustomerLocation[] = [
     name: 'Aeroporto Internacional',
     address: { city: 'Rio de Janeiro', state: 'RJ' },
     contractStatus: 'Vencido',
-    contacts: []
+    contacts: [],
+    interactions: []
   },
 ];
 

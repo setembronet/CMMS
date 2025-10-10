@@ -2,6 +2,16 @@
 
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
+export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
+
+export type Interaction = {
+  id: string;
+  date: number; // timestamp
+  type: InteractionType;
+  description: string;
+  userId: string; // ID of the user who logged the interaction
+};
+
 export type Contact = {
   id: string;
   name: string;
@@ -26,6 +36,7 @@ export type CustomerLocation = {
     zipCode?: string;
   };
   contacts?: Contact[];
+  interactions?: Interaction[];
 };
 
 
