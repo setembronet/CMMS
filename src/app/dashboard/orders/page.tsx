@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus } from 'lucide-react';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -48,6 +48,7 @@ import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineContent } from '@/components/ui/timeline';
 
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
@@ -394,6 +395,71 @@ export default function WorkOrdersPage() {
   const formatDate = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy') : 'N/A';
   const formatDateTime = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy HH:mm') : 'N/A';
 
+  const generateTimelineEvents = (order: WorkOrder) => {
+      if (!order) return [];
+      const events = [];
+
+      events.push({
+          icon: FilePlus,
+          color: "text-sky-500",
+          title: "Ordem de Serviço Criada",
+          description: `Criado por: ${getCreatorName(order.createdByUserId)}`,
+          date: order.creationDate,
+      });
+
+      if (order.scheduledDate) {
+          events.push({
+              icon: CalendarIcon,
+              color: "text-gray-500",
+              title: "Agendamento",
+              description: `Serviço agendado para ${format(new Date(order.scheduledDate), 'dd/MM/yyyy')}`,
+              date: order.creationDate + 1, // just to order it
+          });
+      }
+
+      if (order.responsibleId) {
+          events.push({
+              icon: User,
+              color: "text-gray-500",
+              title: "Técnico Atribuído",
+              description: `Atribuído a: ${getTechnicianName(order.responsibleId)}`,
+              date: order.creationDate + 2, // just to order it
+          });
+      }
+
+      if (order.startDate) {
+          events.push({
+              icon: Play,
+              color: "text-blue-500",
+              title: "Início da Execução",
+              description: `Serviço iniciado em ${formatDateTime(order.startDate)}`,
+              date: order.startDate,
+          });
+      }
+      
+      if (order.partsUsed && order.partsUsed.length > 0) {
+           events.push({
+              icon: ShoppingCart,
+              color: "text-orange-500",
+              title: "Peças Utilizadas",
+              description: `${order.partsUsed.map(p => `${p.quantity}x ${getProductName(p.productId)}`).join(', ')}`,
+              date: order.endDate ? order.endDate - 1 : new Date().getTime(),
+          });
+      }
+
+      if (order.endDate) {
+          events.push({
+              icon: Check,
+              color: "text-green-500",
+              title: "Serviço Concluído",
+              description: `Finalizado em ${formatDateTime(order.endDate)}`,
+              date: order.endDate,
+          });
+      }
+      
+      return events.sort((a,b) => b.date - a.date);
+  }
+
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
@@ -475,252 +541,266 @@ export default function WorkOrdersPage() {
           </DialogHeader>
           {formData && (
             <>
-            <ScrollArea className="max-h-[65vh] -mx-6 px-6">
-              <form onSubmit={handleSaveOrder} id="order-form" className="space-y-6 py-4 px-1">
-                
-                <fieldset disabled={isFormDisabled} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="assetId">{t('workOrders.dialog.asset')}</Label>
-                    <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('workOrders.dialog.assetPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="title">{t('workOrders.dialog.title')}</Label>
-                    <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder={t('workOrders.dialog.titlePlaceholder')}/>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">{t('workOrders.dialog.descriptionLabel')}</Label>
-                    <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.descriptionPlaceholder')}/>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="status">{t('workOrders.dialog.status')}</Label>
-                        <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {orderStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="priority">{t('workOrders.dialog.priority')}</Label>
-                        <Select name="priority" value={formData.priority} onValueChange={(value) => handleSelectChange('priority', value as OrderPriority)} required>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {orderPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="scheduledDate">{t('workOrders.dialog.scheduledDate')}</Label>
-                      <Popover>
-                          <PopoverTrigger asChild>
-                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.scheduledDate && "text-muted-foreground")}>
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {formData.scheduledDate ? format(new Date(formData.scheduledDate), "PPP") : <span>{t('common.optional')}</span>}
-                              </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                              <Calendar mode="single" selected={formData.scheduledDate ? new Date(formData.scheduledDate) : undefined} onSelect={(date) => handleDateChange('scheduledDate', date)} initialFocus />
-                          </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
+            <div className="grid md:grid-cols-2 gap-6 max-h-[65vh]">
+              <ScrollArea className="pr-6 -mr-6">
+                <form onSubmit={handleSaveOrder} id="order-form" className="space-y-6 py-4 px-1">
                   
-                  <Separator />
+                  <fieldset disabled={isFormDisabled} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="assetId">{t('workOrders.dialog.asset')}</Label>
+                      <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('workOrders.dialog.assetPlaceholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <h3 className="text-base font-medium">{t('workOrders.dialog.assignmentSection')}</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">{t('workOrders.dialog.title')}</Label>
+                      <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder={t('workOrders.dialog.titlePlaceholder')}/>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">{t('workOrders.dialog.descriptionLabel')}</Label>
+                      <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.descriptionPlaceholder')}/>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                          <Label htmlFor="responsibleId">{t('workOrders.dialog.responsibleTechnician')}</Label>
-                          <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
-                              <SelectTrigger>
-                              <SelectValue placeholder={t('workOrders.dialog.responsibleTechnicianPlaceholder')} />
-                              </SelectTrigger>
+                          <Label htmlFor="status">{t('workOrders.dialog.status')}</Label>
+                          <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                  {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
+                                  {orderStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                               </SelectContent>
                           </Select>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="squad">{t('workOrders.dialog.squad')}</Label>
-                          <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.squadPlaceholder')}/>
+                          <Label htmlFor="priority">{t('workOrders.dialog.priority')}</Label>
+                          <Select name="priority" value={formData.priority} onValueChange={(value) => handleSelectChange('priority', value as OrderPriority)} required>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                  {orderPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
                       </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4">
-                      <div className="space-y-1">
-                          <Label className="text-sm">{t('workOrders.dialog.executionStart')}</Label>
-                          <p className="text-sm text-muted-foreground">{formatDateTime(formData.startDate)}</p>
+                      <div className="space-y-2">
+                        <Label htmlFor="scheduledDate">{t('workOrders.dialog.scheduledDate')}</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.scheduledDate && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {formData.scheduledDate ? format(new Date(formData.scheduledDate), "PPP") : <span>{t('common.optional')}</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" selected={formData.scheduledDate ? new Date(formData.scheduledDate) : undefined} onSelect={(date) => handleDateChange('scheduledDate', date)} initialFocus />
+                            </PopoverContent>
+                        </Popover>
                       </div>
-                      <div className="space-y-1">
-                          <Label className="text-sm">{t('workOrders.dialog.executionEnd')}</Label>
-                          <p className="text-sm text-muted-foreground">{formatDateTime(formData.endDate)}</p>
-                      </div>
-                  </div>
+                    </div>
+                    
+                    <Separator />
 
-                  {formData.checklist && (
-                    <>
-                      <Separator />
-                      <Accordion type="single" collapsible defaultValue='item-0' className="w-full">
-                        <h3 className="text-base font-medium mb-2">{t('workOrders.dialog.checklistSection')}</h3>
-                          {formData.checklist.map((group, groupIndex) => (
-                            <AccordionItem value={`item-${groupIndex}`} key={group.id}>
-                              <AccordionTrigger>{group.title}</AccordionTrigger>
-                              <AccordionContent className="space-y-4 pt-4">
-                                  {group.items.map((item, itemIndex) => (
-                                      <div key={item.id} className="grid grid-cols-1 gap-4 rounded-md border p-4">
-                                          <Label className="font-medium">{item.text}</Label>
-                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                              <div className="space-y-2">
-                                                  <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">{t('workOrders.dialog.checklistStatus')}</Label>
-                                                  <Select value={item.status} onValueChange={(value) => handleChecklistItemChange(groupIndex, itemIndex, 'status', value)}>
-                                                      <SelectTrigger id={`checklist-status-${groupIndex}-${itemIndex}`}>
-                                                          <SelectValue/>
-                                                      </SelectTrigger>
-                                                      <SelectContent>
-                                                          {checklistStatuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
-                                                      </SelectContent>
-                                                  </Select>
-                                              </div>
-                                              <div className="space-y-2">
-                                                  <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">{t('workOrders.dialog.checklistComment')}</Label>
-                                                  <Input 
-                                                      id={`checklist-comment-${groupIndex}-${itemIndex}`}
-                                                      value={item.comment || ''}
-                                                      onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'comment', e.target.value)}
-                                                      placeholder={t('workOrders.dialog.checklistCommentPlaceholder')}
-                                                      required={item.status === 'NÃO OK'}
-                                                  />
-                                              </div>
-                                          </div>
-                                      </div>
-                                  ))}
-                              </AccordionContent>
-                            </AccordionItem>
+                    <h3 className="text-base font-medium">{t('workOrders.dialog.assignmentSection')}</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="responsibleId">{t('workOrders.dialog.responsibleTechnician')}</Label>
+                            <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
+                                <SelectTrigger>
+                                <SelectValue placeholder={t('workOrders.dialog.responsibleTechnicianPlaceholder')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="squad">{t('workOrders.dialog.squad')}</Label>
+                            <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.squadPlaceholder')}/>
+                        </div>
+                    </div>
+
+                    {formData.checklist && (
+                      <>
+                        <Separator />
+                        <Accordion type="single" collapsible defaultValue='item-0' className="w-full">
+                          <h3 className="text-base font-medium mb-2">{t('workOrders.dialog.checklistSection')}</h3>
+                            {formData.checklist.map((group, groupIndex) => (
+                              <AccordionItem value={`item-${groupIndex}`} key={group.id}>
+                                <AccordionTrigger>{group.title}</AccordionTrigger>
+                                <AccordionContent className="space-y-4 pt-4">
+                                    {group.items.map((item, itemIndex) => (
+                                        <div key={item.id} className="grid grid-cols-1 gap-4 rounded-md border p-4">
+                                            <Label className="font-medium">{item.text}</Label>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">{t('workOrders.dialog.checklistStatus')}</Label>
+                                                    <Select value={item.status} onValueChange={(value) => handleChecklistItemChange(groupIndex, itemIndex, 'status', value)}>
+                                                        <SelectTrigger id={`checklist-status-${groupIndex}-${itemIndex}`}>
+                                                            <SelectValue/>
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {checklistStatuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">{t('workOrders.dialog.checklistComment')}</Label>
+                                                    <Input 
+                                                        id={`checklist-comment-${groupIndex}-${itemIndex}`}
+                                                        value={item.comment || ''}
+                                                        onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'comment', e.target.value)}
+                                                        placeholder={t('workOrders.dialog.checklistCommentPlaceholder')}
+                                                        required={item.status === 'NÃO OK'}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </AccordionContent>
+                              </AccordionItem>
+                            ))}
+                        </Accordion>
+                      </>
+                    )}
+
+                    <Separator />
+                    
+                    <h3 className="text-base font-medium">{t('workOrders.dialog.closingSection')}</h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="rootCause">{t('workOrders.dialog.failureCause')}</Label>
+                            <Select name="rootCause" value={formData.rootCause || ''} onValueChange={(value) => handleSelectChange('rootCause', value as RootCause)}>
+                                <SelectTrigger>
+                                <SelectValue placeholder={t('workOrders.dialog.failureCausePlaceholder')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {rootCauses.map(cause => <SelectItem key={cause.value} value={cause.value}>{cause.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="recommendedAction">{t('workOrders.dialog.recommendedAction')}</Label>
+                            <Select name="recommendedAction" value={formData.recommendedAction || ''} onValueChange={(value) => handleSelectChange('recommendedAction', value as RecommendedAction)}>
+                                <SelectTrigger>
+                                <SelectValue placeholder={t('workOrders.dialog.recommendedActionPlaceholder')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {recommendedActions.map(action => <SelectItem key={action.value} value={action.value}>{action.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-base font-medium">{t('workOrders.dialog.partsSection')}</h3>
+                            <Button type="button" size="sm" variant="outline" onClick={handleAddPart}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> {t('workOrders.dialog.addPart')}
+                            </Button>
+                        </div>
+                        <div className="rounded-md border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50%]">{t('workOrders.dialog.part')}</TableHead>
+                                        <TableHead>{t('workOrders.dialog.quantity')}</TableHead>
+                                        <TableHead>{t('workOrders.dialog.cost')}</TableHead>
+                                        <TableHead>{t('workOrders.dialog.stock')}</TableHead>
+                                        <TableHead className="text-right"></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {(formData.partsUsed || []).map((part, index) => {
+                                      const stock = getProductStock(part.productId);
+                                      const insufficientStock = part.quantity > stock;
+                                      return (
+                                        <TableRow key={index}>
+                                            <TableCell>
+                                                <Select value={part.productId} onValueChange={(value) => handlePartChange(index, 'productId', value)}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder={t('workOrders.dialog.partPlaceholder')} />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input type="number" value={part.quantity} onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value, 10) || 1)} min="1" className={cn(insufficientStock && "border-destructive")}/>
+                                            </TableCell>
+                                            <TableCell>
+                                                R$ {(getProductPrice(part.productId) * part.quantity).toFixed(2)}
+                                            </TableCell>
+                                            <TableCell className={cn(insufficientStock && "text-destructive")}>
+                                                {insufficientStock ? (
+                                                    <div className="flex items-center gap-1">
+                                                        <AlertTriangle className="h-4 w-4" />
+                                                        {stock}
+                                                    </div>
+                                                ) : stock }
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePart(index)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                      )
+                                    })}
+                                    {(formData.partsUsed || []).length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center text-muted-foreground">{t('workOrders.dialog.noParts')}</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                        <div className="flex justify-end font-medium">
+                            {t('workOrders.dialog.totalPartsCost')}: R$ {calculateTotalCost().toFixed(2)}
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                      <Label htmlFor="internalObservation">{t('workOrders.dialog.internalObservation')}</Label>
+                      <Textarea id="internalObservation" name="internalObservation" value={formData.internalObservation || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.internalObservationPlaceholder')}/>
+                    </div>
+                  </fieldset>
+                </form>
+              </ScrollArea>
+
+              <ScrollArea className="border-l -ml-3 pl-3">
+                  <div className="px-4 py-4 space-y-4">
+                      <h3 className="text-base font-medium">Linha do Tempo</h3>
+                      <Timeline>
+                          {generateTimelineEvents(formData).map((event, index) => (
+                              <TimelineItem key={index}>
+                                  <TimelineConnector />
+                                  <TimelineHeader>
+                                      <TimelineTime>{format(new Date(event.date), 'dd/MM/yy')}</TimelineTime>
+                                      <TimelineIcon>
+                                          <event.icon className={cn("h-4 w-4", event.color)} />
+                                      </TimelineIcon>
+                                      <TimelineTitle>{event.title}</TimelineTitle>
+                                  </TimelineHeader>
+                                  <TimelineContent>
+                                      <TimelineDescription>{event.description}</TimelineDescription>
+                                  </TimelineContent>
+                              </TimelineItem>
                           ))}
-                      </Accordion>
-                    </>
-                  )}
-
-                  <Separator />
-                  
-                  <h3 className="text-base font-medium">{t('workOrders.dialog.closingSection')}</h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="rootCause">{t('workOrders.dialog.failureCause')}</Label>
-                          <Select name="rootCause" value={formData.rootCause || ''} onValueChange={(value) => handleSelectChange('rootCause', value as RootCause)}>
-                              <SelectTrigger>
-                              <SelectValue placeholder={t('workOrders.dialog.failureCausePlaceholder')} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  {rootCauses.map(cause => <SelectItem key={cause.value} value={cause.value}>{cause.label}</SelectItem>)}
-                              </SelectContent>
-                          </Select>
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="recommendedAction">{t('workOrders.dialog.recommendedAction')}</Label>
-                          <Select name="recommendedAction" value={formData.recommendedAction || ''} onValueChange={(value) => handleSelectChange('recommendedAction', value as RecommendedAction)}>
-                              <SelectTrigger>
-                              <SelectValue placeholder={t('workOrders.dialog.recommendedActionPlaceholder')} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  {recommendedActions.map(action => <SelectItem key={action.value} value={action.value}>{action.label}</SelectItem>)}
-                              </SelectContent>
-                          </Select>
-                      </div>
+                      </Timeline>
                   </div>
-
-                  <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                          <h3 className="text-base font-medium">{t('workOrders.dialog.partsSection')}</h3>
-                          <Button type="button" size="sm" variant="outline" onClick={handleAddPart}>
-                              <PlusCircle className="mr-2 h-4 w-4" /> {t('workOrders.dialog.addPart')}
-                          </Button>
-                      </div>
-                      <div className="rounded-md border">
-                          <Table>
-                              <TableHeader>
-                                  <TableRow>
-                                      <TableHead className="w-[50%]">{t('workOrders.dialog.part')}</TableHead>
-                                      <TableHead>{t('workOrders.dialog.quantity')}</TableHead>
-                                      <TableHead>{t('workOrders.dialog.cost')}</TableHead>
-                                      <TableHead>{t('workOrders.dialog.stock')}</TableHead>
-                                      <TableHead className="text-right"></TableHead>
-                                  </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                  {(formData.partsUsed || []).map((part, index) => {
-                                    const stock = getProductStock(part.productId);
-                                    const insufficientStock = part.quantity > stock;
-                                    return (
-                                      <TableRow key={index}>
-                                          <TableCell>
-                                              <Select value={part.productId} onValueChange={(value) => handlePartChange(index, 'productId', value)}>
-                                                  <SelectTrigger>
-                                                      <SelectValue placeholder={t('workOrders.dialog.partPlaceholder')} />
-                                                  </SelectTrigger>
-                                                  <SelectContent>
-                                                      {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                                                  </SelectContent>
-                                              </Select>
-                                          </TableCell>
-                                          <TableCell>
-                                              <Input type="number" value={part.quantity} onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value, 10) || 1)} min="1" className={cn(insufficientStock && "border-destructive")}/>
-                                          </TableCell>
-                                          <TableCell>
-                                              R$ {(getProductPrice(part.productId) * part.quantity).toFixed(2)}
-                                          </TableCell>
-                                          <TableCell className={cn(insufficientStock && "text-destructive")}>
-                                              {insufficientStock ? (
-                                                  <div className="flex items-center gap-1">
-                                                      <AlertTriangle className="h-4 w-4" />
-                                                      {stock}
-                                                  </div>
-                                              ) : stock }
-                                          </TableCell>
-                                          <TableCell className="text-right">
-                                              <Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePart(index)}>
-                                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                              </Button>
-                                          </TableCell>
-                                      </TableRow>
-                                    )
-                                  })}
-                                  {(formData.partsUsed || []).length === 0 && (
-                                      <TableRow>
-                                          <TableCell colSpan={5} className="text-center text-muted-foreground">{t('workOrders.dialog.noParts')}</TableCell>
-                                      </TableRow>
-                                  )}
-                              </TableBody>
-                          </Table>
-                      </div>
-                      <div className="flex justify-end font-medium">
-                          {t('workOrders.dialog.totalPartsCost')}: R$ {calculateTotalCost().toFixed(2)}
-                      </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <Label htmlFor="internalObservation">{t('workOrders.dialog.internalObservation')}</Label>
-                    <Textarea id="internalObservation" name="internalObservation" value={formData.internalObservation || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.internalObservationPlaceholder')}/>
-                  </div>
-                </fieldset>
-              </form>
-            </ScrollArea>
-            <DialogFooter className="flex-col-reverse gap-y-2 sm:flex-row sm:justify-between w-full">
+              </ScrollArea>
+            </div>
+            <DialogFooter className="flex-col-reverse gap-y-2 sm:flex-row sm:justify-between w-full pt-4 border-t">
               {isFormDisabled ? (
                   <Button variant="secondary" onClick={handleReopenOrder}>
                     <RotateCcw className="mr-2 h-4 w-4" />
@@ -746,4 +826,3 @@ export default function WorkOrdersPage() {
   );
 }
 
-    
