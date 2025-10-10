@@ -24,7 +24,7 @@ import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/t
 import { format } from 'date-fns';
 import { useClient } from '@/context/client-provider';
 
-export default function DashboardCmmsPage() {
+export default function CmmsDashboardPage() {
   const { t } = useI18n();
   const { selectedClient } = useClient();
 
@@ -160,5 +160,3 @@ export default function DashboardCmmsPage() {
     </div>
   );
 }
-
-    

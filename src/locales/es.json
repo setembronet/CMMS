@@ -30,7 +30,8 @@
     "products": "Piezas",
     "purchaseOrders": "Órdenes de Compra",
     "purchaseSuggestion": "Sugerencia de Compra",
-    "checklistTemplates": "Plantillas de Checklist"
+    "checklistTemplates": "Plantillas de Checklist",
+    "subscriptions": "Suscripciones"
   },
   "common": {
     "save": "Guardar",

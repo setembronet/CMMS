@@ -30,7 +30,8 @@
     "products": "Parts",
     "purchaseOrders": "Purchase Orders",
     "purchaseSuggestion": "Purchase Suggestion",
-    "checklistTemplates": "Checklist Templates"
+    "checklistTemplates": "Checklist Templates",
+    "subscriptions": "Subscriptions"
   },
   "common": {
     "save": "Save",

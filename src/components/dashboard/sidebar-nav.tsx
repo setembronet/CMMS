@@ -7,7 +7,6 @@ import {
   Building2,
   Settings,
   Users,
-  TrendingUp,
   ChevronDown,
   LayoutGrid,
   Package,
@@ -27,6 +26,7 @@ import {
   Truck,
   ShoppingCart,
   Lightbulb,
+  DollarSign,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -48,11 +48,6 @@ export function SidebarNav() {
   const pathname = usePathname();
   const { t } = useI18n();
 
-  const financeLinks = [
-      { href: '/dashboard/finance/plans', label: t('sidebar.plans'), icon: Package },
-      { href: '/dashboard/finance/addons', label: t('sidebar.addons'), icon: Puzzle },
-  ];
-
   const settingsLinks = [
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
       { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
@@ -71,13 +66,10 @@ export function SidebarNav() {
     return pathname.startsWith(href);
   };
   
-  // Custom check for the main SaaS dashboard
-  const isSaaSMainDashboardActive = pathname === '/dashboard';
-
+  const isSaaSMainDashboardActive = pathname === '/dashboard/finance';
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
-  const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion'].some(p => pathname.startsWith(p));
+  const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -90,11 +82,11 @@ export function SidebarNav() {
               <SidebarMenuButton
                 asChild
                 isActive={isSaaSMainDashboardActive}
-                tooltip={{ children: t('sidebar.dashboard') }}
+                tooltip={{ children: t('sidebar.financeDashboard') }}
               >
-                <Link href="/dashboard">
-                  <TrendingUp />
-                  <span>{t('sidebar.dashboard')}</span>
+                <Link href="/dashboard/finance">
+                  <DollarSign />
+                  <span>{t('sidebar.financeDashboard')}</span>
                 </Link>
               </SidebarMenuButton>
           </SidebarMenuItem>
@@ -132,42 +124,27 @@ export function SidebarNav() {
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/plans', true)}>
+                                    <Link href="/dashboard/finance/plans">
+                                        <Package />
+                                        <span>{t('sidebar.plans')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/finance/addons', true)}>
+                                    <Link href="/dashboard/finance/addons">
+                                        <Puzzle />
+                                        <span>{t('sidebar.addons')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
                         </SidebarMenuSub>
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
           
-           <Collapsible asChild defaultOpen={isFinanceActive}>
-                <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                         <SidebarMenuButton
-                            isActive={isFinanceActive}
-                            className="justify-between"
-                            tooltip={{ children: t('sidebar.finance') }}
-                         >
-                            <div className="flex items-center gap-2">
-                                <Receipt />
-                                <span>{t('sidebar.finance')}</span>
-                            </div>
-                            <ChevronDown className={cn("transition-transform duration-200", isFinanceActive && "rotate-180")} />
-                        </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                            {financeLinks.map(link => (
-                                 <SidebarMenuSubItem key={link.href}>
-                                     <SidebarMenuSubButton asChild isActive={isActive(link.href, true)}>
-                                        <Link href={link.href}>
-                                            <link.icon />
-                                            <span>{link.label}</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                 </SidebarMenuSubItem>
-                            ))}
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </SidebarMenuItem>
-           </Collapsible>
             <Collapsible asChild defaultOpen={isCmmsActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
@@ -186,8 +163,8 @@ export function SidebarNav() {
                     <CollapsibleContent>
                         <SidebarMenuSub>
                              <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms', true)}>
-                                    <Link href="/dashboard/cmms">
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard', true)}>
+                                    <Link href="/dashboard">
                                         <LayoutGrid />
                                         <span>{t('sidebar.cmmsDashboard')}</span>
                                     </Link>
