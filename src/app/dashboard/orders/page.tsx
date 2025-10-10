@@ -49,7 +49,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineTime, TimelineContent } from '@/components/ui/timeline';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
 
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
@@ -809,10 +809,12 @@ export default function WorkOrdersPage() {
                                 </TableBody>
                             </Table>
                         </div>
-                        <div className="grid grid-cols-3 gap-4 text-right font-medium">
-                            <span>{t('workOrders.dialog.partsCost')}: R$ {partsCost.toFixed(2)}</span>
-                            <span>{t('workOrders.dialog.laborCost')}: R$ {laborCost.toFixed(2)}</span>
-                            <span className="text-lg font-bold">{t('workOrders.dialog.totalCost')}: R$ {totalCost.toFixed(2)}</span>
+                        <div className="flex justify-end items-start gap-4">
+                            <div className="space-y-1 text-right">
+                                <p className="text-muted-foreground">{t('workOrders.dialog.partsCost')}: R$ {partsCost.toFixed(2)}</p>
+                                <p className="text-muted-foreground">{t('workOrders.dialog.laborCost')}: R$ {laborCost.toFixed(2)}</p>
+                                <p className="font-bold text-lg">{t('workOrders.dialog.totalCost')}: R$ {totalCost.toFixed(2)}</p>
+                            </div>
                         </div>
                     </div>
 
