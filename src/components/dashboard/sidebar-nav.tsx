@@ -1,6 +1,7 @@
 
 
 
+
 'use client';
 
 import Link from 'next/link';
@@ -34,6 +35,7 @@ import {
   Target,
   ArrowRightLeft,
   Landmark,
+  CalendarDays,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -76,7 +78,7 @@ export function SidebarNav() {
   const isSaaSFinanceActive = pathname.startsWith('/dashboard/finance');
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/cmms'].some(p => pathname.startsWith(p));
+  const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -253,6 +255,14 @@ export function SidebarNav() {
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/schedule', true)}>
+                                    <Link href="/dashboard/schedule">
+                                        <CalendarDays />
+                                        <span>{t('sidebar.schedule')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
                               <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/products', true)}>
                                     <Link href="/dashboard/products">
@@ -386,4 +396,5 @@ export function SidebarNav() {
     </>
   );
 }
+
 

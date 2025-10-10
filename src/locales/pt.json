@@ -37,7 +37,8 @@
     "accountsPayable": "Contas a Pagar",
     "accountsReceivable": "Contas a Receber",
     "backoffice": "Backoffice",
-    "bankAccounts": "Contas Bancárias"
+    "bankAccounts": "Contas Bancárias",
+    "schedule": "Escala de Técnicos"
   },
   "common": {
     "save": "Salvar",
@@ -684,5 +685,3 @@
     "generationNoNewDescription": "Todas as faturas para o período atual já foram geradas."
   }
 }
-
-    

@@ -37,7 +37,8 @@
     "accountsPayable": "Accounts Payable",
     "accountsReceivable": "Accounts Receivable",
     "backoffice": "Backoffice",
-    "bankAccounts": "Bank Accounts"
+    "bankAccounts": "Bank Accounts",
+    "schedule": "Technician Schedule"
   },
   "common": {
     "save": "Save",
@@ -640,6 +641,7 @@
     "allGoodDescription": "Your stock is healthy. No parts need restocking at the moment.",
     "table": {
       "item": "Item",
+      "supplier": "Default Supplier",
       "stockInfo": "Stock (Current/Min)",
       "consumption": "Avg Consumption",
       "coverage": "Stock Coverage",
@@ -683,5 +685,3 @@
     "generationNoNewDescription": "All invoices for the current period have already been generated."
   }
 }
-
-    

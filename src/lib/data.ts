@@ -9,7 +9,8 @@
 
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount, Checklist } from './types';
+
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount, Checklist, Schedule } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 import { format } from 'date-fns';
 
@@ -474,6 +475,12 @@ export let contracts: Contract[] = [
 
 export let purchaseOrders: PurchaseOrder[] = [];
 
+export let schedules: Schedule[] = [
+  { id: 'sched-01', technicianId: 'user-05', start: new Date(2024, 6, 22, 8).getTime(), end: new Date(2024, 6, 22, 17).getTime(), type: 'TURNO_NORMAL' },
+  { id: 'sched-02', technicianId: 'user-07', start: new Date(2024, 6, 22, 8).getTime(), end: new Date(2024, 6, 22, 17).getTime(), type: 'TURNO_NORMAL' },
+  { id: 'sched-03', technicianId: 'user-05', start: new Date(2024, 6, 27, 0).getTime(), end: new Date(2024, 6, 28, 23, 59).getTime(), type: 'PLANTAO' },
+];
+
 export let kpis = {
     activeUsers: users.length,
     mockMrr: 1250, // This will be replaced by dynamic calculation
@@ -536,6 +543,10 @@ export const setSuppliers = (newSuppliers: Supplier[]) => {
 
 export const setPurchaseOrders = (newPOs: PurchaseOrder[]) => {
   purchaseOrders = newPOs;
+};
+
+export const setSchedules = (newSchedules: Schedule[]) => {
+    schedules = newSchedules;
 };
 
 export const setAccountsPayable = (newAPs: AccountsPayable[]) => {
@@ -630,6 +641,7 @@ export const getBackupData = () => ({
   accountsPayable,
   accountsReceivable,
   bankAccounts,
+  schedules,
 });
 
 // Function to restore all data
@@ -656,6 +668,7 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.accountsPayable)) setAccountsPayable(data.accountsPayable);
     if (Array.isArray(data.accountsReceivable)) setAccountsReceivable(data.accountsReceivable);
     if (Array.isArray(data.bankAccounts)) setBankAccounts(data.bankAccounts);
+    if (Array.isArray(data.schedules)) setSchedules(data.schedules);
   }
 };
 

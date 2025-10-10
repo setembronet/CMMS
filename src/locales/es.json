@@ -37,7 +37,8 @@
     "accountsPayable": "Cuentas por Pagar",
     "accountsReceivable": "Cuentas por Cobrar",
     "backoffice": "Backoffice",
-    "bankAccounts": "Cuentas Bancarias"
+    "bankAccounts": "Cuentas Bancarias",
+    "schedule": "Horario de Técnicos"
   },
   "common": {
     "save": "Guardar",
@@ -640,6 +641,7 @@
     "allGoodDescription": "Su stock está saludable. Ninguna pieza necesita reposición en este momento.",
     "table": {
       "item": "Ítem",
+      "supplier": "Proveedor Predeterminado",
       "stockInfo": "Stock (Actual/Mín)",
       "consumption": "Consumo Promedio",
       "coverage": "Cobertura del Stock",
@@ -683,5 +685,3 @@
     "generationNoNewDescription": "Todas las facturas para el período actual ya han sido generadas."
   }
 }
-
-    

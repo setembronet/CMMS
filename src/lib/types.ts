@@ -9,6 +9,7 @@
 
 
 
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -353,4 +354,13 @@ export type BankAccount = {
   balance: number;
 };
 
-    
+// Types for Technician Scheduling
+export type ShiftType = 'TURNO_NORMAL' | 'PLANTAO' | 'FOLGA';
+
+export type Schedule = {
+  id: string;
+  technicianId: string;
+  start: number; // timestamp
+  end: number; // timestamp
+  type: ShiftType;
+};

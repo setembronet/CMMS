@@ -1,0 +1,4 @@
+/* We can remove the default calendar button borders for a cleaner look */
+.fc .fc-button-primary {
+    border-color: transparent !important;
+}
