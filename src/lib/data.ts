@@ -131,6 +131,7 @@ export let customerLocations: CustomerLocation[] = [
     clientId: 'client-01',
     name: 'Condomínio Edifício Central',
     address: { street: 'Av. Paulista', number: '1000', city: 'São Paulo', state: 'SP', zipCode: '01310-100' },
+    contractStatus: 'Vigente',
     contacts: [
       { id: 'contact-01', name: 'Sr. Roberto', cmmsRoleId: 'SINDICO', phone: '11987654321', email: 'roberto.sindico@email.com', observation: 'Ligar apenas em emergências.' }
     ]
@@ -139,14 +140,16 @@ export let customerLocations: CustomerLocation[] = [
     id: 'loc-02',
     clientId: 'client-01',
     name: 'Shopping Plaza',
-     address: { street: 'Rua das Flores', number: 'S/N', city: 'São Paulo', state: 'SP', zipCode: '01001-000' },
-     contacts: []
+    address: { street: 'Rua das Flores', number: 'S/N', city: 'São Paulo', state: 'SP', zipCode: '01001-000' },
+    contractStatus: 'Próximo a Vencer',
+    contacts: []
   },
   {
     id: 'loc-03',
     clientId: 'client-02',
     name: 'Aeroporto Internacional',
     address: { city: 'Rio de Janeiro', state: 'RJ' },
+    contractStatus: 'Vencido',
     contacts: []
   },
 ];

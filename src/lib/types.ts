@@ -1,5 +1,7 @@
 
 
+export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
+
 export type Contact = {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ export type CustomerLocation = {
   id: string;
   name: string;
   clientId: string; // The SaaS client this location belongs to
+  contractStatus: ContractStatus;
   address?: {
     street?: string;
     number?: string;

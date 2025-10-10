@@ -31,7 +31,7 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { companies, customerLocations as initialLocations, setCustomerLocations, cmmsRoles as allRoles, assets, workOrders, segments } from '@/lib/data';
-import type { CustomerLocation, Contact, CMMSRole, WorkOrder } from '@/lib/types';
+import type { CustomerLocation, Contact, CMMSRole, WorkOrder, ContractStatus } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,10 +42,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const TEST_CLIENT_ID = 'client-01';
 const testClient = companies.find(c => c.id === TEST_CLIENT_ID);
 
+const contractStatuses: ContractStatus[] = ['Vigente', 'Próximo a Vencer', 'Vencido'];
+
 const emptyLocation: CustomerLocation = {
   id: '',
   name: '',
   clientId: TEST_CLIENT_ID,
+  contractStatus: 'Vigente',
   address: {
     street: '',
     number: '',
@@ -129,6 +132,10 @@ export default function ClientsPage() {
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleSelectChange = (name: keyof CustomerLocation, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleContactChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -221,14 +228,7 @@ export default function ClientsPage() {
     return (correctiveOrders / locationWorkOrders.length) * 100;
   }
   
-  // Mocked for demonstration
-  const getContractStatus = (locationId: string): 'Vigente' | 'Próximo a Vencer' | 'Vencido' => {
-      const mockStatuses: ('Vigente' | 'Próximo a Vencer' | 'Vencido')[] = ['Vigente', 'Próximo a Vencer', 'Vencido'];
-      const index = locationId.charCodeAt(locationId.length - 1) % 3;
-      return mockStatuses[index];
-  }
-
-  const getStatusBadgeVariant = (status: 'Vigente' | 'Próximo a Vencer' | 'Vencido') => {
+  const getStatusBadgeVariant = (status: ContractStatus) => {
       switch (status) {
           case 'Vigente': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
           case 'Próximo a Vencer': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
@@ -265,7 +265,6 @@ export default function ClientsPage() {
                 const assetCount = getAssetCount(location.id);
                 const openWOs = getOpenWorkOrders(location.id);
                 const correctiveRatio = getCorrectiveRatio(location.id);
-                const contractStatus = getContractStatus(location.id);
 
                 return (
                 <TableRow key={location.id}>
@@ -276,9 +275,9 @@ export default function ClientsPage() {
                   <TableCell>{assetCount}</TableCell>
                   <TableCell>{openWOs > 0 ? <Badge variant="destructive">{openWOs}</Badge> : 0}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn('border', getStatusBadgeVariant(contractStatus))}>
+                    <Badge variant="outline" className={cn('border', getStatusBadgeVariant(location.contractStatus))}>
                       <FileText className="mr-1.5 h-3 w-3" />
-                      {contractStatus}
+                      {location.contractStatus}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -344,10 +343,26 @@ export default function ClientsPage() {
               <form onSubmit={handleSaveLocation} id="location-form" className="space-y-6 py-4 px-1">
                 <h3 className="text-lg font-medium">Dados Cadastrais</h3>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome do Cliente Final</Label>
-                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Condomínio Edifício Central"/>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nome do Cliente Final</Label>
+                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Condomínio Edifício Central"/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="contractStatus">Status do Contrato</Label>
+                        <Select name="contractStatus" value={formData.contractStatus} onValueChange={(value) => handleSelectChange('contractStatus', value as ContractStatus)} required>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {contractStatuses.map(status => (
+                                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2 md:col-span-1">
                           <Label htmlFor="zipCode">CEP</Label>
