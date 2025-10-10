@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon } from 'lucide-react';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations, checklistTemplates } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -532,7 +532,20 @@ export default function WorkOrdersPage() {
                     {order.title}
                   </div>
                 </TableCell>
-                <TableCell>{getAssetName(order.assetId)}</TableCell>
+                <TableCell>
+                    <Button variant="link" className="p-0 h-auto" onClick={() => {
+                        const assetToEdit = allAssets.find(a => a.id === order.assetId);
+                        if (assetToEdit) {
+                           // This is a placeholder for a function that would open the asset dialog.
+                           // In a real app, this might be a context function or a prop drill.
+                           // For now, we will just log it.
+                           console.log("Would open asset dossier for:", assetToEdit.name);
+                        }
+                    }}>
+                        {getAssetName(order.assetId)}
+                        <LinkIcon className="ml-2 h-3 w-3" />
+                    </Button>
+                </TableCell>
                 <TableCell>{formatDate(order.scheduledDate)}</TableCell>
                 <TableCell>{getTechnicianName(order.responsibleId)}</TableCell>
                 <TableCell>
@@ -883,3 +896,5 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
+
+    

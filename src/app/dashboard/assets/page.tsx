@@ -37,8 +37,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, MoreHorizontal, History, Trash2, Camera, QrCode } from 'lucide-react';
-import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations, workOrders, plans } from '@/lib/data';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PlusCircle, MoreHorizontal, History, Trash2, Camera, QrCode, HardHat, Package, Check, AlertTriangle, FilePlus } from 'lucide-react';
+import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations, workOrders, plans, products, users } from '@/lib/data';
 import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,7 +48,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
 
 type AssetStatus = 'Operacional' | 'Em Manutenção';
 
@@ -80,6 +83,7 @@ export default function AssetsPage() {
     gallery: [],
     location: { lat: 0, lng: 0 },
     customData: {},
+    creationDate: new Date().getTime(),
   }), [selectedClient]);
 
 
@@ -216,6 +220,7 @@ export default function AssetsPage() {
       clientId: selectedClient?.id || '',
       id: editingAsset?.id || `asset-0${assets.length + 1}`,
       gallery: (formData.gallery || []).filter(url => url.trim() !== ''),
+      creationDate: editingAsset?.creationDate || new Date().getTime(),
     };
 
     if (editingAsset) {
@@ -229,6 +234,76 @@ export default function AssetsPage() {
     }
     closeDialog();
   };
+
+  const getAssetTimeline = (asset: Asset | null) => {
+    if (!asset) return [];
+    
+    const assetWorkOrders = workOrders.filter(wo => wo.assetId === asset.id);
+    const events = [];
+
+    // Asset Creation
+    events.push({
+      id: `evt-creation-${asset.id}`,
+      date: asset.creationDate,
+      icon: Package,
+      color: "text-blue-500",
+      title: "Ativo Criado",
+      description: `O ativo '${asset.name}' foi cadastrado no sistema.`
+    });
+
+    // Work Orders
+    assetWorkOrders.forEach(wo => {
+      events.push({
+        id: `evt-wo-open-${wo.id}`,
+        date: wo.creationDate,
+        icon: FilePlus,
+        color: "text-gray-500",
+        title: `OS Aberta: ${wo.title}`,
+        description: `Criada por ${users.find(u=>u.id === wo.createdByUserId)?.name || 'Sistema'}`
+      });
+
+      if (wo.partsUsed && wo.partsUsed.length > 0) {
+        events.push({
+          id: `evt-wo-parts-${wo.id}`,
+          date: wo.endDate ? wo.endDate - 1000 : new Date().getTime(), // just before closing
+          icon: HardHat,
+          color: "text-orange-500",
+          title: 'Troca de Peças',
+          description: `Peças: ${wo.partsUsed.map(p => `${p.quantity}x ${products.find(prod => prod.id === p.productId)?.name || '?'}`).join(', ')}`
+        });
+      }
+      
+      if(wo.checklist) {
+          wo.checklist.forEach(group => {
+              group.items.forEach(item => {
+                  if (item.status === 'NÃO OK') {
+                      events.push({
+                          id: `evt-chk-nok-${wo.id}-${item.id}`,
+                          date: wo.endDate ? wo.endDate - 2000 : new Date().getTime(),
+                          icon: AlertTriangle,
+                          color: 'text-destructive',
+                          title: 'Falha no Checklist',
+                          description: `Item: "${item.text}". Comentário: ${item.comment}`
+                      });
+                  }
+              });
+          });
+      }
+
+      if (wo.status === 'CONCLUIDO' && wo.endDate) {
+        events.push({
+          id: `evt-wo-close-${wo.id}`,
+          date: wo.endDate,
+          icon: Check,
+          color: "text-green-500",
+          title: `OS Concluída: ${wo.title}`,
+          description: `Finalizada por ${users.find(u=>u.id === wo.responsibleId)?.name || 'Não atribuído'}`
+        });
+      }
+    });
+
+    return events.sort((a,b) => b.date - a.date);
+  }
   
   const NewAssetButton = () => (
      <Button onClick={() => openDialog()} disabled={hasReachedAssetLimit || !selectedClient}>
@@ -320,158 +395,214 @@ export default function AssetsPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-4xl h-[90vh]">
             <DialogHeader>
-              <DialogTitle>{editingAsset ? t('assets.dialog.editTitle') : t('assets.dialog.newTitle')}</DialogTitle>
+              <DialogTitle>{editingAsset ? `Dossiê do Ativo: ${editingAsset.name}` : t('assets.dialog.newTitle')}</DialogTitle>
               <DialogDescription>
-                {editingAsset ? t('assets.dialog.editDescription') : t('assets.dialog.newDescription', { clientName: selectedClient?.name || ''})}
+                {editingAsset ? `Informações completas e histórico do ativo.` : t('assets.dialog.newDescription', { clientName: selectedClient?.name || ''})}
               </DialogDescription>
             </DialogHeader>
             {formData && (
-              <>
-              <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-                <form onSubmit={handleSaveAsset} id="asset-form" className="space-y-4 py-4 px-1">
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="customerLocationId">{t('assets.dialog.finalClient')}</Label>
-                    <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('assets.dialog.finalClientPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {availableSegments.length > 0 && (
-                    <>
-                      {availableSegments.length > 1 ? (
-                        <div className="space-y-2">
-                          <Label htmlFor="activeSegment">{t('assets.dialog.segment')}</Label>
-                          <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)} required>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('assets.dialog.segmentPlaceholder')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableSegments.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                            <Label>{t('assets.dialog.segment')}</Label>
-                            <Input value={availableSegments[0]?.name || t('assets.dialog.noSegment')} disabled />
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="name">{t('assets.dialog.assetName')}</Label>
-                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder={t('assets.dialog.assetNamePlaceholder')}/>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="brand">{t('assets.dialog.brand')}</Label>
-                        <Input id="brand" name="brand" value={formData.brand || ''} onChange={handleInputChange} placeholder={t('assets.dialog.brandPlaceholder')}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="model">{t('assets.dialog.model')}</Label>
-                        <Input id="model" name="model" value={formData.model || ''} onChange={handleInputChange} placeholder={t('assets.dialog.modelPlaceholder')}/>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="serialNumber">{t('assets.dialog.serialNumber')}</Label>
-                    <Input id="serialNumber" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} required />
-                  </div>
-
-                  {customFields.length > 0 && (
-                    <>
-                      <Separator />
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-muted-foreground">{t('assets.dialog.segmentSpecificData')}</h3>
-                        {customFields.map((field) => (
-                          <div key={field.id} className="space-y-2">
-                            <Label htmlFor={field.name}>{field.label}</Label>
-                            <Input 
-                              id={field.name}
-                              name={field.name}
-                              type={field.type === 'date' ? 'date' : field.type}
-                              value={formData.customData?.[field.name] || ''}
-                              onChange={handleCustomFieldChange}
-                            />
+              <Tabs defaultValue="data" className="flex flex-col h-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="data">Dados Cadastrais</TabsTrigger>
+                  <TabsTrigger value="history">Histórico de OS</TabsTrigger>
+                  <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
+                </TabsList>
+                <div className="flex-1 overflow-hidden">
+                    <TabsContent value="data" className="h-full">
+                      <ScrollArea className="h-full -mx-6 px-6">
+                        <form onSubmit={handleSaveAsset} id="asset-form" className="space-y-4 py-4 px-1">
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="customerLocationId">{t('assets.dialog.finalClient')}</Label>
+                            <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t('assets.dialog.finalClientPlaceholder')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
                           </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
 
-                  <Separator />
+                          {availableSegments.length > 0 && (
+                            <>
+                              {availableSegments.length > 1 ? (
+                                <div className="space-y-2">
+                                  <Label htmlFor="activeSegment">{t('assets.dialog.segment')}</Label>
+                                  <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)} required>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder={t('assets.dialog.segmentPlaceholder')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {availableSegments.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                    <Label>{t('assets.dialog.segment')}</Label>
+                                    <Input value={availableSegments[0]?.name || t('assets.dialog.noSegment')} disabled />
+                                </div>
+                              )}
+                            </>
+                          )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="observation">{t('common.observation')}</Label>
-                    <Textarea id="observation" name="observation" value={formData.observation || ''} onChange={handleInputChange} placeholder={t('assets.dialog.observationPlaceholder')}/>
-                  </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="name">{t('assets.dialog.assetName')}</Label>
+                            <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder={t('assets.dialog.assetNamePlaceholder')}/>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="brand">{t('assets.dialog.brand')}</Label>
+                                <Input id="brand" name="brand" value={formData.brand || ''} onChange={handleInputChange} placeholder={t('assets.dialog.brandPlaceholder')}/>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="model">{t('assets.dialog.model')}</Label>
+                                <Input id="model" name="model" value={formData.model || ''} onChange={handleInputChange} placeholder={t('assets.dialog.modelPlaceholder')}/>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="serialNumber">{t('assets.dialog.serialNumber')}</Label>
+                            <Input id="serialNumber" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} required />
+                          </div>
 
-                  <Separator />
+                          {customFields.length > 0 && (
+                            <>
+                              <Separator />
+                              <div className="space-y-4">
+                                <h3 className="text-sm font-medium text-muted-foreground">{t('assets.dialog.segmentSpecificData')}</h3>
+                                {customFields.map((field) => (
+                                  <div key={field.id} className="space-y-2">
+                                    <Label htmlFor={field.name}>{field.label}</Label>
+                                    <Input 
+                                      id={field.name}
+                                      name={field.name}
+                                      type={field.type === 'date' ? 'date' : field.type}
+                                      value={formData.customData?.[field.name] || ''}
+                                      onChange={handleCustomFieldChange}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
 
-                  <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                          <h3 className="text-base font-medium flex items-center gap-2"><Camera /> Galeria de Fotos</h3>
-                          <Button type="button" size="sm" variant="outline" onClick={addGalleryItem}>
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              Adicionar Foto
-                          </Button>
-                      </div>
-                      <div className="space-y-2">
-                          {(formData.gallery || []).map((url, index) => (
-                              <div key={index} className="flex items-center gap-2">
-                                  <Input 
-                                      type="url"
-                                      value={url}
-                                      onChange={(e) => handleGalleryChange(index, e.target.value)}
-                                      placeholder="https://exemplo.com/imagem.png"
-                                  />
-                                  <Button type="button" variant="ghost" size="icon" onClick={() => removeGalleryItem(index)}>
-                                      <Trash2 className="h-4 w-4 text-destructive" />
+                          <Separator />
+
+                          <div className="space-y-2">
+                            <Label htmlFor="observation">{t('common.observation')}</Label>
+                            <Textarea id="observation" name="observation" value={formData.observation || ''} onChange={handleInputChange} placeholder={t('assets.dialog.observationPlaceholder')}/>
+                          </div>
+
+                          <Separator />
+
+                          <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                  <h3 className="text-base font-medium flex items-center gap-2"><Camera /> Galeria de Fotos</h3>
+                                  <Button type="button" size="sm" variant="outline" onClick={addGalleryItem}>
+                                      <PlusCircle className="mr-2 h-4 w-4" />
+                                      Adicionar Foto
                                   </Button>
                               </div>
-                          ))}
-                          {(formData.gallery || []).length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-2">Nenhuma foto adicionada.</p>
-                          )}
-                      </div>
-                  </div>
+                              <div className="space-y-2">
+                                  {(formData.gallery || []).map((url, index) => (
+                                      <div key={index} className="flex items-center gap-2">
+                                          <Input 
+                                              type="url"
+                                              value={url}
+                                              onChange={(e) => handleGalleryChange(index, e.target.value)}
+                                              placeholder="https://exemplo.com/imagem.png"
+                                          />
+                                          <Button type="button" variant="ghost" size="icon" onClick={() => removeGalleryItem(index)}>
+                                              <Trash2 className="h-4 w-4 text-destructive" />
+                                          </Button>
+                                      </div>
+                                  ))}
+                                  {(formData.gallery || []).length === 0 && (
+                                    <p className="text-sm text-muted-foreground text-center py-2">Nenhuma foto adicionada.</p>
+                                  )}
+                              </div>
+                          </div>
 
-                  {editingAsset && (
-                    <>
-                      <Separator />
-                      <div className="space-y-4">
-                        <h3 className="text-base font-medium flex items-center gap-2"><QrCode /> QR Code do Ativo</h3>
-                        <div className="flex flex-col items-center justify-center p-4 border rounded-lg bg-muted/50">
-                          <Image 
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(editingAsset.id)}`}
-                            alt={`QR Code para ${editingAsset.name}`}
-                            width={150}
-                            height={150}
-                          />
-                          <p className="mt-2 text-xs text-muted-foreground">Aponte a câmera para identificar o ativo.</p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </form>
-              </ScrollArea>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
-                <Button type="submit" form="asset-form" disabled={!formData.activeSegment || !formData.customerLocationId}>{t('assets.dialog.save')}</Button>
-              </DialogFooter>
-              </>
+                          {editingAsset && (
+                            <>
+                              <Separator />
+                              <div className="space-y-4">
+                                <h3 className="text-base font-medium flex items-center gap-2"><QrCode /> QR Code do Ativo</h3>
+                                <div className="flex flex-col items-center justify-center p-4 border rounded-lg bg-muted/50">
+                                  <Image 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(editingAsset.id)}`}
+                                    alt={`QR Code para ${editingAsset.name}`}
+                                    width={150}
+                                    height={150}
+                                  />
+                                  <p className="mt-2 text-xs text-muted-foreground">Aponte a câmera para identificar o ativo.</p>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </form>
+                      </ScrollArea>
+                    </TabsContent>
+                    <TabsContent value="history" className="h-full">
+                       <ScrollArea className="h-full -mx-6 px-6 py-4">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Título</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Data de Criação</TableHead>
+                                        <TableHead>Responsável</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {workOrders.filter(wo => wo.assetId === editingAsset?.id).map(wo => (
+                                        <TableRow key={wo.id}>
+                                            <TableCell>{wo.title}</TableCell>
+                                            <TableCell><Badge variant="outline">{wo.status}</Badge></TableCell>
+                                            <TableCell>{format(new Date(wo.creationDate), "dd/MM/yyyy")}</TableCell>
+                                            <TableCell>{users.find(u => u.id === wo.responsibleId)?.name || 'N/A'}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                       </ScrollArea>
+                    </TabsContent>
+                    <TabsContent value="timeline" className="h-full">
+                        <ScrollArea className="h-full -mx-6 px-6 py-4">
+                             <Timeline>
+                                {getAssetTimeline(editingAsset).map((event) => (
+                                    <TimelineItem key={event.id}>
+                                        <TimelineConnector />
+                                        <TimelineHeader>
+                                            <TimelineTime>{format(new Date(event.date), 'dd/MM/yy')}</TimelineTime>
+                                            <TimelineIcon>
+                                                <event.icon className={cn("h-4 w-4", event.color)} />
+                                            </TimelineIcon>
+                                            <TimelineTitle>{event.title}</TimelineTitle>
+                                        </TimelineHeader>
+                                        <TimelineContent>
+                                            <TimelineDescription>{event.description}</TimelineDescription>
+                                        </TimelineContent>
+                                    </TimelineItem>
+                                ))}
+                            </Timeline>
+                        </ScrollArea>
+                    </TabsContent>
+                </div>
+              </Tabs>
             )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+              <Button type="submit" form="asset-form" disabled={!formData?.activeSegment || !formData?.customerLocationId}>{t('assets.dialog.save')}</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
     </TooltipProvider>
   );
 }
+
+    

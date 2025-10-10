@@ -6,6 +6,9 @@
 
 
 
+
+
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -154,6 +157,7 @@ export type Asset = {
     lng: number;
   };
   customData?: { [key: string]: any };
+  creationDate: number; // timestamp
 };
 
 export type WorkOrderPart = {
@@ -348,3 +352,5 @@ export type BankAccount = {
   accountNumber?: string;
   balance: number;
 };
+
+    

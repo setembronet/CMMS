@@ -8,6 +8,7 @@
 
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount, Checklist } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 import { format } from 'date-fns';
@@ -344,10 +345,11 @@ export let assets: Asset[] = [
       'https://picsum.photos/seed/elev3/800/600'
     ],
     location: { lat: -23.5505, lng: -46.6333 }, 
-    customData: { numero_de_paradas: 15, data_ultima_vistoria: '2024-07-01' } 
+    customData: { numero_de_paradas: 15, data_ultima_vistoria: '2024-07-01' },
+    creationDate: new Date(2020, 0, 15).getTime(),
   },
-  { id: 'asset-02', clientId: 'client-01', customerLocationId: 'loc-02', name: 'Elevador de Carga', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-C01', brand: 'Thyssenkrupp', model: 'Synergy', observation: 'Utilizado para abastecimento do shopping.', location: { lat: -23.5505, lng: -46.6333 } },
-  { id: 'asset-03', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', brand: 'Thyssenkrupp', model: 'Velino', observation: 'Fluxo intenso em horários de pico.', location: { lat: -22.9068, lng: -43.1729 } },
+  { id: 'asset-02', clientId: 'client-01', customerLocationId: 'loc-02', name: 'Elevador de Carga', activeSegment: 'ELEVADOR', serialNumber: 'SN-ELEV-C01', brand: 'Thyssenkrupp', model: 'Synergy', observation: 'Utilizado para abastecimento do shopping.', location: { lat: -23.5505, lng: -46.6333 }, creationDate: new Date(2021, 5, 10).getTime() },
+  { id: 'asset-03', clientId: 'client-02', customerLocationId: 'loc-03', name: 'Escada Rolante - Acesso Principal', activeSegment: 'ESCADA_ROLANTE', serialNumber: 'SN-ESCD-B01', brand: 'Thyssenkrupp', model: 'Velino', observation: 'Fluxo intenso em horários de pico.', location: { lat: -22.9068, lng: -43.1729 }, creationDate: new Date(2019, 8, 20).getTime() },
 ];
 
 export let workOrders: WorkOrder[] = [
@@ -657,3 +659,4 @@ export const restoreData = (data: any) => {
   }
 };
 
+    
