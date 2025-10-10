@@ -371,7 +371,7 @@ export default function CMMSUsersPage() {
                       </div>
                        <div className="space-y-2">
                         <Label htmlFor="costPerHour">{t('users.dialog.costPerHour')}</Label>
-                        <Input id="costPerHour" name="costPerHour" type="number" value={formData.costPerHour || 0} onChange={handleInputChange} />
+                        <Input id="costPerHour" name="costPerHour" type="number" step="0.01" value={formData.costPerHour || 0} onChange={handleInputChange} />
                       </div>
                     </div>
                     

@@ -244,7 +244,7 @@ export default function ContractsPage() {
     );
 
     let partsCost = 0;
-    if (contract.contractType !== 'Integral') {
+    if (contract.contractType === 'Integral') {
         partsCost = contractWorkOrders.reduce((total, wo) => {
             const orderPartsCost = (wo.partsUsed || []).reduce((acc, part) => {
                 const product = allProducts.find(p => p.id === part.productId);
