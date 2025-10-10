@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, Checklist } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, Checklist, Supplier } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -211,6 +211,43 @@ export let products: Product[] = [
     { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', stock: 10, price: 2500.00 },
 ];
 
+export let suppliers: Supplier[] = [
+    {
+        id: 'supp-01',
+        name: 'Fornecedor de Peças Genéricas Ltda.',
+        cnpj: '11.222.333/0001-44',
+        email: 'vendas@fornecedorgenerico.com',
+        phone: '11 2233-4455',
+        address: {
+            street: 'Rua das Peças',
+            number: '123',
+            neighborhood: 'Centro',
+            city: 'São Paulo',
+            state: 'SP',
+            zipCode: '01002-001',
+        },
+        contacts: [
+            { id: 'scontact-01', name: 'Carlos Vendedor', role: 'Vendedor', email: 'carlos.vendas@fornecedorgenerico.com', phone: '11 91234-5678' }
+        ]
+    },
+    {
+        id: 'supp-02',
+        name: 'Importadora de Componentes Eletrônicos S.A.',
+        cnpj: '44.555.666/0001-77',
+        email: 'contato@importadoracomponentes.com',
+        phone: '21 3344-5566',
+        address: {
+            street: 'Avenida das Américas',
+            number: '5000',
+            neighborhood: 'Barra da Tijuca',
+            city: 'Rio de Janeiro',
+            state: 'RJ',
+            zipCode: '22640-102',
+        },
+        contacts: []
+    },
+];
+
 export const maintenanceFrequencies: { value: MaintenanceFrequency, label: string }[] = [
     { value: 'DIARIA', label: 'Diária' },
     { value: 'SEMANAL', label: 'Semanal' },
@@ -313,6 +350,10 @@ export const setContracts = (newContracts: Contract[]) => {
   contracts = newContracts;
 };
 
+export const setSuppliers = (newSuppliers: Supplier[]) => {
+  suppliers = newSuppliers;
+};
+
 export const setKpis = (newKpis: typeof kpis) => {
     kpis = newKpis;
 };
@@ -331,6 +372,7 @@ export const getBackupData = () => ({
   kpis,
   products,
   contracts,
+  suppliers,
 });
 
 // Function to restore all data
@@ -349,5 +391,6 @@ export const restoreData = (data: any) => {
     if (data.kpis) setKpis(data.kpis);
     if (Array.isArray(data.products)) setProducts(data.products);
     if (Array.isArray(data.contracts)) setContracts(data.contracts);
+    if (Array.isArray(data.suppliers)) setSuppliers(data.suppliers);
   }
 };

@@ -24,6 +24,7 @@ import {
   Contact,
   PackageSearch,
   Receipt,
+  Truck,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -174,6 +175,18 @@ export function SidebarNav() {
                 <Link href="/dashboard/products">
                   <PackageSearch />
                   <span>{t('products.title')}</span>
+                </Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive('/dashboard/suppliers')}
+                tooltip={{ children: t('sidebar.suppliers') }}
+              >
+                <Link href="/dashboard/suppliers">
+                  <Truck />
+                  <span>{t('sidebar.suppliers')}</span>
                 </Link>
               </SidebarMenuButton>
           </SidebarMenuItem>

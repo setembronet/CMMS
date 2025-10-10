@@ -218,3 +218,29 @@ export type Contract = {
   coveredAssetIds: string[];
   plans: MaintenancePlan[];
 };
+
+export type SupplierContact = {
+  id: string;
+  name: string;
+  role: string;
+  email?: string;
+  phone?: string;
+};
+
+export type Supplier = {
+  id: string;
+  name: string;
+  cnpj: string;
+  email?: string;
+  phone?: string;
+  address: {
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  contacts?: SupplierContact[];
+};

@@ -25,7 +25,8 @@
     "segments": "Segments",
     "cmms": "CMMS",
     "contracts": "Contracts",
-    "cmmsDashboard": "CMMS Dashboard"
+    "cmmsDashboard": "CMMS Dashboard",
+    "suppliers": "Suppliers"
   },
   "common": {
     "save": "Save",
@@ -531,6 +532,23 @@
       "stock": "Stock",
       "manufacturer": "Manufacturer",
       "price": "Price ($)"
+    }
+  },
+  "suppliers": {
+    "title": "Suppliers",
+    "new": "New Supplier",
+    "table": {
+      "name": "Supplier Name",
+      "contact": "Main Contact"
+    },
+    "dialog": {
+      "editTitle": "Edit Supplier",
+      "newTitle": "New Supplier",
+      "editDescription": "Update the supplier details.",
+      "newDescription": "Fill in the new supplier details.",
+      "registrationData": "Registration Data",
+      "name": "Company Name",
+      "rolePlaceholder": "e.g., Sales Rep, Manager..."
     }
   }
 }

@@ -25,7 +25,8 @@
     "segments": "Segmentos",
     "cmms": "GMAO",
     "contracts": "Contratos",
-    "cmmsDashboard": "Dashboard GMAO"
+    "cmmsDashboard": "Dashboard GMAO",
+    "suppliers": "Proveedores"
   },
   "common": {
     "save": "Guardar",
@@ -531,6 +532,23 @@
       "stock": "Stock",
       "manufacturer": "Fabricante",
       "price": "Precio ($)"
+    }
+  },
+  "suppliers": {
+    "title": "Proveedores",
+    "new": "Nuevo Proveedor",
+    "table": {
+      "name": "Nombre del Proveedor",
+      "contact": "Contacto Principal"
+    },
+    "dialog": {
+      "editTitle": "Editar Proveedor",
+      "newTitle": "Nuevo Proveedor",
+      "editDescription": "Actualice los detalles del proveedor.",
+      "newDescription": "Rellene los detalles del nuevo proveedor.",
+      "registrationData": "Datos de Registro",
+      "name": "Razón Social",
+      "rolePlaceholder": "Ej: Vendedor, Gerente..."
     }
   }
 }

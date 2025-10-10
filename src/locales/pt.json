@@ -25,7 +25,8 @@
     "segments": "Segmentos",
     "cmms": "CMMS",
     "contracts": "Contratos",
-    "cmmsDashboard": "Dashboard CMMS"
+    "cmmsDashboard": "Dashboard CMMS",
+    "suppliers": "Fornecedores"
   },
   "common": {
     "save": "Salvar",
@@ -531,6 +532,23 @@
       "stock": "Estoque",
       "manufacturer": "Fabricante",
       "price": "Preço (R$)"
+    }
+  },
+  "suppliers": {
+    "title": "Fornecedores",
+    "new": "Novo Fornecedor",
+    "table": {
+      "name": "Nome do Fornecedor",
+      "contact": "Contato Principal"
+    },
+    "dialog": {
+      "editTitle": "Editar Fornecedor",
+      "newTitle": "Novo Fornecedor",
+      "editDescription": "Atualize os detalhes do fornecedor.",
+      "newDescription": "Preencha os detalhes do novo fornecedor.",
+      "registrationData": "Dados Cadastrais",
+      "name": "Razão Social",
+      "rolePlaceholder": "Ex: Vendedor, Gerente..."
     }
   }
 }
