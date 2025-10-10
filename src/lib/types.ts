@@ -37,6 +37,7 @@ export type CustomerLocation = {
   };
   contacts?: Contact[];
   interactions?: Interaction[];
+  contracts?: Contract[];
 };
 
 
@@ -59,6 +60,7 @@ export type CompanySegment = {
 export type CompanyStatus = 'active' | 'inactive';
 export type OrderStatus = 'ABERTO' | 'EM ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
+export type MaintenanceFrequency = 'DIARIA' | 'SEMANAL' | 'QUINZENAL' | 'MENSAL' | 'TRIMESTRAL' | 'SEMESTRAL' | 'ANUAL';
 
 // Roles for SaaS management (internal users)
 export type SaaSUserRole = 'ADMIN' | 'FINANCEIRO' | 'SUPORTE' | 'VIEWER';
@@ -163,6 +165,7 @@ export type WorkOrder = {
   internalObservation?: string;
   squad?: string;
   partsUsed?: WorkOrderPart[];
+  isPreventive?: boolean;
 };
 
 export type Product = {
@@ -172,4 +175,20 @@ export type Product = {
   manufacturer: string;
   stock: number;
   price: number;
+};
+
+export type MaintenancePlan = {
+  id: string;
+  assetId: string;
+  frequency: MaintenanceFrequency;
+  description: string;
+  lastGenerated: number; // timestamp
+};
+
+export type Contract = {
+  id: string;
+  customerLocationId: string;
+  startDate: number;
+  endDate: number;
+  plans: MaintenancePlan[];
 };

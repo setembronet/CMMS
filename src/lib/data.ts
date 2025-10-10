@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -189,6 +189,18 @@ export let products: Product[] = [
     { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', stock: 10, price: 2500.00 },
 ];
 
+export let contracts: Contract[] = [
+  {
+    id: 'contract-01',
+    customerLocationId: 'loc-01',
+    startDate: new Date(2024, 0, 1).getTime(),
+    endDate: new Date(2024, 11, 31).getTime(),
+    plans: [
+      { id: 'mp-01', assetId: 'asset-01', frequency: 'MENSAL', description: 'Inspeção mensal e lubrificação', lastGenerated: new Date(2024, 6, 1).getTime() },
+    ]
+  }
+];
+
 export let kpis = {
     activeUsers: users.length,
     mockMrr: 1250, // This will be replaced by dynamic calculation
@@ -237,6 +249,10 @@ export const setProducts = (newProducts: Product[]) => {
   products = newProducts;
 };
 
+export const setContracts = (newContracts: Contract[]) => {
+  contracts = newContracts;
+};
+
 export const setKpis = (newKpis: typeof kpis) => {
     kpis = newKpis;
 };
@@ -254,6 +270,7 @@ export const getBackupData = () => ({
   cmmsRoles,
   kpis,
   products,
+  contracts,
 });
 
 // Function to restore all data
@@ -271,5 +288,6 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.cmmsRoles)) setCmmsRoles(data.cmmsRoles);
     if (data.kpis) setKpis(data.kpis);
     if (Array.isArray(data.products)) setProducts(data.products);
+    if (Array.isArray(data.contracts)) setContracts(data.contracts);
   }
 };

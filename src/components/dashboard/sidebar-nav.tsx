@@ -73,7 +73,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/products'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/products', '/dashboard/contracts'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -209,6 +209,14 @@ export function SidebarNav() {
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/contracts', true)}>
+                                    <Link href="/dashboard/contracts">
+                                        <FileText />
+                                        <span>{t('sidebar.contracts')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
                              <SidebarMenuSubItem>
                                  <SidebarMenuSubButton asChild isActive={isActive('/dashboard/products', true)}>
                                     <Link href="/dashboard/products">
@@ -282,5 +290,3 @@ export function SidebarNav() {
     </>
   );
 }
-
-    

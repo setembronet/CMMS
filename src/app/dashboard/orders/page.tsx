@@ -38,12 +38,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts } from '@/lib/data';
-import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart } from '@/lib/types';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning } from 'lucide-react';
+import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders } from '@/lib/data';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenancePlan, MaintenanceFrequency } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, addDays, addMonths, addWeeks, addQuarters, addYears } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 
 const TEST_CLIENT_ID = 'client-01';
@@ -67,6 +67,59 @@ const emptyWorkOrder: WorkOrder = {
   partsUsed: [],
 };
 
+const getNextDueDate = (last: number, frequency: MaintenanceFrequency): Date => {
+    switch (frequency) {
+        case 'DIARIA': return addDays(last, 1);
+        case 'SEMANAL': return addWeeks(last, 1);
+        case 'QUINZENAL': return addDays(last, 15);
+        case 'MENSAL': return addMonths(last, 1);
+        case 'TRIMESTRAL': return addQuarters(last, 1);
+        case 'SEMESTRAL': return addMonths(last, 6);
+        case 'ANUAL': return addYears(last, 1);
+    }
+};
+
+const generatePreventiveWorkOrders = (existingWorkOrders: WorkOrder[]): WorkOrder[] => {
+    const newWorkOrders: WorkOrder[] = [];
+    const today = new Date();
+    const lookaheadDate = addDays(today, 7);
+    const clientContracts = contracts.filter(c => allAssets.some(a => a.customerLocationId === c.customerLocationId && a.clientId === TEST_CLIENT_ID));
+
+    clientContracts.forEach(contract => {
+        contract.plans.forEach(plan => {
+            let nextDueDate = getNextDueDate(plan.lastGenerated, plan.frequency);
+            
+            while (nextDueDate <= lookaheadDate) {
+                 const alreadyExists = existingWorkOrders.some(wo => 
+                    wo.isPreventive && 
+                    wo.assetId === plan.assetId && 
+                    wo.description === plan.description &&
+                    format(new Date(wo.scheduledDate || 0), 'yyyy-MM-dd') === format(nextDueDate, 'yyyy-MM-dd')
+                );
+
+                if (!alreadyExists) {
+                    const newWo: WorkOrder = {
+                        ...emptyWorkOrder,
+                        id: `os-prev-${plan.id}-${format(nextDueDate, 'yyyyMMdd')}`,
+                        title: `Manutenção Preventiva - ${plan.description}`,
+                        description: `Manutenção preventiva programada conforme plano: ${plan.description}`,
+                        assetId: plan.assetId,
+                        priority: 'Média',
+                        isPreventive: true,
+                        scheduledDate: nextDueDate.getTime(),
+                        creationDate: new Date().getTime(),
+                    };
+                    newWorkOrders.push(newWo);
+                }
+                nextDueDate = getNextDueDate(nextDueDate.getTime(), plan.frequency);
+            }
+        });
+    });
+
+    return newWorkOrders;
+};
+
+
 export default function WorkOrdersPage() {
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>(initialWorkOrders.filter(wo => wo.clientId === TEST_CLIENT_ID));
   const [clientAssets, setClientAssets] = React.useState<Asset[]>([]);
@@ -75,6 +128,17 @@ export default function WorkOrdersPage() {
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
   const [formData, setFormData] = React.useState<WorkOrder>(emptyWorkOrder);
   const [products, setLocalProducts] = React.useState<Product[]>(initialProducts);
+
+  React.useEffect(() => {
+    const newPreventiveOrders = generatePreventiveWorkOrders(initialWorkOrders);
+    if (newPreventiveOrders.length > 0) {
+        const allOrders = [...initialWorkOrders, ...newPreventiveOrders];
+        setGlobalWorkOrders(allOrders);
+        setWorkOrders(allOrders.filter(wo => wo.clientId === TEST_CLIENT_ID));
+    } else {
+        setWorkOrders(initialWorkOrders.filter(wo => wo.clientId === TEST_CLIENT_ID));
+    }
+  }, []);
 
   React.useEffect(() => {
     setClientAssets(allAssets.filter(a => a.clientId === TEST_CLIENT_ID));
@@ -218,11 +282,15 @@ export default function WorkOrdersPage() {
     // --- End Stock Logic ---
 
 
+    let allWorkOrders;
     if (editingOrder) {
-      setWorkOrders(workOrders.map(wo => (wo.id === newOrder.id ? newOrder : wo)));
+      allWorkOrders = initialWorkOrders.map(wo => (wo.id === newOrder.id ? newOrder : wo));
     } else {
-      setWorkOrders([newOrder, ...workOrders]);
+      allWorkOrders = [newOrder, ...initialWorkOrders];
     }
+    setGlobalWorkOrders(allWorkOrders);
+    setWorkOrders(allWorkOrders.filter(wo => wo.clientId === TEST_CLIENT_ID));
+    
     closeDialog();
   };
 
@@ -290,7 +358,12 @@ export default function WorkOrdersPage() {
           <TableBody>
             {workOrders.map(order => (
               <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.title}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {order.isPreventive && <FileWarning className="h-4 w-4 text-muted-foreground" />}
+                    {order.title}
+                  </div>
+                </TableCell>
                 <TableCell>{getAssetName(order.assetId)}</TableCell>
                 <TableCell>{formatDate(order.scheduledDate)}</TableCell>
                 <TableCell>{getTechnicianName(order.responsibleId)}</TableCell>
@@ -529,5 +602,3 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
-
-    
