@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Wrench, AlertTriangle, Users, Package, CalendarCheck, CheckCircle, Play } from 'lucide-react';
-import { workOrders, assets, users } from '@/lib/data';
+import { workOrders, assets, users, customerLocations } from '@/lib/data';
 import { useI18n } from '@/hooks/use-i18n';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/types';
 import { format, startOfWeek, endOfWeek, isToday } from 'date-fns';
@@ -202,11 +202,11 @@ function TechnicianDashboard() {
   }, [currentUser]);
 
   const getAssetName = (id: string) => assets.find(a => a.id === id)?.name || 'N/A';
-  const getCustomerLocation = (assetId: string) => {
-      const asset = assets.find(a => a.id === assetId);
-      if (!asset) return 'N/A';
-      const location = users.find(u => u.clientId === asset.clientId); // This seems wrong, should be customerLocations
-      return location?.clientName || 'N/A';
+  const getCustomerLocationName = (assetId: string) => {
+    const asset = assets.find(a => a.id === assetId);
+    if (!asset) return 'N/A';
+    const location = customerLocations.find(loc => loc.id === asset.customerLocationId);
+    return location?.name || 'N/A';
   };
    const formatDate = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy') : 'N/A';
 
@@ -260,7 +260,7 @@ function TechnicianDashboard() {
                   <div className="flex-1">
                     <p className="font-semibold">{order.title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {getAssetName(order.assetId)} - {getCustomerLocation(order.assetId)}
+                      {getAssetName(order.assetId)} - {getCustomerLocationName(order.assetId)}
                     </p>
                      <p className="text-xs text-muted-foreground">
                       Agendado para: {formatDate(order.scheduledDate)}
@@ -268,7 +268,7 @@ function TechnicianDashboard() {
                   </div>
                   <div className="flex items-center gap-4">
                      <Badge variant={order.priority === 'Urgente' ? 'destructive' : 'outline'}>{order.priority}</Badge>
-                     <Button size="sm" onClick={() => router.push('/dashboard/orders')}>
+                     <Button size="sm" onClick={() => router.push(`/dashboard/orders/${order.id}`)}>
                         <Play className="mr-2 h-4 w-4"/>
                         Iniciar
                      </Button>
@@ -293,5 +293,3 @@ export default function DashboardPage() {
 
   return isTechnician ? <TechnicianDashboard /> : <ManagerDashboard />;
 }
-
-    

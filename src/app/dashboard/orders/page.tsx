@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon, BrainCircuit } from 'lucide-react';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations, checklistTemplates } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,6 +50,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
+import Link from 'next/link';
 
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
@@ -529,7 +530,8 @@ export default function WorkOrdersPage() {
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     {order.isPreventive && <FileWarning className="h-4 w-4 text-muted-foreground" />}
-                    {order.title}
+                     {order.usedIA && <BrainCircuit className="h-4 w-4 text-primary" />}
+                    <Link href={`/dashboard/orders/${order.id}`} className="hover:underline">{order.title}</Link>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -538,7 +540,6 @@ export default function WorkOrdersPage() {
                         if (assetToEdit) {
                            // This is a placeholder for a function that would open the asset dialog.
                            // In a real app, this might be a context function or a prop drill.
-                           // For now, we will just log it.
                            console.log("Would open asset dossier for:", assetToEdit.name);
                         }
                     }}>
@@ -897,4 +898,3 @@ export default function WorkOrdersPage() {
   );
 }
 
-    
