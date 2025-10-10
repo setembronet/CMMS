@@ -30,6 +30,7 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { addons as initialAddons } from '@/lib/data';
 import type { Addon } from '@/lib/types';
+import { useI18n } from '@/hooks/use-i18n';
 
 const emptyAddon: Addon = {
   id: '',
@@ -38,6 +39,7 @@ const emptyAddon: Addon = {
 };
 
 export default function AddonsPage() {
+  const { t } = useI18n();
   const [addons, setAddons] = React.useState<Addon[]>(initialAddons);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAddon, setEditingAddon] = React.useState<Addon | null>(null);
@@ -81,19 +83,19 @@ export default function AddonsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Gerenciamento de Add-ons</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('addons.title')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Add-on
+          {t('addons.new')}
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome do Add-on</TableHead>
-              <TableHead>Valor Mensal</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>{t('addons.table.name')}</TableHead>
+              <TableHead>{t('addons.table.monthlyValue')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -105,13 +107,13 @@ export default function AddonsPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
+                        <span className="sr-only">{t('common.openMenu')}</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(addon)}>
-                        Editar
+                        {t('common.edit')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -125,27 +127,29 @@ export default function AddonsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingAddon ? 'Editar Add-on' : 'Novo Add-on'}</DialogTitle>
+            <DialogTitle>{editingAddon ? t('addons.dialog.editTitle') : t('addons.dialog.newTitle')}</DialogTitle>
             <DialogDescription>
-              {editingAddon ? 'Atualize os detalhes do add-on.' : 'Preencha os detalhes do novo add-on.'}
+              {editingAddon ? t('addons.dialog.editDescription') : t('addons.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveAddon} id="addon-form" className="space-y-4 py-4">
               <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Add-on</Label>
+                  <Label htmlFor="name">{t('addons.dialog.name')}</Label>
                   <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
               </div>
               <div className="space-y-2">
-                  <Label htmlFor="price">Valor Mensal (R$)</Label>
+                  <Label htmlFor="price">{t('addons.dialog.monthlyValue')}</Label>
                   <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} required />
               </div>
           </form>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="addon-form">Salvar</Button>
+            <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+            <Button type="submit" form="addon-form">{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    

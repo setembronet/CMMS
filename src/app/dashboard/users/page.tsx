@@ -44,6 +44,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClient } from '@/context/client-provider';
+import { useI18n } from '@/hooks/use-i18n';
 
 
 type PasswordStrength = {
@@ -55,6 +56,8 @@ type PasswordStrength = {
 
 export default function CMMSUsersPage() {
   const { selectedClient } = useClient();
+  const { t } = useI18n();
+
   const [users, setUsers] = React.useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -122,6 +125,14 @@ export default function CMMSUsersPage() {
     if (score <= 4) return { level: 'Média', value: 66, color: 'bg-yellow-500' };
     return { level: 'Forte', value: 100, color: 'bg-green-500' };
   };
+
+  const translatedPasswordStrength = (level: 'Fraca' | 'Média' | 'Forte') => {
+    switch(level) {
+      case 'Fraca': return t('saasUsers.dialog.strength.weak');
+      case 'Média': return t('saasUsers.dialog.strength.medium');
+      case 'Forte': return t('saasUsers.dialog.strength.strong');
+    }
+  }
 
   const openDialog = (user: User | null = null) => {
     setEditingUser(user);
@@ -197,14 +208,14 @@ export default function CMMSUsersPage() {
   const NewUserButton = () => (
     <Button onClick={() => openDialog()} disabled={!selectedClient}>
         <PlusCircle className="mr-2 h-4 w-4" />
-        Novo Usuário
+        {t('users.new')}
     </Button>
   );
 
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar os usuários.</p>
+            <p className="text-muted-foreground">{t('users.selectClientPrompt')}</p>
         </div>
     )
   }
@@ -213,15 +224,15 @@ export default function CMMSUsersPage() {
     <TooltipProvider>
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-headline">Usuários de {selectedClient?.name || 'Empresa'}</h1>
+          <h1 className="text-3xl font-bold font-headline">{t('users.title', { clientName: selectedClient?.name || 'Empresa' })}</h1>
            {hasReachedTechnicianLimit ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span><NewUserButton /></span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Limite de {technicianLimit} técnico(s) do plano {clientPlan?.name} atingido.</p>
-                <p>Você ainda pode criar usuários com outras funções.</p>
+                <p>{t('users.limitReached', { limit: technicianLimit, planName: clientPlan?.name })}</p>
+                <p>{t('users.limitInfo')}</p>
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -232,10 +243,10 @@ export default function CMMSUsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Usuário</TableHead>
-                <TableHead>Função</TableHead>
-                <TableHead>Equipe</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('users.table.user')}</TableHead>
+                <TableHead>{t('users.table.role')}</TableHead>
+                <TableHead>{t('users.table.squad')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -259,13 +270,13 @@ export default function CMMSUsersPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
+                          <span className="sr-only">{t('common.openMenu')}</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openDialog(user)}>
-                          Editar
+                          {t('common.edit')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -279,7 +290,7 @@ export default function CMMSUsersPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle>{editingUser ? 'Editar Usuário' : `Novo Usuário para ${selectedClient?.name}`}</DialogTitle>
+              <DialogTitle>{editingUser ? t('users.dialog.editTitle') : t('users.dialog.newTitle', { clientName: selectedClient?.name })}</DialogTitle>
             </DialogHeader>
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 150px)' }}>
               <ScrollArea className="h-full pr-6 -mx-6 px-6">
@@ -291,60 +302,60 @@ export default function CMMSUsersPage() {
                           <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="w-full space-y-2">
-                          <Label htmlFor="avatarUrl">URL do Avatar</Label>
+                          <Label htmlFor="avatarUrl">{t('saasUsers.dialog.avatarUrl')}</Label>
                           <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="name">Nome</Label>
+                      <Label htmlFor="name">{t('common.name')}</Label>
                       <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">{t('common.email')}</Label>
                       <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password">Senha</Label>
-                      <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? 'Deixe em branco para não alterar' : ''} />
+                      <Label htmlFor="password">{t('saasUsers.dialog.password')}</Label>
+                      <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? t('saasUsers.dialog.passwordPlaceholder') : ''} />
                     </div>
                     
                     {passwordStrength && (
                         <div className="space-y-2">
                             <div className="flex justify-between items-center text-xs">
-                                <Label>Força da Senha</Label>
+                                <Label>{t('saasUsers.dialog.passwordStrength')}</Label>
                                 <span className={cn(
                                     passwordStrength.level === 'Fraca' && 'text-red-500',
                                     passwordStrength.level === 'Média' && 'text-yellow-500',
                                     passwordStrength.level === 'Forte' && 'text-green-500'
-                                )}>{passwordStrength.level}</span>
+                                )}>{translatedPasswordStrength(passwordStrength.level)}</span>
                             </div>
                             <Progress value={passwordStrength.value} className={cn("h-2", passwordStrength.color)} />
                             <p className="text-xs text-muted-foreground">
-                                Use 8+ caracteres com letras, números e símbolos.
+                                {t('saasUsers.dialog.strengthHint')}
                             </p>
                         </div>
                     )}
                     
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                      <Label htmlFor="confirmPassword">{t('saasUsers.dialog.confirmPassword')}</Label>
                       <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword || ''} onChange={handleInputChange} required={!!formData.password} />
                       {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                        <p className="text-sm text-destructive">As senhas não coincidem.</p>
+                        <p className="text-sm text-destructive">{t('saasUsers.dialog.passwordMismatch')}</p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Empresa</Label>
+                      <Label>{t('users.dialog.company')}</Label>
                       <Input value={selectedClient?.name || ''} disabled />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="cmmsRole">Função CMMS</Label>
+                      <Label htmlFor="cmmsRole">{t('users.dialog.role')}</Label>
                       <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} required>
                         <SelectTrigger>
-                          <SelectValue placeholder={availableRoles.length > 0 ? "Selecione uma função" : "Nenhuma função aplicável"} />
+                          <SelectValue placeholder={availableRoles.length > 0 ? t('users.dialog.rolePlaceholder') : t('users.dialog.noRoles')} />
                         </SelectTrigger>
                         <SelectContent>
                           {availableRoles.map(role => (
@@ -353,21 +364,21 @@ export default function CMMSUsersPage() {
                         </SelectContent>
                       </Select>
                       {formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit && !editingUser && (
-                          <p className="text-sm text-destructive">O limite de técnicos para este plano foi atingido.</p>
+                          <p className="text-sm text-destructive">{t('users.dialog.technicianLimitReached')}</p>
                       )}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="squad">Equipe</Label>
-                      <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Opcional para técnicos" />
+                      <Label htmlFor="squad">{t('users.dialog.squad')}</Label>
+                      <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder={t('users.dialog.squadPlaceholder')} />
                     </div>
                   </form>
                 )}
               </ScrollArea>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-              <Button type="submit" form="user-form" disabled={isSaveDisabled}>Salvar</Button>
+              <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+              <Button type="submit" form="user-form" disabled={isSaveDisabled}>{t('common.save')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -30,6 +30,7 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { products as initialProducts, setProducts } from '@/lib/data';
 import type { Product } from '@/lib/types';
+import { useI18n } from '@/hooks/use-i18n';
 
 const emptyProduct: Product = {
   id: '',
@@ -41,6 +42,7 @@ const emptyProduct: Product = {
 };
 
 export default function ProductsPage() {
+  const { t } = useI18n();
   const [products, setLocalProducts] = React.useState<Product[]>(initialProducts);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
@@ -88,22 +90,22 @@ export default function ProductsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Cadastro de Peças</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('products.title')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Nova Peça
+          {t('products.new')}
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome da Peça</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Fabricante</TableHead>
-              <TableHead>Estoque</TableHead>
-              <TableHead>Preço (R$)</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>{t('products.table.name')}</TableHead>
+              <TableHead>{t('products.table.sku')}</TableHead>
+              <TableHead>{t('products.table.manufacturer')}</TableHead>
+              <TableHead>{t('products.table.stock')}</TableHead>
+              <TableHead>{t('products.table.price')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,13 +120,13 @@ export default function ProductsPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
+                        <span className="sr-only">{t('common.openMenu')}</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(product)}>
-                        Editar
+                        {t('common.edit')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -138,41 +140,43 @@ export default function ProductsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Editar Peça' : 'Nova Peça'}</DialogTitle>
+            <DialogTitle>{editingProduct ? t('products.dialog.editTitle') : t('products.dialog.newTitle')}</DialogTitle>
             <DialogDescription>
-              {editingProduct ? 'Atualize os detalhes da peça.' : 'Preencha os detalhes da nova peça.'}
+              {editingProduct ? t('products.dialog.editDescription') : t('products.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveProduct} id="product-form" className="space-y-4 py-4">
               <div className="space-y-2">
-                  <Label htmlFor="name">Nome da Peça</Label>
+                  <Label htmlFor="name">{t('products.dialog.name')}</Label>
                   <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="sku">SKU (Código)</Label>
+                    <Label htmlFor="sku">{t('products.dialog.sku')}</Label>
                     <Input id="sku" name="sku" value={formData.sku} onChange={handleInputChange} required />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="stock">Estoque</Label>
+                    <Label htmlFor="stock">{t('products.dialog.stock')}</Label>
                     <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleInputChange} required />
                 </div>
               </div>
               <div className="space-y-2">
-                  <Label htmlFor="manufacturer">Fabricante</Label>
+                  <Label htmlFor="manufacturer">{t('products.dialog.manufacturer')}</Label>
                   <Input id="manufacturer" name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} />
               </div>
                <div className="space-y-2">
-                  <Label htmlFor="price">Preço (R$)</Label>
+                  <Label htmlFor="price">{t('products.dialog.price')}</Label>
                   <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
               </div>
           </form>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="product-form">Salvar</Button>
+            <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+            <Button type="submit" form="product-form">{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    

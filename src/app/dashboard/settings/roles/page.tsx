@@ -82,19 +82,19 @@ export default function RolesPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">{t('sidebar.roles')}</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('roles.title')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Nova Função
+          {t('roles.new')}
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome da Função</TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>{t('roles.table.name')}</TableHead>
+              <TableHead>{t('roles.table.id')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -106,13 +106,13 @@ export default function RolesPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
+                        <span className="sr-only">{t('common.openMenu')}</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(role)}>
-                        Editar
+                        {t('common.edit')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -126,29 +126,31 @@ export default function RolesPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingRole ? 'Editar Função' : 'Nova Função'}</DialogTitle>
+            <DialogTitle>{editingRole ? t('roles.dialog.editTitle') : t('roles.dialog.newTitle')}</DialogTitle>
             <DialogDescription>
-              {editingRole ? 'Atualize os detalhes da função.' : 'Crie uma nova função de usuário para o CMMS.'}
+              {editingRole ? t('roles.dialog.editDescription') : t('roles.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveRole} id="role-form" className="space-y-4 py-4">
               <div className="space-y-2">
-                  <Label htmlFor="name">Nome da Função</Label>
-                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Síndico Residente"/>
+                  <Label htmlFor="name">{t('roles.dialog.name')}</Label>
+                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder={t('roles.dialog.namePlaceholder')}/>
               </div>
                {!editingRole && (
                  <div className="space-y-2">
-                    <Label htmlFor="id">ID da Função</Label>
-                    <Input id="id" name="id" value={formData.name.toUpperCase().replace(/\s/g, '_')} disabled placeholder="Gerado automaticamente"/>
+                    <Label htmlFor="id">{t('roles.dialog.id')}</Label>
+                    <Input id="id" name="id" value={formData.name.toUpperCase().replace(/\s/g, '_')} disabled placeholder={t('roles.dialog.idPlaceholder')}/>
                 </div>
                )}
           </form>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="role-form">Salvar</Button>
+            <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+            <Button type="submit" form="role-form">{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    

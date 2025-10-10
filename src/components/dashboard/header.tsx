@@ -28,7 +28,7 @@ export function Header() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="w-[220px] justify-between">
-            {selectedClient ? selectedClient.name : 'Selecione um cliente'}
+            {selectedClient ? selectedClient.name : t('header.selectClient')}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>

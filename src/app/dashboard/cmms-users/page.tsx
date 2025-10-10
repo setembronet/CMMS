@@ -42,6 +42,7 @@ import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
 
 const saasRoles: SaaSUserRole[] = ['ADMIN', 'FINANCEIRO', 'SUPORTE'];
 
@@ -67,6 +68,7 @@ type PasswordStrength = {
 };
 
 export default function SaaSUsersPage() {
+  const { t } = useI18n();
   const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => saasRoles.includes(u.saasRole as SaaSUserRole)));
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -86,6 +88,14 @@ export default function SaaSUsersPage() {
     if (score <= 4) return { level: 'Média', value: 66, color: 'bg-yellow-500' };
     return { level: 'Forte', value: 100, color: 'bg-green-500' };
   };
+
+  const translatedPasswordStrength = (level: 'Fraca' | 'Média' | 'Forte') => {
+    switch(level) {
+      case 'Fraca': return t('saasUsers.dialog.strength.weak');
+      case 'Média': return t('saasUsers.dialog.strength.medium');
+      case 'Forte': return t('saasUsers.dialog.strength.strong');
+    }
+  }
 
   const openDialog = (user: User | null = null) => {
     setEditingUser(user);
@@ -144,19 +154,19 @@ export default function SaaSUsersPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Usuários do SaaS</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('saasUsers.title')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Usuário
+          {t('saasUsers.new')}
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Usuário</TableHead>
-              <TableHead>Função</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>{t('saasUsers.table.user')}</TableHead>
+              <TableHead>{t('saasUsers.table.role')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -179,13 +189,13 @@ export default function SaaSUsersPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
+                        <span className="sr-only">{t('common.openMenu')}</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(user)}>
-                        Editar
+                        {t('common.edit')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -199,7 +209,7 @@ export default function SaaSUsersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
+            <DialogTitle>{editingUser ? t('saasUsers.dialog.editTitle') : t('saasUsers.dialog.newTitle')}</DialogTitle>
           </DialogHeader>
            <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 150px)' }}>
             <ScrollArea className="h-full pr-6 -mx-6 px-6">
@@ -210,56 +220,56 @@ export default function SaaSUsersPage() {
                       <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="w-full space-y-2">
-                      <Label htmlFor="avatarUrl">URL do Avatar</Label>
+                      <Label htmlFor="avatarUrl">{t('saasUsers.dialog.avatarUrl')}</Label>
                       <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
+                  <Label htmlFor="name">{t('saasUsers.dialog.name')}</Label>
                   <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('saasUsers.dialog.email')}</Label>
                   <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? 'Deixe em branco para não alterar' : ''} />
+                  <Label htmlFor="password">{t('saasUsers.dialog.password')}</Label>
+                  <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? t('saasUsers.dialog.passwordPlaceholder') : ''} />
                 </div>
                 
                 {passwordStrength && (
                     <div className="space-y-2">
                         <div className="flex justify-between items-center text-xs">
-                            <Label>Força da Senha</Label>
+                            <Label>{t('saasUsers.dialog.passwordStrength')}</Label>
                             <span className={cn(
                                 passwordStrength.level === 'Fraca' && 'text-red-500',
                                 passwordStrength.level === 'Média' && 'text-yellow-500',
                                 passwordStrength.level === 'Forte' && 'text-green-500'
-                            )}>{passwordStrength.level}</span>
+                            )}>{translatedPasswordStrength(passwordStrength.level)}</span>
                         </div>
                         <Progress value={passwordStrength.value} className={cn("h-2", passwordStrength.color)} />
                         <p className="text-xs text-muted-foreground">
-                            Use 8+ caracteres com letras, números e símbolos.
+                            {t('saasUsers.dialog.strengthHint')}
                         </p>
                     </div>
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                  <Label htmlFor="confirmPassword">{t('saasUsers.dialog.confirmPassword')}</Label>
                   <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword || ''} onChange={handleInputChange} required={!!formData.password} />
                    {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                    <p className="text-sm text-destructive">As senhas não coincidem.</p>
+                    <p className="text-sm text-destructive">{t('saasUsers.dialog.passwordMismatch')}</p>
                   )}
                 </div>
 
 
                 <div className="space-y-2">
-                  <Label htmlFor="saasRole">Função SaaS</Label>
+                  <Label htmlFor="saasRole">{t('saasUsers.dialog.role')}</Label>
                   <Select name="saasRole" value={formData.saasRole || ''} onValueChange={(value) => handleSelectChange('saasRole', value as SaaSUserRole)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a função" />
+                      <SelectValue placeholder={t('saasUsers.dialog.rolePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {saasRoles.map(role => (
@@ -272,11 +282,13 @@ export default function SaaSUsersPage() {
             </ScrollArea>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="user-form" disabled={isSaveDisabled}>Salvar</Button>
+            <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+            <Button type="submit" form="user-form" disabled={isSaveDisabled}>{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    

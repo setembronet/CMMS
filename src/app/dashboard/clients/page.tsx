@@ -40,6 +40,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useClient } from '@/context/client-provider';
+import { useI18n } from '@/hooks/use-i18n';
 
 const CURRENT_USER_ID = 'user-04'; // Mock logged-in user
 
@@ -63,6 +64,8 @@ const emptyContact: Contact = {
 
 export default function ClientsPage() {
   const { selectedClient } = useClient();
+  const { t } = useI18n();
+
   const [locations, setLocations] = React.useState<CustomerLocation[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
@@ -306,10 +309,18 @@ export default function ClientsPage() {
         .slice(0, 10); // get last 10 for simplicity
   };
 
+  const translatedContractStatus = (status: ContractStatus) => {
+    switch (status) {
+      case 'Vigente': return t('clients.status.current');
+      case 'Próximo a Vencer': return t('clients.status.expiring');
+      case 'Vencido': return t('clients.status.expired');
+    }
+  }
+
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar os clientes finais.</p>
+            <p className="text-muted-foreground">{t('clients.selectClientPrompt')}</p>
         </div>
     )
   }
@@ -319,24 +330,24 @@ export default function ClientsPage() {
     <TooltipProvider>
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-headline">Clientes Finais de {selectedClient?.name || '...'}</h1>
+          <h1 className="text-3xl font-bold font-headline">{t('clients.title', { clientName: selectedClient?.name || '...' })}</h1>
           <Button onClick={() => openDialog()}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Novo Cliente
+            {t('clients.new')}
           </Button>
         </div>
         <div className="rounded-lg border shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cliente Final</TableHead>
-                <TableHead>Ativos</TableHead>
-                <TableHead>OS Abertas</TableHead>
-                <TableHead>Status Contrato</TableHead>
-                <TableHead>Custo Peças (90d)</TableHead>
-                <TableHead>Criticidade</TableHead>
-                <TableHead>Add-ons</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('clients.table.finalClient')}</TableHead>
+                <TableHead>{t('clients.table.assets')}</TableHead>
+                <TableHead>{t('clients.table.openWos')}</TableHead>
+                <TableHead>{t('clients.table.contractStatus')}</TableHead>
+                <TableHead>{t('clients.table.partsCost')}</TableHead>
+                <TableHead>{t('clients.table.criticality')}</TableHead>
+                <TableHead>{t('clients.table.addons')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -357,7 +368,7 @@ export default function ClientsPage() {
                   <TableCell>
                     <Badge variant="outline" className={cn('border', getStatusBadgeVariant(location.contractStatus))}>
                       <FileText className="mr-1.5 h-3 w-3" />
-                      {location.contractStatus}
+                      {translatedContractStatus(location.contractStatus)}
                     </Badge>
                   </TableCell>
                    <TableCell>
@@ -369,11 +380,11 @@ export default function ClientsPage() {
                               <TooltipTrigger>
                                   <Badge variant="destructive">
                                       <AlertTriangle className="mr-1.5 h-3 w-3" />
-                                      Alta Taxa Corretiva
+                                      {t('clients.criticalityMessage')}
                                   </Badge>
                               </TooltipTrigger>
                               <TooltipContent>
-                                  <p>{correctiveRatio.toFixed(0)}% das OS são corretivas.</p>
+                                  <p>{t('clients.criticalityTooltip', { ratio: correctiveRatio.toFixed(0) })}</p>
                               </TooltipContent>
                           </Tooltip>
                       )}
@@ -387,7 +398,7 @@ export default function ClientsPage() {
                                     <BrainCircuit className="h-5 w-5 text-primary" />
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Módulo IA Ativo</p>
+                                    <p>{t('clients.addonIaTooltip')}</p>
                                 </TooltipContent>
                             </Tooltip>
                         )}
@@ -397,17 +408,17 @@ export default function ClientsPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
+                          <span className="sr-only">{t('common.openMenu')}</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openDialog(location)}>
-                          Editar
+                          {t('common.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openInvoiceDialog(location)}>
                            <Receipt className="mr-2 h-4 w-4" />
-                           Gerar Fatura
+                           {t('clients.actions.generateInvoice')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -421,31 +432,31 @@ export default function ClientsPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
-              <DialogTitle>{editingLocation ? 'Editar Cliente Final' : 'Novo Cliente Final'}</DialogTitle>
+              <DialogTitle>{editingLocation ? t('clients.dialog.editTitle') : t('clients.dialog.newTitle')}</DialogTitle>
               <DialogDescription>
-                {editingLocation ? 'Atualize os detalhes do cliente e seus contatos.' : `Cadastre um novo cliente final para ${selectedClient?.name || ''}.`}
+                {editingLocation ? t('clients.dialog.editDescription') : t('clients.dialog.newDescription', { clientName: selectedClient?.name || '' })}
               </DialogDescription>
             </DialogHeader>
             {formData && (
               <>
               <ScrollArea className="max-h-[70vh] -mx-6 px-6">
                 <form onSubmit={handleSaveLocation} id="location-form" className="space-y-6 py-4 px-1">
-                  <h3 className="text-lg font-medium">Dados Cadastrais</h3>
+                  <h3 className="text-lg font-medium">{t('clients.dialog.registrationData')}</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Nome do Cliente Final</Label>
-                        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Condomínio Edifício Central"/>
+                        <Label htmlFor="name">{t('clients.table.finalClient')}</Label>
+                        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder={t('clients.dialog.namePlaceholder')}/>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="contractStatus">Status do Contrato</Label>
+                          <Label htmlFor="contractStatus">{t('clients.dialog.contractStatus')}</Label>
                           <Select name="contractStatus" value={formData.contractStatus} onValueChange={(value) => handleSelectChange('contractStatus', value as ContractStatus)} required>
                               <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o status" />
+                                  <SelectValue placeholder={t('clients.dialog.contractStatusPlaceholder')} />
                               </SelectTrigger>
                               <SelectContent>
                                   {contractStatuses.map(status => (
-                                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                                      <SelectItem key={status} value={status}>{translatedContractStatus(status)}</SelectItem>
                                   ))}
                               </SelectContent>
                           </Select>
@@ -454,36 +465,36 @@ export default function ClientsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2 md:col-span-1">
-                            <Label htmlFor="zipCode">CEP</Label>
+                            <Label htmlFor="zipCode">{t('address.zipCode')}</Label>
                             <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode || ''} onChange={handleInputChange} onBlur={handleCepBlur} />
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="street">Rua</Label>
+                            <Label htmlFor="street">{t('address.street')}</Label>
                             <Input id="street" name="address.street" value={formData.address?.street || ''} onChange={handleInputChange} />
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
-                              <Label htmlFor="number">Número</Label>
+                              <Label htmlFor="number">{t('address.number')}</Label>
                               <Input id="number" name="address.number" value={formData.address?.number || ''} onChange={handleInputChange} />
                           </div>
                           <div className="space-y-2 md:col-span-2">
-                              <Label htmlFor="complement">Complemento</Label>
+                              <Label htmlFor="complement">{t('address.complement')}</Label>
                               <Input id="complement" name="address.complement" value={formData.address?.complement || ''} onChange={handleInputChange} />
                           </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="neighborhood">Bairro</Label>
+                            <Label htmlFor="neighborhood">{t('address.neighborhood')}</Label>
                             <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood || ''} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="city">Cidade</Label>
+                            <Label htmlFor="city">{t('address.city')}</Label>
                             <Input id="city" name="address.city" value={formData.address?.city || ''} onChange={handleInputChange} />
                         </div>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="state">Estado</Label>
+                          <Label htmlFor="state">{t('address.state')}</Label>
                           <Input id="state" name="address.state" value={formData.address?.state || ''} onChange={handleInputChange} />
                       </div>
                   </div>
@@ -492,10 +503,10 @@ export default function ClientsPage() {
 
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-medium">Contatos</h3>
+                        <h3 className="text-lg font-medium">{t('clients.dialog.contactsSection')}</h3>
                         <Button type="button" variant="outline" size="sm" onClick={addContact}>
                             <UserPlus className="mr-2 h-4 w-4" />
-                            Adicionar Contato
+                            {t('clients.dialog.addContact')}
                         </Button>
                     </div>
                     <div className="space-y-4">
@@ -503,30 +514,30 @@ export default function ClientsPage() {
                         <div key={contact.id} className="p-4 border rounded-lg space-y-4 relative">
                             <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeContact(index)}>
                                 <Trash2 className="h-4 w-4 text-destructive"/>
-                                <span className="sr-only">Remover Contato</span>
+                                <span className="sr-only">{t('clients.dialog.removeContact')}</span>
                             </Button>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label htmlFor={`contact-name-${index}`}>Nome Completo</Label>
+                                <Label htmlFor={`contact-name-${index}`}>{t('clients.dialog.fullName')}</Label>
                                 <Input id={`contact-name-${index}`} name="name" value={contact.name} onChange={e => handleContactChange(index, e)} required/>
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor={`contact-role-${index}`}>Função</Label>
-                                <Input id={`contact-role-${index}`} name="role" value={contact.role} onChange={e => handleContactChange(index, e)} required placeholder="Ex: Síndico, Zelador..."/>
+                                <Label htmlFor={`contact-role-${index}`}>{t('clients.dialog.role')}</Label>
+                                <Input id={`contact-role-${index}`} name="role" value={contact.role} onChange={e => handleContactChange(index, e)} required placeholder={t('clients.dialog.rolePlaceholder')}/>
                               </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                  <Label htmlFor={`contact-phone-${index}`}>Telefone</Label>
+                                  <Label htmlFor={`contact-phone-${index}`}>{t('common.phone')}</Label>
                                   <Input id={`contact-phone-${index}`} name="phone" value={contact.phone || ''} onChange={e => handleContactChange(index, e)} />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label htmlFor={`contact-email-${index}`}>Email</Label>
+                                  <Label htmlFor={`contact-email-${index}`}>{t('common.email')}</Label>
                                   <Input id={`contact-email-${index}`} name="email" type="email" value={contact.email || ''} onChange={e => handleContactChange(index, e)} />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor={`contact-observation-${index}`}>Observação (Uso Interno)</Label>
+                                <Label htmlFor={`contact-observation-${index}`}>{t('clients.dialog.internalObservation')}</Label>
                                 <Textarea id={`contact-observation-${index}`} name="observation" value={contact.observation || ''} onChange={e => handleContactChange(index, e)} />
                             </div>
                         </div>
@@ -538,10 +549,10 @@ export default function ClientsPage() {
                   
                   <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-medium">Histórico de Interações (CRM)</h3>
+                        <h3 className="text-lg font-medium">{t('clients.dialog.interactionsSection')}</h3>
                         <Button type="button" variant="outline" size="sm" onClick={addInteraction}>
                             <MessageSquarePlus className="mr-2 h-4 w-4" />
-                            Registrar Interação
+                            {t('clients.dialog.addInteraction')}
                         </Button>
                     </div>
                     <div className="space-y-4">
@@ -549,17 +560,17 @@ export default function ClientsPage() {
                             <div key={interaction.id} className="p-4 border rounded-lg space-y-3 relative">
                                 <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeInteraction(index)}>
                                     <Trash2 className="h-4 w-4 text-destructive"/>
-                                    <span className="sr-only">Remover Interação</span>
+                                    <span className="sr-only">{t('clients.dialog.removeInteraction')}</span>
                                 </Button>
                                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                                   <div className="flex items-center gap-1.5">
                                       <Clock className="h-3 w-3"/>
-                                      <span>{format(new Date(interaction.date), "dd/MM/yyyy HH:mm", { locale: ptBR })} por {getUserName(interaction.userId)}</span>
+                                      <span>{t('clients.dialog.interactionDate', { date: format(new Date(interaction.date), "dd/MM/yyyy HH:mm", { locale: ptBR }), user: getUserName(interaction.userId) })}</span>
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
                                   <div className="space-y-2 sm:col-span-2">
-                                    <Label htmlFor={`interaction-type-${index}`}>Tipo</Label>
+                                    <Label htmlFor={`interaction-type-${index}`}>{t('clients.dialog.interactionType')}</Label>
                                     <Select value={interaction.type} onValueChange={(value) => handleInteractionTypeChange(index, value as InteractionType)}>
                                         <SelectTrigger id={`interaction-type-${index}`}>
                                             <SelectValue />
@@ -572,13 +583,13 @@ export default function ClientsPage() {
                                     </Select>
                                   </div>
                                   <div className="space-y-2 sm:col-span-4">
-                                    <Label htmlFor={`interaction-desc-${index}`}>Descrição</Label>
+                                    <Label htmlFor={`interaction-desc-${index}`}>{t('clients.dialog.interactionDescription')}</Label>
                                     <Textarea 
                                         id={`interaction-desc-${index}`} 
                                         name="description" 
                                         value={interaction.description}
                                         onChange={(e) => handleInteractionChange(index, e)}
-                                        placeholder="Descreva a interação..."
+                                        placeholder={t('clients.dialog.interactionDescriptionPlaceholder')}
                                     />
                                   </div>
                                 </div>
@@ -590,8 +601,8 @@ export default function ClientsPage() {
                 </form>
               </ScrollArea>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-                <Button type="submit" form="location-form">Salvar</Button>
+                <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+                <Button type="submit" form="location-form">{t('common.save')}</Button>
               </DialogFooter>
               </>
             )}
@@ -601,9 +612,9 @@ export default function ClientsPage() {
         <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Gerar Fatura para {invoicingLocation?.name}</DialogTitle>
+                    <DialogTitle>{t('clients.invoiceDialog.title', { clientName: invoicingLocation?.name })}</DialogTitle>
                     <DialogDescription>
-                        Esta é uma simulação de fatura baseada nas peças usadas em Ordens de Serviço recentes.
+                        {t('clients.invoiceDialog.description')}
                     </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="max-h-[60vh] -mx-6 px-6">
@@ -617,17 +628,17 @@ export default function ClientsPage() {
                             return (
                                 <div key={wo.id} className="border rounded-lg p-4">
                                     <div className="flex justify-between items-center mb-2">
-                                        <h4 className="font-semibold">{wo.title} (OS: {wo.id})</h4>
+                                        <h4 className="font-semibold">{t('clients.invoiceDialog.woTitle', { title: wo.title, id: wo.id })}</h4>
                                         <span className="font-bold">R$ {totalCost.toFixed(2)}</span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">Data: {format(new Date(wo.creationDate), "dd/MM/yyyy")}</p>
+                                    <p className="text-sm text-muted-foreground">{t('clients.invoiceDialog.date')}: {format(new Date(wo.creationDate), "dd/MM/yyyy")}</p>
                                     <Separator className="my-2" />
                                     <ul className="text-sm space-y-1">
                                         {(wo.partsUsed || []).map(part => {
                                             const product = products.find(p => p.id === part.productId);
                                             return (
                                                 <li key={part.productId} className="flex justify-between">
-                                                    <span>{product?.name || 'Peça desconhecida'} (x{part.quantity})</span>
+                                                    <span>{product?.name || t('clients.invoiceDialog.unknownPart')} (x{part.quantity})</span>
                                                     <span>R$ {( (product?.price || 0) * part.quantity).toFixed(2)}</span>
                                                 </li>
                                             )
@@ -637,14 +648,14 @@ export default function ClientsPage() {
                             )
                         })}
                          {getWorkOrdersForInvoice(invoicingLocation?.id || null).length === 0 && (
-                            <p className="text-muted-foreground text-center py-8">Nenhuma ordem de serviço com peças para faturar.</p>
+                            <p className="text-muted-foreground text-center py-8">{t('clients.invoiceDialog.noPartsToBill')}</p>
                          )}
                     </div>
                 </ScrollArea>
                 <DialogFooter>
                     <div className="w-full flex justify-between items-center">
                         <span className="font-bold text-lg">
-                            Total a Faturar: R$ {
+                            {t('clients.invoiceDialog.totalToBill')}: R$ {
                                 getWorkOrdersForInvoice(invoicingLocation?.id || null).reduce((total, wo) => {
                                     return total + (wo.partsUsed || []).reduce((acc, part) => {
                                         const product = products.find(p => p.id === part.productId);
@@ -654,8 +665,8 @@ export default function ClientsPage() {
                             }
                         </span>
                         <div>
-                            <Button variant="outline" onClick={() => setIsInvoiceDialogOpen(false)}>Fechar</Button>
-                            <Button className="ml-2">Enviar Fatura (Simulado)</Button>
+                            <Button variant="outline" onClick={() => setIsInvoiceDialogOpen(false)}>{t('clients.invoiceDialog.close')}</Button>
+                            <Button className="ml-2">{t('clients.invoiceDialog.sendInvoice')}</Button>
                         </div>
                     </div>
                 </DialogFooter>

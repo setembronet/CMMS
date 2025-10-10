@@ -1,7 +1,8 @@
 
 {
   "header": {
-    "changeLanguage": "Mudar idioma"
+    "changeLanguage": "Mudar idioma",
+    "selectClient": "Selecione um cliente"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -39,7 +40,12 @@
     "saveChanges": "Salvar Alterações",
     "address": "Endereço",
     "selectPlaceholder": "Selecione uma opção",
-    "value": "Valor"
+    "value": "Valor",
+    "new": "Novo",
+    "observation": "Observação",
+    "optional": "Opcional",
+    "required": "obrigatório",
+    "search": "Buscar"
   },
   "address": {
     "zipCode": "CEP",
@@ -51,6 +57,7 @@
     "state": "Estado"
   },
   "companies": {
+    "title": "Empresas",
     "overviewTitle": "Visão Geral das Empresas",
     "newCompany": "Nova Empresa",
     "toggleStatus": "Ativar/Desativar empresa",
@@ -117,6 +124,7 @@
   },
   "cmmsDashboard": {
     "title": "Dashboard Operacional",
+    "selectClientPrompt": "Selecione um cliente no menu superior para visualizar o dashboard operacional.",
     "openWorkOrders": "Ordens de Serviço Abertas",
     "totalOpen": "Total de OS em aberto ou em andamento",
     "urgentAlerts": "Alertas Urgentes",
@@ -129,13 +137,108 @@
     "latestWorkOrders": "Últimas ordens de serviço criadas para sua empresa."
   },
   "workOrders": {
-    "title": "Título da OS",
-    "priority": "Prioridade",
-    "creationDate": "Data de Criação",
-    "status": "Status"
+    "title": "Ordens de Serviço",
+    "new": "Nova Ordem de Serviço",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar as Ordens de Serviço.",
+    "table": {
+      "title": "Título da OS",
+      "asset": "Ativo",
+      "scheduledDate": "Agendamento",
+      "technician": "Técnico",
+      "priority": "Prioridade",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Detalhes da Ordem de Serviço",
+      "newTitle": "Nova Ordem de Serviço",
+      "description": "OS #{id} - Criada por {user} em: {date}",
+      "newDescription": "Preencha os detalhes da ordem de serviço.",
+      "asset": "Ativo",
+      "assetPlaceholder": "Selecione o ativo",
+      "title": "Título",
+      "titlePlaceholder": "Ex: Manutenção Corretiva Urgente",
+      "descriptionLabel": "Descrição",
+      "descriptionPlaceholder": "Detalhe o problema ou o serviço a ser realizado.",
+      "status": "Status",
+      "priority": "Prioridade",
+      "scheduledDate": "Data de Agendamento",
+      "optionalDate": "Opcional",
+      "assignmentSection": "Atribuição e Execução",
+      "responsibleTechnician": "Técnico Responsável",
+      "responsibleTechnicianPlaceholder": "Atribuir a um técnico (opcional)",
+      "squad": "Equipe",
+      "squadPlaceholder": "Ex: Equipe Alpha",
+      "executionStart": "Início da Execução",
+      "executionEnd": "Fim da Execução",
+      "checklistSection": "Checklist de Execução",
+      "checklistStatus": "Status",
+      "checklistComment": "Comentário",
+      "checklistCommentPlaceholder": "Se 'NÃO OK', detalhe aqui...",
+      "closingSection": "Encerramento do Serviço",
+      "failureCause": "Causa da Falha (se aplicável)",
+      "failureCausePlaceholder": "Selecione a causa raiz",
+      "recommendedAction": "Ação Recomendada",
+      "recommendedActionPlaceholder": "Selecione a próxima ação",
+      "partsSection": "Peças Utilizadas",
+      "addPart": "Adicionar Peça",
+      "part": "Peça",
+      "partPlaceholder": "Selecione uma peça",
+      "quantity": "Qtd",
+      "cost": "Custo",
+      "stock": "Estoque",
+      "noParts": "Nenhuma peça adicionada.",
+      "totalPartsCost": "Custo Total das Peças",
+      "internalObservation": "Observação Interna (visível apenas para a equipe)",
+      "internalObservationPlaceholder": "Detalhes técnicos, histórico relevante, etc.",
+      "reopen": "Reabrir OS",
+      "close": "Fechar"
+    }
   },
   "assets": {
-    "title": "Ativo"
+    "title": "Gestão de Ativos",
+    "new": "Novo Ativo",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar os ativos.",
+    "limitReached": "Limite de {limit} ativos do plano {planName} atingido.",
+    "table": {
+      "name": "Nome do Ativo",
+      "finalClient": "Cliente Final",
+      "status": "Status",
+      "serialNumber": "Nº de Série",
+      "woHistory": "Histórico de OS"
+    },
+    "status": {
+      "operational": "Operacional",
+      "maintenance": "Em Manutenção"
+    },
+    "history": {
+      "count": "{count} OS",
+      "none": "Nenhuma"
+    },
+    "actions": {
+      "viewHistory": "Ver Histórico de OS"
+    },
+    "dialog": {
+      "editTitle": "Editar Ativo",
+      "newTitle": "Novo Ativo",
+      "editDescription": "Atualize os detalhes do ativo.",
+      "newDescription": "Preencha os detalhes do novo ativo para {clientName}.",
+      "finalClient": "Cliente Final",
+      "finalClientPlaceholder": "Selecione o cliente final",
+      "segment": "Segmento do Ativo",
+      "segmentPlaceholder": "Selecione o segmento",
+      "noSegment": "O cliente não possui segmentos ativos",
+      "assetName": "Nome do Ativo",
+      "assetNamePlaceholder": "Ex: Elevador Social Bloco B",
+      "brand": "Marca",
+      "brandPlaceholder": "Ex: Atlas Schindler",
+      "model": "Modelo",
+      "modelPlaceholder": "Ex: 5500 MRL",
+      "serialNumber": "Número de Série",
+      "segmentSpecificData": "Dados Específicos do Segmento",
+      "fieldLabel": "Rótulo do Campo",
+      "observationPlaceholder": "Detalhes adicionais, histórico, etc.",
+      "save": "Salvar Ativo"
+    }
   },
   "finance": {
     "mrr": "MRR (Receita Recorrente Mensal)",
@@ -167,6 +270,269 @@
     "jun": "Jun"
   },
   "clients": {
-    "finalClient": "Cliente Final"
+    "title": "Clientes Finais de {clientName}",
+    "new": "Novo Cliente",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar os clientes finais.",
+    "table": {
+      "finalClient": "Cliente Final",
+      "assets": "Ativos",
+      "openWos": "OS Abertas",
+      "contractStatus": "Status Contrato",
+      "partsCost": "Custo Peças (90d)",
+      "criticality": "Criticidade",
+      "addons": "Add-ons"
+    },
+    "status": {
+      "current": "Vigente",
+      "expiring": "Próximo a Vencer",
+      "expired": "Vencido"
+    },
+    "criticalityMessage": "Alta Taxa Corretiva",
+    "criticalityTooltip": "{ratio}% das OS são corretivas.",
+    "addonIaTooltip": "Módulo IA Ativo",
+    "actions": {
+      "generateInvoice": "Gerar Fatura"
+    },
+    "dialog": {
+      "editTitle": "Editar Cliente Final",
+      "newTitle": "Novo Cliente Final",
+      "editDescription": "Atualize os detalhes do cliente e seus contatos.",
+      "newDescription": "Cadastre um novo cliente final para {clientName}.",
+      "registrationData": "Dados Cadastrais",
+      "namePlaceholder": "Ex: Condomínio Edifício Central",
+      "contractStatus": "Status do Contrato",
+      "contractStatusPlaceholder": "Selecione o status",
+      "contactsSection": "Contatos",
+      "addContact": "Adicionar Contato",
+      "removeContact": "Remover Contato",
+      "fullName": "Nome Completo",
+      "role": "Função",
+      "rolePlaceholder": "Ex: Síndico, Zelador...",
+      "internalObservation": "Observação (Uso Interno)",
+      "interactionsSection": "Histórico de Interações (CRM)",
+      "addInteraction": "Registrar Interação",
+      "removeInteraction": "Remover Interação",
+      "interactionDate": "{date} por {user}",
+      "interactionType": "Tipo",
+      "interactionDescription": "Descrição",
+      "interactionDescriptionPlaceholder": "Descreva a interação..."
+    },
+    "invoiceDialog": {
+      "title": "Gerar Fatura para {clientName}",
+      "description": "Esta é uma simulação de fatura baseada nas peças usadas em Ordens de Serviço recentes.",
+      "woTitle": "{title} (OS: {id})",
+      "date": "Data",
+      "unknownPart": "Peça desconhecida",
+      "noPartsToBill": "Nenhuma ordem de serviço com peças para faturar.",
+      "totalToBill": "Total a Faturar",
+      "close": "Fechar",
+      "sendInvoice": "Enviar Fatura (Simulado)"
+    }
+  },
+  "roles": {
+    "title": "Funções",
+    "new": "Nova Função",
+    "table": {
+      "name": "Nome da Função",
+      "id": "ID"
+    },
+    "dialog": {
+      "editTitle": "Editar Função",
+      "newTitle": "Nova Função",
+      "editDescription": "Atualize os detalhes da função.",
+      "newDescription": "Crie uma nova função de usuário para o CMMS.",
+      "name": "Nome da Função",
+      "namePlaceholder": "Ex: Síndico Residente",
+      "id": "ID da Função",
+      "idPlaceholder": "Gerado automaticamente"
+    }
+  },
+  "segments": {
+    "title": "Segmentos",
+    "new": "Novo Segmento",
+    "table": {
+      "name": "Nome do Segmento",
+      "applicableRoles": "Funções Aplicáveis",
+      "customFields": "Campos Personalizados"
+    },
+    "dialog": {
+      "editTitle": "Editar Segmento",
+      "newTitle": "Novo Segmento",
+      "editDescription": "Atualize os detalhes do segmento.",
+      "newDescription": "Defina um novo segmento de atuação para o CMMS.",
+      "name": "Nome do Segmento",
+      "namePlaceholder": "Ex: Ar Condicionado Central",
+      "applicableRoles": "Funções Aplicáveis",
+      "applicableRolesDescription": "Selecione as funções de contato para este segmento.",
+      "customFields": "Campos Personalizados",
+      "customFieldsDescription": "Adicione campos específicos para ativos deste segmento.",
+      "addField": "Adicionar Campo",
+      "fieldLabel": "Rótulo do Campo",
+      "fieldLabelPlaceholder": "Ex: Potência (BTUs)",
+      "fieldType": "Tipo",
+      "fieldVariable": "Nome da Variável (automático)"
+    }
+  },
+  "plans": {
+    "title": "Gerenciamento de Planos",
+    "new": "Novo Plano",
+    "table": {
+      "name": "Nome do Plano",
+      "monthlyValue": "Valor Mensal",
+      "assetLimit": "Limite de Ativos",
+      "technicianLimit": "Limite de Técnicos"
+    },
+    "dialog": {
+      "editTitle": "Editar Plano",
+      "newTitle": "Novo Plano",
+      "editDescription": "Atualize os detalhes do plano.",
+      "newDescription": "Preencha os detalhes do novo plano.",
+      "name": "Nome do Plano",
+      "monthlyValue": "Valor Mensal (R$)",
+      "assetLimit": "Limite de Ativos",
+      "technicianLimit": "Limite de Técnicos",
+      "limitPlaceholder": "-1 para ilimitado",
+      "permissions": "Permissões do Plano",
+      "multiModule": "Acesso Multi-Módulo",
+      "multiModuleDescription": "Permite acesso a diferentes módulos de ativos.",
+      "bigQuery": "Acesso Básico ao BigQuery",
+      "bigQueryDescription": "Permite consultas básicas no BigQuery.",
+      "iaAddon": "Acesso ao Add-on de IA",
+      "iaAddonDescription": "Habilita as funcionalidades do módulo de IA.",
+      "iotAddon": "Acesso ao Add-on de IoT",
+      "iotAddonDescription": "Habilita as funcionalidades do módulo de IoT."
+    },
+    "unlimited": "Ilimitado"
+  },
+  "addons": {
+    "title": "Gerenciamento de Add-ons",
+    "new": "Novo Add-on",
+    "table": {
+      "name": "Nome do Add-on",
+      "monthlyValue": "Valor Mensal"
+    },
+    "dialog": {
+      "editTitle": "Editar Add-on",
+      "newTitle": "Novo Add-on",
+      "editDescription": "Atualize os detalhes do add-on.",
+      "newDescription": "Preencha os detalhes do novo add-on.",
+      "name": "Nome do Add-on",
+      "monthlyValue": "Valor Mensal (R$)"
+    }
+  },
+  "contracts": {
+    "title": "Gestão de Contratos",
+    "new": "Novo Contrato",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar os contratos.",
+    "table": {
+      "title": "Título do Contrato",
+      "finalClient": "Cliente Final",
+      "validity": "Vigência",
+      "coveredAssets": "Ativos Cobertos",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Editar Contrato",
+      "newTitle": "Novo Contrato",
+      "description": "Gerencie os detalhes do contrato, ativos cobertos e planos de manutenção preventiva.",
+      "generalData": "Dados Gerais do Contrato",
+      "finalClient": "Cliente Final",
+      "finalClientPlaceholder": "Selecione o cliente",
+      "title": "Título do Contrato",
+      "titlePlaceholder": "Ex: Contrato de Manutenção 2024",
+      "startDate": "Data de Início",
+      "endDate": "Data de Fim",
+      "selectDate": "Selecione a data",
+      "coverageType": "Tipo de Cobertura",
+      "coverageTypeIntegral": "Integral (Peças inclusas)",
+      "coverageTypeLabor": "Mão de Obra",
+      "coveredAssets": "Ativos Cobertos pelo Contrato",
+      "assetsPlaceholder": "Selecione um cliente final para ver os ativos.",
+      "maintenancePlans": "Planos de Manutenção Preventiva",
+      "addPlan": "Adicionar Plano",
+      "removePlan": "Remover Plano",
+      "serviceDescription": "Descrição do Serviço",
+      "serviceDescriptionPlaceholder": "Ex: Inspeção e lubrificação geral",
+      "frequency": "Frequência",
+      "asset": "Ativo",
+      "assetPlaceholder": "Selecione o ativo para este plano",
+      "noPlans": "Nenhum plano de manutenção preventiva adicionado.",
+      "save": "Salvar Contrato"
+    }
+  },
+  "saasUsers": {
+    "title": "Usuários do SaaS",
+    "new": "Novo Usuário",
+    "table": {
+      "user": "Usuário",
+      "role": "Função"
+    },
+    "dialog": {
+      "editTitle": "Editar Usuário",
+      "newTitle": "Novo Usuário",
+      "avatarUrl": "URL do Avatar",
+      "name": "Nome",
+      "email": "Email",
+      "password": "Senha",
+      "passwordPlaceholder": "Deixe em branco para não alterar",
+      "passwordStrength": "Força da Senha",
+      "strength": {
+        "weak": "Fraca",
+        "medium": "Média",
+        "strong": "Forte"
+      },
+      "strengthHint": "Use 8+ caracteres com letras, números e símbolos.",
+      "confirmPassword": "Confirmar Senha",
+      "passwordMismatch": "As senhas não coincidem.",
+      "role": "Função SaaS",
+      "rolePlaceholder": "Selecione a função"
+    }
+  },
+  "users": {
+    "title": "Usuários de {clientName}",
+    "new": "Novo Usuário",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar os usuários.",
+    "limitReached": "Limite de {limit} técnico(s) do plano {planName} atingido.",
+    "limitInfo": "Você ainda pode criar usuários com outras funções.",
+    "table": {
+      "user": "Usuário",
+      "role": "Função",
+      "squad": "Equipe"
+    },
+    "dialog": {
+      "editTitle": "Editar Usuário",
+      "newTitle": "Novo Usuário para {clientName}",
+      "company": "Empresa",
+      "role": "Função CMMS",
+      "rolePlaceholder": "Selecione uma função",
+      "noRoles": "Nenhuma função aplicável",
+      "technicianLimitReached": "O limite de técnicos para este plano foi atingido.",
+      "squad": "Equipe",
+      "squadPlaceholder": "Opcional para técnicos"
+    }
+  },
+  "products": {
+    "title": "Cadastro de Peças",
+    "new": "Nova Peça",
+    "table": {
+      "name": "Nome da Peça",
+      "sku": "SKU",
+      "manufacturer": "Fabricante",
+      "stock": "Estoque",
+      "price": "Preço (R$)"
+    },
+    "dialog": {
+      "editTitle": "Editar Peça",
+      "newTitle": "Nova Peça",
+      "editDescription": "Atualize os detalhes da peça.",
+      "newDescription": "Preencha os detalhes da nova peça.",
+      "name": "Nome da Peça",
+      "sku": "SKU (Código)",
+      "stock": "Estoque",
+      "manufacturer": "Fabricante",
+      "price": "Preço (R$)"
+    }
   }
 }
+
+    

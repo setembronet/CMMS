@@ -45,8 +45,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS, es } from 'date-fns/locale';
 import { useClient } from '@/context/client-provider';
+import { useI18n } from '@/hooks/use-i18n';
 
 const emptyPlan: Omit<MaintenancePlan, 'id' | 'lastGenerated'> = {
   assetId: '',
@@ -56,6 +57,8 @@ const emptyPlan: Omit<MaintenancePlan, 'id' | 'lastGenerated'> = {
 
 export default function ContractsPage() {
   const { selectedClient } = useClient();
+  const { t, locale } = useI18n();
+
   const [contracts, setLocalContracts] = React.useState<Contract[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingContract, setEditingContract] = React.useState<Contract | null>(null);
@@ -63,6 +66,14 @@ export default function ContractsPage() {
   
   const [availableLocations, setAvailableLocations] = React.useState<CustomerLocation[]>([]);
   const [availableAssets, setAvailableAssets] = React.useState<Asset[]>([]);
+
+  const dateLocale = React.useMemo(() => {
+    switch (locale) {
+      case 'en': return enUS;
+      case 'es': return es;
+      default: return ptBR;
+    }
+  }, [locale]);
 
   const emptyContract: Contract = React.useMemo(() => ({
     id: '',
@@ -78,13 +89,15 @@ export default function ContractsPage() {
 
   React.useEffect(() => {
     if (selectedClient) {
-      setLocalContracts(initialContracts.filter(c => availableLocations.some(l => l.clientId === selectedClient.id && l.id === c.customerLocationId)));
-      setAvailableLocations(allLocations.filter(l => l.clientId === selectedClient.id));
+      const clientLocations = allLocations.filter(l => l.clientId === selectedClient.id);
+      setAvailableLocations(clientLocations);
+      const clientLocationIds = clientLocations.map(l => l.id);
+      setLocalContracts(initialContracts.filter(c => clientLocationIds.includes(c.customerLocationId)));
     } else {
       setLocalContracts([]);
       setAvailableLocations([]);
     }
-  }, [selectedClient, availableLocations]);
+  }, [selectedClient]);
   
   React.useEffect(() => {
     if (formData?.customerLocationId) {
@@ -168,7 +181,7 @@ export default function ContractsPage() {
 
   const handleSaveContract = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData) return;
+    if (!formData || !selectedClient) return;
     const newContract: Contract = {
       ...formData,
       id: editingContract?.id || `contract-${Date.now()}`,
@@ -182,7 +195,8 @@ export default function ContractsPage() {
     }
     
     setContracts(updatedContracts);
-    setLocalContracts(updatedContracts.filter(c => availableLocations.some(l => l.clientId === selectedClient?.id && l.id === c.customerLocationId)));
+    const clientLocationIds = availableLocations.map(l => l.id);
+    setLocalContracts(updatedContracts.filter(c => clientLocationIds.includes(c.customerLocationId)));
     closeDialog();
   };
   
@@ -203,10 +217,18 @@ export default function ContractsPage() {
       }
   }
 
+  const translatedContractStatus = (status: ContractStatus) => {
+    switch (status) {
+      case 'Vigente': return t('clients.status.current');
+      case 'Próximo a Vencer': return t('clients.status.expiring');
+      case 'Vencido': return t('clients.status.expired');
+    }
+  }
+
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar os contratos.</p>
+            <p className="text-muted-foreground">{t('contracts.selectClientPrompt')}</p>
         </div>
     )
   }
@@ -214,22 +236,22 @@ export default function ContractsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Gestão de Contratos</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('contracts.title')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Contrato
+          {t('contracts.new')}
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Título do Contrato</TableHead>
-              <TableHead>Cliente Final</TableHead>
-              <TableHead>Vigência</TableHead>
-              <TableHead>Ativos Cobertos</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>{t('contracts.table.title')}</TableHead>
+              <TableHead>{t('contracts.table.finalClient')}</TableHead>
+              <TableHead>{t('contracts.table.validity')}</TableHead>
+              <TableHead>{t('contracts.table.coveredAssets')}</TableHead>
+              <TableHead>{t('contracts.table.status')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -245,20 +267,20 @@ export default function ContractsPage() {
                     <TableCell>{contract.coveredAssetIds.length}</TableCell>
                     <TableCell>
                         <Badge variant="outline" className={cn('border', getStatusBadgeVariant(status))}>
-                            {status}
+                            {translatedContractStatus(status)}
                         </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Abrir menu</span>
+                            <span className="sr-only">{t('common.openMenu')}</span>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openDialog(contract)}>
-                            Editar
+                            {t('common.edit')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -273,64 +295,64 @@ export default function ContractsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-4xl">
              <DialogHeader>
-              <DialogTitle>{editingContract ? 'Editar Contrato' : 'Novo Contrato'}</DialogTitle>
+              <DialogTitle>{editingContract ? t('contracts.dialog.editTitle') : t('contracts.dialog.newTitle')}</DialogTitle>
               <DialogDescription>
-                Gerencie os detalhes do contrato, ativos cobertos e planos de manutenção preventiva.
+                {t('contracts.dialog.description')}
               </DialogDescription>
             </DialogHeader>
             {formData && (
               <>
               <ScrollArea className="max-h-[70vh] -mx-6 px-6">
                   <form id="contract-form" onSubmit={handleSaveContract} className="space-y-6 py-4 px-1">
-                      <h3 className="text-lg font-medium">Dados Gerais do Contrato</h3>
+                      <h3 className="text-lg font-medium">{t('contracts.dialog.generalData')}</h3>
                       <div className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                  <Label htmlFor="customerLocationId">Cliente Final</Label>
+                                  <Label htmlFor="customerLocationId">{t('contracts.dialog.finalClient')}</Label>
                                   <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
-                                      <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                                      <SelectTrigger><SelectValue placeholder={t('contracts.dialog.finalClientPlaceholder')} /></SelectTrigger>
                                       <SelectContent>
                                           {availableLocations.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
                                       </SelectContent>
                                   </Select>
                               </div>
                               <div className="space-y-2">
-                                  <Label htmlFor="title">Título do Contrato</Label>
-                                  <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Ex: Contrato de Manutenção 2024"/>
+                                  <Label htmlFor="title">{t('contracts.dialog.title')}</Label>
+                                  <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder={t('contracts.dialog.titlePlaceholder')}/>
                               </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="space-y-2">
-                                  <Label htmlFor="startDate">Data de Início</Label>
+                                  <Label htmlFor="startDate">{t('contracts.dialog.startDate')}</Label>
                                   <Popover>
                                       <PopoverTrigger asChild>
                                           <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.startDate && "text-muted-foreground")}>
                                               <CalendarIcon className="mr-2 h-4 w-4" />
-                                              {formData.startDate ? format(new Date(formData.startDate), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                                              {formData.startDate ? format(new Date(formData.startDate), "PPP", { locale: dateLocale }) : <span>{t('contracts.dialog.selectDate')}</span>}
                                           </Button>
                                       </PopoverTrigger>
-                                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(formData.startDate)} onSelect={(d) => handleDateChange('startDate', d)} initialFocus /></PopoverContent>
+                                      <PopoverContent className="w-auto p-0"><Calendar mode="single" locale={dateLocale} selected={new Date(formData.startDate)} onSelect={(d) => handleDateChange('startDate', d)} initialFocus /></PopoverContent>
                                   </Popover>
                               </div>
                               <div className="space-y-2">
-                                  <Label htmlFor="endDate">Data de Fim</Label>
+                                  <Label htmlFor="endDate">{t('contracts.dialog.endDate')}</Label>
                                   <Popover>
                                       <PopoverTrigger asChild>
                                           <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.endDate && "text-muted-foreground")}>
                                               <CalendarIcon className="mr-2 h-4 w-4" />
-                                              {formData.endDate ? format(new Date(formData.endDate), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                                              {formData.endDate ? format(new Date(formData.endDate), "PPP", { locale: dateLocale }) : <span>{t('contracts.dialog.selectDate')}</span>}
                                           </Button>
                                       </PopoverTrigger>
-                                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(formData.endDate)} onSelect={(d) => handleDateChange('endDate', d)} initialFocus /></PopoverContent>
+                                      <PopoverContent className="w-auto p-0"><Calendar mode="single" locale={dateLocale} selected={new Date(formData.endDate)} onSelect={(d) => handleDateChange('endDate', d)} initialFocus /></PopoverContent>
                                   </Popover>
                               </div>
                               <div className="space-y-2">
-                                  <Label htmlFor="contractType">Tipo de Cobertura</Label>
+                                  <Label htmlFor="contractType">{t('contracts.dialog.coverageType')}</Label>
                                   <Select name="contractType" value={formData.contractType} onValueChange={(v) => handleSelectChange('contractType', v as ContractType)} required>
                                       <SelectTrigger><SelectValue /></SelectTrigger>
                                       <SelectContent>
-                                          <SelectItem value="Integral">Integral (Peças inclusas)</SelectItem>
-                                          <SelectItem value="Mão de Obra">Mão de Obra</SelectItem>
+                                          <SelectItem value="Integral">{t('contracts.dialog.coverageTypeIntegral')}</SelectItem>
+                                          <SelectItem value="Mão de Obra">{t('contracts.dialog.coverageTypeLabor')}</SelectItem>
                                       </SelectContent>
                                   </Select>
                               </div>
@@ -340,7 +362,7 @@ export default function ContractsPage() {
                       <Separator />
 
                       <div>
-                          <h3 className="text-lg font-medium">Ativos Cobertos pelo Contrato</h3>
+                          <h3 className="text-lg font-medium">{t('contracts.dialog.coveredAssets')}</h3>
                           <div className="rounded-lg border p-4 mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
                               {availableAssets.length > 0 ? availableAssets.map(asset => (
                                   <div key={asset.id} className="flex items-center gap-2">
@@ -351,7 +373,7 @@ export default function ContractsPage() {
                                       />
                                       <Label htmlFor={`asset-${asset.id}`} className="font-normal">{asset.name}</Label>
                                   </div>
-                              )) : <p className="text-sm text-muted-foreground col-span-full">Selecione um cliente final para ver os ativos.</p>}
+                              )) : <p className="text-sm text-muted-foreground col-span-full">{t('contracts.dialog.assetsPlaceholder')}</p>}
                           </div>
                       </div>
                       
@@ -359,10 +381,10 @@ export default function ContractsPage() {
                       
                       <div>
                           <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-medium">Planos de Manutenção Preventiva</h3>
+                              <h3 className="text-lg font-medium">{t('contracts.dialog.maintenancePlans')}</h3>
                               <Button type="button" variant="outline" size="sm" onClick={addMaintenancePlan} disabled={formData.coveredAssetIds.length === 0}>
                                   <PlusCircle className="mr-2 h-4 w-4" />
-                                  Adicionar Plano
+                                  {t('contracts.dialog.addPlan')}
                               </Button>
                           </div>
                           <div className="space-y-4">
@@ -370,15 +392,15 @@ export default function ContractsPage() {
                                   <div key={plan.id} className="p-4 border rounded-lg space-y-4 relative">
                                       <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeMaintenancePlan(plan.id)}>
                                           <Trash2 className="h-4 w-4 text-destructive"/>
-                                          <span className="sr-only">Remover Plano</span>
+                                          <span className="sr-only">{t('contracts.dialog.removePlan')}</span>
                                       </Button>
                                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                           <div className="space-y-2 md:col-span-2">
-                                              <Label htmlFor={`plan-desc-${plan.id}`}>Descrição do Serviço</Label>
-                                              <Input id={`plan-desc-${plan.id}`} value={plan.description} onChange={e => handlePlanChange(plan.id, 'description', e.target.value)} required placeholder="Ex: Inspeção e lubrificação geral" />
+                                              <Label htmlFor={`plan-desc-${plan.id}`}>{t('contracts.dialog.serviceDescription')}</Label>
+                                              <Input id={`plan-desc-${plan.id}`} value={plan.description} onChange={e => handlePlanChange(plan.id, 'description', e.target.value)} required placeholder={t('contracts.dialog.serviceDescriptionPlaceholder')} />
                                           </div>
                                           <div className="space-y-2">
-                                              <Label htmlFor={`plan-freq-${plan.id}`}>Frequência</Label>
+                                              <Label htmlFor={`plan-freq-${plan.id}`}>{t('contracts.dialog.frequency')}</Label>
                                               <Select value={plan.frequency} onValueChange={v => handlePlanChange(plan.id, 'frequency', v as MaintenanceFrequency)}>
                                                   <SelectTrigger><SelectValue /></SelectTrigger>
                                                   <SelectContent>
@@ -388,9 +410,9 @@ export default function ContractsPage() {
                                           </div>
                                       </div>
                                       <div className="space-y-2">
-                                          <Label htmlFor={`plan-asset-${plan.id}`}>Ativo</Label>
+                                          <Label htmlFor={`plan-asset-${plan.id}`}>{t('contracts.dialog.asset')}</Label>
                                           <Select value={plan.assetId} onValueChange={v => handlePlanChange(plan.id, 'assetId', v)} required>
-                                              <SelectTrigger><SelectValue placeholder="Selecione o ativo para este plano" /></SelectTrigger>
+                                              <SelectTrigger><SelectValue placeholder={t('contracts.dialog.assetPlaceholder')} /></SelectTrigger>
                                               <SelectContent>
                                                   {formData.coveredAssetIds.map(assetId => (
                                                       <SelectItem key={assetId} value={assetId}>{getAssetName(assetId)}</SelectItem>
@@ -403,7 +425,7 @@ export default function ContractsPage() {
                               {(formData.plans || []).length === 0 && (
                                   <div className="text-center py-8 px-4 border border-dashed rounded-lg">
                                       <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
-                                      <p className="mt-2 text-sm text-muted-foreground">Nenhum plano de manutenção preventiva adicionado.</p>
+                                      <p className="mt-2 text-sm text-muted-foreground">{t('contracts.dialog.noPlans')}</p>
                                   </div>
                               )}
                           </div>
@@ -411,8 +433,8 @@ export default function ContractsPage() {
                   </form>
               </ScrollArea>
               <DialogFooter>
-                  <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-                  <Button type="submit" form="contract-form">Salvar Contrato</Button>
+                  <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+                  <Button type="submit" form="contract-form">{t('contracts.dialog.save')}</Button>
               </DialogFooter>
               </>
             )}

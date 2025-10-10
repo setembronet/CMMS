@@ -153,20 +153,20 @@ export default function SegmentsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">{t('sidebar.segments')}</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('segments.title')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Segmento
+          {t('segments.new')}
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome do Segmento</TableHead>
-              <TableHead>Funções Aplicáveis</TableHead>
-              <TableHead>Campos Personalizados</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>{t('segments.table.name')}</TableHead>
+              <TableHead>{t('segments.table.applicableRoles')}</TableHead>
+              <TableHead>{t('segments.table.customFields')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -174,22 +174,22 @@ export default function SegmentsPage() {
               <TableRow key={segment.id}>
                 <TableCell className="font-medium">{segment.name}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{(segment.applicableRoles || []).length} funções</Badge>
+                  <Badge variant="secondary">{(segment.applicableRoles || []).length} {t('sidebar.roles').toLowerCase()}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline">{(segment.customFields || []).length} campos</Badge>
+                  <Badge variant="outline">{(segment.customFields || []).length} {t('segments.table.customFields').toLowerCase()}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
+                        <span className="sr-only">{t('common.openMenu')}</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(segment)}>
-                        Editar
+                        {t('common.edit')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -203,24 +203,24 @@ export default function SegmentsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingSegment ? 'Editar Segmento' : 'Novo Segmento'}</DialogTitle>
+            <DialogTitle>{editingSegment ? t('segments.dialog.editTitle') : t('segments.dialog.newTitle')}</DialogTitle>
             <DialogDescription>
-              {editingSegment ? 'Atualize os detalhes do segmento.' : 'Defina um novo segmento de atuação para o CMMS.'}
+              {editingSegment ? t('segments.dialog.editDescription') : t('segments.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
             <form onSubmit={handleSaveSegment} id="segment-form" className="space-y-6 py-4">
                 <div className="space-y-2 px-1">
-                    <Label htmlFor="name">Nome do Segmento</Label>
-                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Ar Condicionado Central"/>
+                    <Label htmlFor="name">{t('segments.dialog.name')}</Label>
+                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder={t('segments.dialog.namePlaceholder')}/>
                 </div>
                 
                 <Separator />
 
                 <div className="space-y-4 px-1">
                   <div>
-                      <h3 className="font-medium">Funções Aplicáveis</h3>
-                      <p className="text-sm text-muted-foreground">Selecione as funções de contato para este segmento.</p>
+                      <h3 className="font-medium">{t('segments.dialog.applicableRoles')}</h3>
+                      <p className="text-sm text-muted-foreground">{t('segments.dialog.applicableRolesDescription')}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
                       {cmmsRoles.map(role => (
@@ -243,12 +243,12 @@ export default function SegmentsPage() {
                  <div className="space-y-4 px-1">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium">Campos Personalizados</h3>
-                      <p className="text-sm text-muted-foreground">Adicione campos específicos para ativos deste segmento.</p>
+                      <h3 className="font-medium">{t('segments.dialog.customFields')}</h3>
+                      <p className="text-sm text-muted-foreground">{t('segments.dialog.customFieldsDescription')}</p>
                     </div>
                     <Button type="button" size="sm" variant="outline" onClick={addCustomField}>
                       <PlusCircle className="mr-2 h-4 w-4" />
-                      Adicionar Campo
+                      {t('segments.dialog.addField')}
                     </Button>
                   </div>
                   <div className="space-y-4">
@@ -256,11 +256,11 @@ export default function SegmentsPage() {
                           <div key={field.id} className="flex items-end gap-2 p-4 border rounded-lg">
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor={`field-label-${field.id}`}>Rótulo do Campo</Label>
-                                    <Input id={`field-label-${field.id}`} name="label" value={field.label} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Ex: Potência (BTUs)"/>
+                                    <Label htmlFor={`field-label-${field.id}`}>{t('segments.dialog.fieldLabel')}</Label>
+                                    <Input id={`field-label-${field.id}`} name="label" value={field.label} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder={t('segments.dialog.fieldLabelPlaceholder')}/>
                                 </div>
                                  <div className="space-y-1.5">
-                                    <Label htmlFor={`field-type-${field.id}`}>Tipo</Label>
+                                    <Label htmlFor={`field-type-${field.id}`}>{t('segments.dialog.fieldType')}</Label>
                                     <Select value={field.type} onValueChange={(value) => handleCustomFieldTypeChange(field.id, value as CustomFieldType)}>
                                         <SelectTrigger id={`field-type-${field.id}`}>
                                             <SelectValue />
@@ -273,7 +273,7 @@ export default function SegmentsPage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-1.5 sm:col-span-2">
-                                     <Label htmlFor={`field-name-${field.id}`}>Nome da Variável (automático)</Label>
+                                     <Label htmlFor={`field-name-${field.id}`}>{t('segments.dialog.fieldVariable')}</Label>
                                      <Input id={`field-name-${field.id}`} name="name" value={field.name} disabled />
                                 </div>
                               </div>
@@ -287,11 +287,13 @@ export default function SegmentsPage() {
             </form>
           </ScrollArea>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button type="submit" form="segment-form">Salvar</Button>
+            <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+            <Button type="submit" form="segment-form">{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    

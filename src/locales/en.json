@@ -1,7 +1,8 @@
 
 {
   "header": {
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "selectClient": "Select a client"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -39,7 +40,12 @@
     "saveChanges": "Save Changes",
     "address": "Address",
     "selectPlaceholder": "Select an option",
-    "value": "Value"
+    "value": "Value",
+    "new": "New",
+    "observation": "Observation",
+    "optional": "Optional",
+    "required": "required",
+    "search": "Search"
   },
   "address": {
     "zipCode": "Zip Code",
@@ -51,6 +57,7 @@
     "state": "State"
   },
   "companies": {
+    "title": "Companies",
     "overviewTitle": "Companies Overview",
     "newCompany": "New Company",
     "toggleStatus": "Toggle company status",
@@ -117,6 +124,7 @@
   },
   "cmmsDashboard": {
     "title": "Operational Dashboard",
+    "selectClientPrompt": "Select a client from the top menu to view the operational dashboard.",
     "openWorkOrders": "Open Work Orders",
     "totalOpen": "Total open or in-progress WOs",
     "urgentAlerts": "Urgent Alerts",
@@ -129,13 +137,108 @@
     "latestWorkOrders": "Latest work orders created for your company."
   },
   "workOrders": {
-    "title": "WO Title",
-    "priority": "Priority",
-    "creationDate": "Creation Date",
-    "status": "Status"
+    "title": "Work Orders",
+    "new": "New Work Order",
+    "selectClientPrompt": "Select a client from the top menu to manage Work Orders.",
+    "table": {
+      "title": "WO Title",
+      "asset": "Asset",
+      "scheduledDate": "Scheduled Date",
+      "technician": "Technician",
+      "priority": "Priority",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Work Order Details",
+      "newTitle": "New Work Order",
+      "description": "WO #{id} - Created by {user} on: {date}",
+      "newDescription": "Fill in the work order details.",
+      "asset": "Asset",
+      "assetPlaceholder": "Select the asset",
+      "title": "Title",
+      "titlePlaceholder": "e.g., Urgent Corrective Maintenance",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Detail the problem or the service to be performed.",
+      "status": "Status",
+      "priority": "Priority",
+      "scheduledDate": "Scheduled Date",
+      "optionalDate": "Optional",
+      "assignmentSection": "Assignment and Execution",
+      "responsibleTechnician": "Responsible Technician",
+      "responsibleTechnicianPlaceholder": "Assign to a technician (optional)",
+      "squad": "Squad",
+      "squadPlaceholder": "e.g., Alpha Team",
+      "executionStart": "Execution Start",
+      "executionEnd": "Execution End",
+      "checklistSection": "Execution Checklist",
+      "checklistStatus": "Status",
+      "checklistComment": "Comment",
+      "checklistCommentPlaceholder": "If 'NOT OK', detail here...",
+      "closingSection": "Service Closing",
+      "failureCause": "Cause of Failure (if applicable)",
+      "failureCausePlaceholder": "Select the root cause",
+      "recommendedAction": "Recommended Action",
+      "recommendedActionPlaceholder": "Select the next action",
+      "partsSection": "Parts Used",
+      "addPart": "Add Part",
+      "part": "Part",
+      "partPlaceholder": "Select a part",
+      "quantity": "Qty",
+      "cost": "Cost",
+      "stock": "Stock",
+      "noParts": "No parts added.",
+      "totalPartsCost": "Total Parts Cost",
+      "internalObservation": "Internal Observation (visible only to the team)",
+      "internalObservationPlaceholder": "Technical details, relevant history, etc.",
+      "reopen": "Reopen WO",
+      "close": "Close"
+    }
   },
   "assets": {
-    "title": "Asset"
+    "title": "Asset Management",
+    "new": "New Asset",
+    "selectClientPrompt": "Select a client from the top menu to manage assets.",
+    "limitReached": "Asset limit of {limit} for the {planName} plan has been reached.",
+    "table": {
+      "name": "Asset Name",
+      "finalClient": "Final Client",
+      "status": "Status",
+      "serialNumber": "Serial Number",
+      "woHistory": "WO History"
+    },
+    "status": {
+      "operational": "Operational",
+      "maintenance": "In Maintenance"
+    },
+    "history": {
+      "count": "{count} WOs",
+      "none": "None"
+    },
+    "actions": {
+      "viewHistory": "View WO History"
+    },
+    "dialog": {
+      "editTitle": "Edit Asset",
+      "newTitle": "New Asset",
+      "editDescription": "Update the asset details.",
+      "newDescription": "Fill in the details for the new asset for {clientName}.",
+      "finalClient": "Final Client",
+      "finalClientPlaceholder": "Select the final client",
+      "segment": "Asset Segment",
+      "segmentPlaceholder": "Select the segment",
+      "noSegment": "The client has no active segments",
+      "assetName": "Asset Name",
+      "assetNamePlaceholder": "e.g., Social Elevator Block B",
+      "brand": "Brand",
+      "brandPlaceholder": "e.g., Atlas Schindler",
+      "model": "Model",
+      "modelPlaceholder": "e.g., 5500 MRL",
+      "serialNumber": "Serial Number",
+      "segmentSpecificData": "Segment-Specific Data",
+      "fieldLabel": "Field Label",
+      "observationPlaceholder": "Additional details, history, etc.",
+      "save": "Save Asset"
+    }
   },
   "finance": {
     "mrr": "MRR (Monthly Recurring Revenue)",
@@ -167,6 +270,269 @@
     "jun": "Jun"
   },
   "clients": {
-    "finalClient": "Final Client"
+    "title": "Final Clients of {clientName}",
+    "new": "New Client",
+    "selectClientPrompt": "Select a client from the top menu to manage final clients.",
+    "table": {
+      "finalClient": "Final Client",
+      "assets": "Assets",
+      "openWos": "Open WOs",
+      "contractStatus": "Contract Status",
+      "partsCost": "Parts Cost (90d)",
+      "criticality": "Criticality",
+      "addons": "Add-ons"
+    },
+    "status": {
+      "current": "Current",
+      "expiring": "Expiring Soon",
+      "expired": "Expired"
+    },
+    "criticalityMessage": "High Corrective Rate",
+    "criticalityTooltip": "{ratio}% of WOs are corrective.",
+    "addonIaTooltip": "AI Module Active",
+    "actions": {
+      "generateInvoice": "Generate Invoice"
+    },
+    "dialog": {
+      "editTitle": "Edit Final Client",
+      "newTitle": "New Final Client",
+      "editDescription": "Update the client's details and contacts.",
+      "newDescription": "Register a new final client for {clientName}.",
+      "registrationData": "Registration Data",
+      "namePlaceholder": "e.g., Central Building Condominium",
+      "contractStatus": "Contract Status",
+      "contractStatusPlaceholder": "Select the status",
+      "contactsSection": "Contacts",
+      "addContact": "Add Contact",
+      "removeContact": "Remove Contact",
+      "fullName": "Full Name",
+      "role": "Role",
+      "rolePlaceholder": "e.g., Manager, Janitor...",
+      "internalObservation": "Observation (Internal Use)",
+      "interactionsSection": "Interaction History (CRM)",
+      "addInteraction": "Log Interaction",
+      "removeInteraction": "Remove Interaction",
+      "interactionDate": "{date} by {user}",
+      "interactionType": "Type",
+      "interactionDescription": "Description",
+      "interactionDescriptionPlaceholder": "Describe the interaction..."
+    },
+    "invoiceDialog": {
+      "title": "Generate Invoice for {clientName}",
+      "description": "This is a simulated invoice based on parts used in recent Work Orders.",
+      "woTitle": "{title} (WO: {id})",
+      "date": "Date",
+      "unknownPart": "Unknown part",
+      "noPartsToBill": "No work orders with parts to bill.",
+      "totalToBill": "Total to Bill",
+      "close": "Close",
+      "sendInvoice": "Send Invoice (Simulated)"
+    }
+  },
+  "roles": {
+    "title": "Roles",
+    "new": "New Role",
+    "table": {
+      "name": "Role Name",
+      "id": "ID"
+    },
+    "dialog": {
+      "editTitle": "Edit Role",
+      "newTitle": "New Role",
+      "editDescription": "Update the role details.",
+      "newDescription": "Create a new user role for the CMMS.",
+      "name": "Role Name",
+      "namePlaceholder": "e.g., Resident Manager",
+      "id": "Role ID",
+      "idPlaceholder": "Generated automatically"
+    }
+  },
+  "segments": {
+    "title": "Segments",
+    "new": "New Segment",
+    "table": {
+      "name": "Segment Name",
+      "applicableRoles": "Applicable Roles",
+      "customFields": "Custom Fields"
+    },
+    "dialog": {
+      "editTitle": "Edit Segment",
+      "newTitle": "New Segment",
+      "editDescription": "Update the segment details.",
+      "newDescription": "Define a new operational segment for the CMMS.",
+      "name": "Segment Name",
+      "namePlaceholder": "e.g., Central Air Conditioning",
+      "applicableRoles": "Applicable Roles",
+      "applicableRolesDescription": "Select the contact roles for this segment.",
+      "customFields": "Custom Fields",
+      "customFieldsDescription": "Add specific fields for assets in this segment.",
+      "addField": "Add Field",
+      "fieldLabel": "Field Label",
+      "fieldLabelPlaceholder": "e.g., Power (BTUs)",
+      "fieldType": "Type",
+      "fieldVariable": "Variable Name (automatic)"
+    }
+  },
+  "plans": {
+    "title": "Plan Management",
+    "new": "New Plan",
+    "table": {
+      "name": "Plan Name",
+      "monthlyValue": "Monthly Value",
+      "assetLimit": "Asset Limit",
+      "technicianLimit": "Technician Limit"
+    },
+    "dialog": {
+      "editTitle": "Edit Plan",
+      "newTitle": "New Plan",
+      "editDescription": "Update the plan details.",
+      "newDescription": "Fill in the new plan details.",
+      "name": "Plan Name",
+      "monthlyValue": "Monthly Value ($)",
+      "assetLimit": "Asset Limit",
+      "technicianLimit": "Technician Limit",
+      "limitPlaceholder": "-1 for unlimited",
+      "permissions": "Plan Permissions",
+      "multiModule": "Multi-Module Access",
+      "multiModuleDescription": "Allows access to different asset modules.",
+      "bigQuery": "Basic BigQuery Access",
+      "bigQueryDescription": "Allows basic queries in BigQuery.",
+      "iaAddon": "AI Add-on Access",
+      "iaAddonDescription": "Enables the features of the AI module.",
+      "iotAddon": "IoT Add-on Access",
+      "iotAddonDescription": "Enables the features of the IoT module."
+    },
+    "unlimited": "Unlimited"
+  },
+  "addons": {
+    "title": "Add-on Management",
+    "new": "New Add-on",
+    "table": {
+      "name": "Add-on Name",
+      "monthlyValue": "Monthly Value"
+    },
+    "dialog": {
+      "editTitle": "Edit Add-on",
+      "newTitle": "New Add-on",
+      "editDescription": "Update the add-on details.",
+      "newDescription": "Fill in the new add-on details.",
+      "name": "Add-on Name",
+      "monthlyValue": "Monthly Value ($)"
+    }
+  },
+  "contracts": {
+    "title": "Contract Management",
+    "new": "New Contract",
+    "selectClientPrompt": "Select a client from the top menu to manage contracts.",
+    "table": {
+      "title": "Contract Title",
+      "finalClient": "Final Client",
+      "validity": "Validity",
+      "coveredAssets": "Covered Assets",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Edit Contract",
+      "newTitle": "New Contract",
+      "description": "Manage contract details, covered assets, and preventive maintenance plans.",
+      "generalData": "General Contract Data",
+      "finalClient": "Final Client",
+      "finalClientPlaceholder": "Select the client",
+      "title": "Contract Title",
+      "titlePlaceholder": "e.g., Maintenance Contract 2024",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "selectDate": "Select date",
+      "coverageType": "Coverage Type",
+      "coverageTypeIntegral": "Integral (Parts included)",
+      "coverageTypeLabor": "Labor Only",
+      "coveredAssets": "Assets Covered by Contract",
+      "assetsPlaceholder": "Select a final client to see assets.",
+      "maintenancePlans": "Preventive Maintenance Plans",
+      "addPlan": "Add Plan",
+      "removePlan": "Remove Plan",
+      "serviceDescription": "Service Description",
+      "serviceDescriptionPlaceholder": "e.g., General inspection and lubrication",
+      "frequency": "Frequency",
+      "asset": "Asset",
+      "assetPlaceholder": "Select the asset for this plan",
+      "noPlans": "No preventive maintenance plans added.",
+      "save": "Save Contract"
+    }
+  },
+  "saasUsers": {
+    "title": "SaaS Users",
+    "new": "New User",
+    "table": {
+      "user": "User",
+      "role": "Role"
+    },
+    "dialog": {
+      "editTitle": "Edit User",
+      "newTitle": "New User",
+      "avatarUrl": "Avatar URL",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "passwordPlaceholder": "Leave blank to not change",
+      "passwordStrength": "Password Strength",
+      "strength": {
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong"
+      },
+      "strengthHint": "Use 8+ characters with letters, numbers, and symbols.",
+      "confirmPassword": "Confirm Password",
+      "passwordMismatch": "Passwords do not match.",
+      "role": "SaaS Role",
+      "rolePlaceholder": "Select role"
+    }
+  },
+  "users": {
+    "title": "Users of {clientName}",
+    "new": "New User",
+    "selectClientPrompt": "Select a client from the top menu to manage users.",
+    "limitReached": "Technician limit of {limit} for the {planName} plan has been reached.",
+    "limitInfo": "You can still create users with other roles.",
+    "table": {
+      "user": "User",
+      "role": "Role",
+      "squad": "Squad"
+    },
+    "dialog": {
+      "editTitle": "Edit User",
+      "newTitle": "New User for {clientName}",
+      "company": "Company",
+      "role": "CMMS Role",
+      "rolePlaceholder": "Select a role",
+      "noRoles": "No applicable roles",
+      "technicianLimitReached": "The technician limit for this plan has been reached.",
+      "squad": "Squad",
+      "squadPlaceholder": "Optional for technicians"
+    }
+  },
+  "products": {
+    "title": "Parts Management",
+    "new": "New Part",
+    "table": {
+      "name": "Part Name",
+      "sku": "SKU",
+      "manufacturer": "Manufacturer",
+      "stock": "Stock",
+      "price": "Price ($)"
+    },
+    "dialog": {
+      "editTitle": "Edit Part",
+      "newTitle": "New Part",
+      "editDescription": "Update the part details.",
+      "newDescription": "Fill in the new part details.",
+      "name": "Part Name",
+      "sku": "SKU (Code)",
+      "stock": "Stock",
+      "manufacturer": "Manufacturer",
+      "price": "Price ($)"
+    }
   }
 }
+
+    

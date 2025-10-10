@@ -45,12 +45,15 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClient } from '@/context/client-provider';
+import { useI18n } from '@/hooks/use-i18n';
 
 
 type AssetStatus = 'Operacional' | 'Em Manutenção';
 
 export default function AssetsPage() {
   const { selectedClient } = useClient();
+  const { t } = useI18n();
+
   const [assets, setAssets] = React.useState<Asset[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null);
@@ -209,14 +212,14 @@ export default function AssetsPage() {
   const NewAssetButton = () => (
      <Button onClick={() => openDialog()} disabled={hasReachedAssetLimit || !selectedClient}>
         <PlusCircle className="mr-2 h-4 w-4" />
-        Novo Ativo
+        {t('assets.new')}
       </Button>
   );
 
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar os ativos.</p>
+            <p className="text-muted-foreground">{t('assets.selectClientPrompt')}</p>
         </div>
     )
   }
@@ -225,7 +228,7 @@ export default function AssetsPage() {
     <TooltipProvider>
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-headline">Gestão de Ativos</h1>
+          <h1 className="text-3xl font-bold font-headline">{t('assets.title')}</h1>
            {hasReachedAssetLimit ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -234,7 +237,7 @@ export default function AssetsPage() {
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Limite de {assetLimit} ativos do plano {clientPlan?.name} atingido.</p>
+                <p>{t('assets.limitReached', { limit: assetLimit, planName: clientPlan?.name })}</p>
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -245,12 +248,12 @@ export default function AssetsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome do Ativo</TableHead>
-                <TableHead>Cliente Final</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Nº de Série</TableHead>
-                <TableHead>Histórico de OS</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('assets.table.name')}</TableHead>
+                <TableHead>{t('assets.table.finalClient')}</TableHead>
+                <TableHead>{t('assets.table.status')}</TableHead>
+                <TableHead>{t('assets.table.serialNumber')}</TableHead>
+                <TableHead>{t('assets.table.woHistory')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -263,27 +266,27 @@ export default function AssetsPage() {
                   <TableCell>{getLocationName(asset.customerLocationId)}</TableCell>
                   <TableCell>
                       <Badge variant="outline" className={cn('border', getStatusBadgeVariant(status))}>
-                          {status}
+                          {t(`assets.status.${status === 'Operacional' ? 'operational' : 'maintenance'}`)}
                       </Badge>
                   </TableCell>
                   <TableCell>{asset.serialNumber}</TableCell>
-                  <TableCell>{osCount > 0 ? `${osCount} OS` : 'Nenhuma'}</TableCell>
+                  <TableCell>{osCount > 0 ? t('assets.history.count', { count: osCount }) : t('assets.history.none')}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
+                          <span className="sr-only">{t('common.openMenu')}</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openDialog(asset)}>
-                          Editar
+                          {t('common.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/dashboard/orders"> 
                               <History className="mr-2 h-4 w-4" />
-                              Ver Histórico de OS
+                              {t('assets.actions.viewHistory')}
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -298,9 +301,9 @@ export default function AssetsPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>{editingAsset ? 'Editar Ativo' : 'Novo Ativo'}</DialogTitle>
+              <DialogTitle>{editingAsset ? t('assets.dialog.editTitle') : t('assets.dialog.newTitle')}</DialogTitle>
               <DialogDescription>
-                {editingAsset ? 'Atualize os detalhes do ativo.' : `Preencha os detalhes do novo ativo para ${selectedClient?.name || ''}.`}
+                {editingAsset ? t('assets.dialog.editDescription') : t('assets.dialog.newDescription', { clientName: selectedClient?.name || ''})}
               </DialogDescription>
             </DialogHeader>
             {formData && (
@@ -309,10 +312,10 @@ export default function AssetsPage() {
                 <form onSubmit={handleSaveAsset} id="asset-form" className="space-y-4 py-4 px-1">
                   
                   <div className="space-y-2">
-                    <Label htmlFor="customerLocationId">Cliente Final</Label>
+                    <Label htmlFor="customerLocationId">{t('assets.dialog.finalClient')}</Label>
                     <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o cliente final" />
+                        <SelectValue placeholder={t('assets.dialog.finalClientPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {availableLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
@@ -324,10 +327,10 @@ export default function AssetsPage() {
                     <>
                       {availableSegments.length > 1 ? (
                         <div className="space-y-2">
-                          <Label htmlFor="activeSegment">Segmento do Ativo</Label>
+                          <Label htmlFor="activeSegment">{t('assets.dialog.segment')}</Label>
                           <Select name="activeSegment" value={formData.activeSegment} onValueChange={(value) => handleSelectChange('activeSegment', value)} required>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione o segmento" />
+                              <SelectValue placeholder={t('assets.dialog.segmentPlaceholder')} />
                             </SelectTrigger>
                             <SelectContent>
                               {availableSegments.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -336,29 +339,29 @@ export default function AssetsPage() {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                            <Label>Segmento do Ativo</Label>
-                            <Input value={availableSegments[0]?.name || 'O cliente não possui segmentos ativos'} disabled />
+                            <Label>{t('assets.dialog.segment')}</Label>
+                            <Input value={availableSegments[0]?.name || t('assets.dialog.noSegment')} disabled />
                         </div>
                       )}
                     </>
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome do Ativo</Label>
-                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Elevador Social Bloco B"/>
+                    <Label htmlFor="name">{t('assets.dialog.assetName')}</Label>
+                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder={t('assets.dialog.assetNamePlaceholder')}/>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="brand">Marca</Label>
-                        <Input id="brand" name="brand" value={formData.brand || ''} onChange={handleInputChange} placeholder="Ex: Atlas Schindler"/>
+                        <Label htmlFor="brand">{t('assets.dialog.brand')}</Label>
+                        <Input id="brand" name="brand" value={formData.brand || ''} onChange={handleInputChange} placeholder={t('assets.dialog.brandPlaceholder')}/>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="model">Modelo</Label>
-                        <Input id="model" name="model" value={formData.model || ''} onChange={handleInputChange} placeholder="Ex: 5500 MRL"/>
+                        <Label htmlFor="model">{t('assets.dialog.model')}</Label>
+                        <Input id="model" name="model" value={formData.model || ''} onChange={handleInputChange} placeholder={t('assets.dialog.modelPlaceholder')}/>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="serialNumber">Número de Série</Label>
+                    <Label htmlFor="serialNumber">{t('assets.dialog.serialNumber')}</Label>
                     <Input id="serialNumber" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} required />
                   </div>
 
@@ -366,7 +369,7 @@ export default function AssetsPage() {
                     <>
                       <Separator />
                       <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-muted-foreground">Dados Específicos do Segmento</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground">{t('assets.dialog.segmentSpecificData')}</h3>
                         {customFields.map((field) => (
                           <div key={field.id} className="space-y-2">
                             <Label htmlFor={field.name}>{field.label}</Label>
@@ -386,14 +389,14 @@ export default function AssetsPage() {
                   <Separator />
 
                   <div className="space-y-2">
-                    <Label htmlFor="observation">Observação</Label>
-                    <Textarea id="observation" name="observation" value={formData.observation || ''} onChange={handleInputChange} placeholder="Detalhes adicionais, histórico, etc."/>
+                    <Label htmlFor="observation">{t('common.observation')}</Label>
+                    <Textarea id="observation" name="observation" value={formData.observation || ''} onChange={handleInputChange} placeholder={t('assets.dialog.observationPlaceholder')}/>
                   </div>
                 </form>
               </ScrollArea>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-                <Button type="submit" form="asset-form" disabled={!formData.activeSegment || !formData.customerLocationId}>Salvar Ativo</Button>
+                <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+                <Button type="submit" form="asset-form" disabled={!formData.activeSegment || !formData.customerLocationId}>{t('assets.dialog.save')}</Button>
               </DialogFooter>
               </>
             )}
