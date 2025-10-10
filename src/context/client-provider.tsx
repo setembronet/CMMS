@@ -5,7 +5,7 @@ import { companies, users } from '@/lib/data';
 import type { Company, User } from '@/lib/types';
 
 // Mocked current user ID. In a real app, this would come from an auth context.
-const MOCKED_CURRENT_USER_ID = 'user-05'; // Switch between 'user-04' (Manager) and 'user-05' (Technician) to test
+const MOCKED_CURRENT_USER_ID = 'user-01'; // Corrected to 'user-01' (Admin Master)
 
 interface ClientContextType {
   selectedClientId: string | null;
