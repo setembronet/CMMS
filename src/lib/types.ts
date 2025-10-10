@@ -54,7 +54,6 @@ export type CompanySegment = {
   name: string;
   customFields?: CustomField[];
   applicableRoles?: string[]; // IDs of CMMSRole
-  checklistTemplate?: Checklist;
 };
 
 export type CompanyStatus = 'active' | 'inactive';
@@ -171,6 +170,14 @@ export type ChecklistGroup = {
 
 export type Checklist = ChecklistGroup[];
 
+export type ChecklistTemplate = {
+  id: string;
+  name: string;
+  segmentId: string;
+  checklistData: Checklist;
+};
+
+
 export type WorkOrder = {
   id:string;
   title: string;
@@ -189,6 +196,7 @@ export type WorkOrder = {
   squad?: string;
   partsUsed?: WorkOrderPart[];
   isPreventive?: boolean;
+  checklistTemplateId?: string;
   checklist?: Checklist;
   rootCause?: RootCause;
   recommendedAction?: RecommendedAction;

@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, Checklist, Supplier, SupplierCategory, PurchaseOrder } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -24,33 +24,12 @@ export let segments: CompanySegment[] = [
         { id: 'field_2', name: 'data_ultima_vistoria', label: 'Data da Última Vistoria', type: 'date'},
     ], 
     applicableRoles: ['GESTOR', 'TECNICO', 'SINDICO', 'GERENTE_PREDIAL', 'ZELADOR'],
-    checklistTemplate: [
-      {
-        id: 'group_1',
-        title: 'Casa de Máquinas',
-        items: [
-          { id: 'item_1_1', text: 'Verificar nível de óleo do motor', status: 'OK', comment: '' },
-          { id: 'item_1_2', text: 'Inspecionar quadro de comando', status: 'OK', comment: '' },
-          { id: 'item_1_3', text: 'Verificar desgaste das polias', status: 'OK', comment: '' },
-        ]
-      },
-      {
-        id: 'group_2',
-        title: 'Cabine e Portas',
-        items: [
-          { id: 'item_2_1', text: 'Verificar funcionamento da botoeira', status: 'OK', comment: '' },
-          { id: 'item_2_2', text: 'Inspecionar alinhamento das portas', status: 'OK', comment: '' },
-          { id: 'item_2_3', text: 'Testar iluminação de emergência', status: 'OK', comment: '' },
-        ]
-      }
-    ]
   },
   { 
     id: 'ESCADA_ROLANTE', 
     name: 'Escada Rolante', 
     customFields: [], 
     applicableRoles: ['GESTOR', 'TECNICO'],
-    checklistTemplate: []
   },
   { 
     id: 'AR_CONDICIONADO', 
@@ -59,8 +38,35 @@ export let segments: CompanySegment[] = [
         { id: 'field_3', name: 'potencia_btus', label: 'Potência (BTUs)', type: 'number'},
     ], 
     applicableRoles: ['GESTOR', 'TECNICO', 'TECNICO_TERCERIZADO'],
-    checklistTemplate: []
   },
+];
+
+export let checklistTemplates: ChecklistTemplate[] = [
+    {
+        id: 'template-elev-mensal',
+        name: 'Preventiva Mensal de Elevadores',
+        segmentId: 'ELEVADOR',
+        checklistData: [
+             {
+                id: 'group_1',
+                title: 'Casa de Máquinas',
+                items: [
+                { id: 'item_1_1', text: 'Verificar nível de óleo do motor', status: 'OK', comment: '' },
+                { id: 'item_1_2', text: 'Inspecionar quadro de comando', status: 'OK', comment: '' },
+                { id: 'item_1_3', text: 'Verificar desgaste das polias', status: 'OK', comment: '' },
+                ]
+            },
+            {
+                id: 'group_2',
+                title: 'Cabine e Portas',
+                items: [
+                { id: 'item_2_1', text: 'Verificar funcionamento da botoeira', status: 'OK', comment: '' },
+                { id: 'item_2_2', text: 'Inspecionar alinhamento das portas', status: 'OK', comment: '' },
+                { id: 'item_2_3', text: 'Testar iluminação de emergência', status: 'OK', comment: '' },
+                ]
+            }
+        ]
+    }
 ];
 
 export let plans: Plan[] = [
@@ -372,6 +378,10 @@ export const setSegments = (newSegments: CompanySegment[]) => {
   segments = newSegments;
 };
 
+export const setChecklistTemplates = (newTemplates: ChecklistTemplate[]) => {
+    checklistTemplates = newTemplates;
+};
+
 export const setCmmsRoles = (newRoles: CMMSRole[]) => {
   cmmsRoles = newRoles;
 };
@@ -416,6 +426,7 @@ export const getBackupData = () => ({
   contracts,
   suppliers,
   purchaseOrders,
+  checklistTemplates,
 });
 
 // Function to restore all data
@@ -436,5 +447,6 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.contracts)) setContracts(data.contracts);
     if (Array.isArray(data.suppliers)) setSuppliers(data.suppliers);
     if (Array.isArray(data.purchaseOrders)) setPurchaseOrders(data.purchaseOrders);
+    if (Array.isArray(data.checklistTemplates)) setChecklistTemplates(data.checklistTemplates);
   }
 };
