@@ -38,9 +38,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers } from '@/lib/data';
-import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/types';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
+import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as allProducts } from '@/lib/data';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -64,6 +64,7 @@ const emptyWorkOrder: WorkOrder = {
   createdByUserId: CURRENT_USER_ID,
   internalObservation: '',
   squad: '',
+  partsUsed: [],
 };
 
 export default function WorkOrdersPage() {
@@ -73,6 +74,7 @@ export default function WorkOrdersPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
   const [formData, setFormData] = React.useState<WorkOrder>(emptyWorkOrder);
+  const [products] = React.useState<Product[]>(allProducts);
 
   React.useEffect(() => {
     setClientAssets(allAssets.filter(a => a.clientId === TEST_CLIENT_ID));
@@ -92,15 +94,17 @@ export default function WorkOrdersPage() {
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
   const getTechnicianName = (id?: string) => id ? allUsers.find(u => u.id === id)?.name : 'N/A';
+  const getProductName = (id: string) => products.find(p => p.id === id)?.name || 'N/A';
+  const getProductPrice = (id: string) => products.find(p => p.id === id)?.price || 0;
 
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
     if (order) {
-        setFormData(order);
+        setFormData(JSON.parse(JSON.stringify(order))); // Deep copy
     } else {
         // When creating new, ensure it has the current user ID and client ID
-        setFormData({...emptyWorkOrder, createdByUserId: CURRENT_USER_ID, clientId: TEST_CLIENT_ID});
+        setFormData(JSON.parse(JSON.stringify({...emptyWorkOrder, createdByUserId: CURRENT_USER_ID, clientId: TEST_CLIENT_ID})));
     }
     setIsDialogOpen(true);
   };
@@ -148,6 +152,30 @@ export default function WorkOrdersPage() {
   const handleDateChange = (name: keyof WorkOrder, date: Date | undefined) => {
     setFormData(prev => ({...prev, [name]: date?.getTime()}));
   }
+
+  const handleAddPart = () => {
+    const newPart: WorkOrderPart = { productId: '', quantity: 1 };
+    setFormData(prev => ({ ...prev, partsUsed: [...(prev.partsUsed || []), newPart] }));
+  };
+
+  const handlePartChange = (index: number, field: keyof WorkOrderPart, value: string | number) => {
+    const newParts = [...(formData.partsUsed || [])];
+    // @ts-ignore
+    newParts[index][field] = value;
+    setFormData(prev => ({ ...prev, partsUsed: newParts }));
+  };
+
+  const handleRemovePart = (index: number) => {
+    setFormData(prev => ({ ...prev, partsUsed: (prev.partsUsed || []).filter((_, i) => i !== index) }));
+  };
+
+  const calculateTotalCost = () => {
+    return (formData.partsUsed || []).reduce((total, part) => {
+      const product = products.find(p => p.id === part.productId);
+      return total + (product ? product.price * part.quantity : 0);
+    }, 0);
+  };
+
 
   const handleSaveOrder = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -266,7 +294,7 @@ export default function WorkOrdersPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editingOrder ? 'Detalhes da Ordem de Serviço' : 'Nova Ordem de Serviço'}</DialogTitle>
             <DialogDescription>
@@ -369,6 +397,64 @@ export default function WorkOrdersPage() {
 
 
                 <Separator />
+                
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-base font-medium">Peças Utilizadas</h3>
+                        <Button type="button" size="sm" variant="outline" onClick={handleAddPart}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Peça
+                        </Button>
+                    </div>
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[60%]">Peça</TableHead>
+                                    <TableHead>Qtd</TableHead>
+                                    <TableHead>Custo</TableHead>
+                                    <TableHead className="text-right"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {(formData.partsUsed || []).map((part, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>
+                                            <Select value={part.productId} onValueChange={(value) => handlePartChange(index, 'productId', value)}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione uma peça" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input type="number" value={part.quantity} onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value, 10) || 1)} min="1"/>
+                                        </TableCell>
+                                        <TableCell>
+                                            R$ {(getProductPrice(part.productId) * part.quantity).toFixed(2)}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePart(index)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {(formData.partsUsed || []).length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center text-muted-foreground">Nenhuma peça adicionada.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                     <div className="flex justify-end font-medium">
+                        Custo Total das Peças: R$ {calculateTotalCost().toFixed(2)}
+                    </div>
+                </div>
+
+                <Separator />
 
                 <div className="space-y-2">
                   <Label htmlFor="internalObservation">Observação Interna (visível apenas para a equipe)</Label>
@@ -400,7 +486,3 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
-
-    
-
-    

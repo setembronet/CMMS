@@ -179,14 +179,14 @@ export let assets: Asset[] = [
 
 export let workOrders: WorkOrder[] = [
   { id: 'os-01', clientId: 'client-01', assetId: 'asset-01', title: 'Verificar ruído no motor', status: 'ABERTO', priority: 'Alta', creationDate: new Date(2024, 6, 20).getTime(), createdByUserId: 'user-04', scheduledDate: new Date(2024, 6, 24).getTime(), description: 'Cliente relatou ruído estranho vindo da casa de máquinas durante a operação.', responsibleId: 'user-05', squad: 'Equipe Alpha' },
-  { id: 'os-02', clientId: 'client-01', assetId: 'asset-02', title: 'Manutenção preventiva mensal', status: 'CONCLUIDO', priority: 'Média', creationDate: new Date(2024, 5, 15).getTime(), createdByUserId: 'user-04', startDate: new Date(2024, 5, 15, 9).getTime(), endDate: new Date(2024, 5, 15, 11).getTime(), responsibleId: 'user-05', internalObservation: 'Troca de óleo realizada.', squad: 'Equipe Alpha' },
+  { id: 'os-02', clientId: 'client-01', assetId: 'asset-02', title: 'Manutenção preventiva mensal', status: 'CONCLUIDO', priority: 'Média', creationDate: new Date(2024, 5, 15).getTime(), createdByUserId: 'user-04', startDate: new Date(2024, 5, 15, 9).getTime(), endDate: new Date(2024, 5, 15, 11).getTime(), responsibleId: 'user-05', internalObservation: 'Troca de óleo realizada.', squad: 'Equipe Alpha', partsUsed: [{productId: 'prod-01', quantity: 1}] },
   { id: 'os-03', clientId: 'client-02', assetId: 'asset-03', title: 'Degrau quebrado', status: 'EM ANDAMENTO', priority: 'Urgente', creationDate: new Date(2024, 6, 22).getTime(), createdByUserId: 'user-06', startDate: new Date(2024, 6, 22, 14).getTime(), responsibleId: 'user-07', squad: 'Equipe Beta' },
 ];
 
 export let products: Product[] = [
-    { id: 'prod-01', name: 'Óleo Lubrificante XPTO', sku: 'LUB-001', manufacturer: 'Castrol', stock: 150 },
-    { id: 'prod-02', name: 'Correia Dentada 5M', sku: 'COR-005', manufacturer: 'Gates', stock: 80 },
-    { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', stock: 10 },
+    { id: 'prod-01', name: 'Óleo Lubrificante XPTO', sku: 'LUB-001', manufacturer: 'Castrol', stock: 150, price: 50.00 },
+    { id: 'prod-02', name: 'Correia Dentada 5M', sku: 'COR-005', manufacturer: 'Gates', stock: 80, price: 120.50 },
+    { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', stock: 10, price: 2500.00 },
 ];
 
 export let kpis = {

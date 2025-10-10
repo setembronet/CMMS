@@ -141,6 +141,11 @@ export type Asset = {
   customData?: { [key: string]: any };
 };
 
+export type WorkOrderPart = {
+  productId: string;
+  quantity: number;
+};
+
 export type WorkOrder = {
   id: string;
   title: string;
@@ -157,6 +162,7 @@ export type WorkOrder = {
   responsibleId?: string;
   internalObservation?: string;
   squad?: string;
+  partsUsed?: WorkOrderPart[];
 };
 
 export type Product = {
@@ -165,4 +171,5 @@ export type Product = {
   sku: string;
   manufacturer: string;
   stock: number;
+  price: number;
 };

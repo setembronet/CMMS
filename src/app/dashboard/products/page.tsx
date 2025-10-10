@@ -37,6 +37,7 @@ const emptyProduct: Product = {
   sku: '',
   manufacturer: '',
   stock: 0,
+  price: 0,
 };
 
 export default function ProductsPage() {
@@ -61,7 +62,7 @@ export default function ProductsPage() {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseInt(value, 10) || 0 : value,
+      [name]: type === 'number' ? parseFloat(value) || 0 : value,
     }));
   };
 
@@ -101,6 +102,7 @@ export default function ProductsPage() {
               <TableHead>SKU</TableHead>
               <TableHead>Fabricante</TableHead>
               <TableHead>Estoque</TableHead>
+              <TableHead>Preço (R$)</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -111,6 +113,7 @@ export default function ProductsPage() {
                 <TableCell>{product.sku}</TableCell>
                 <TableCell>{product.manufacturer}</TableCell>
                 <TableCell>{product.stock}</TableCell>
+                <TableCell>{product.price.toFixed(2)}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -158,6 +161,10 @@ export default function ProductsPage() {
               <div className="space-y-2">
                   <Label htmlFor="manufacturer">Fabricante</Label>
                   <Input id="manufacturer" name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} />
+              </div>
+               <div className="space-y-2">
+                  <Label htmlFor="price">Preço (R$)</Label>
+                  <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
               </div>
           </form>
           <DialogFooter>
