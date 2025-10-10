@@ -28,9 +28,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { products as initialProducts, setProducts } from '@/lib/data';
-import type { Product } from '@/lib/types';
+import { products as initialProducts, setProducts, suppliers } from '@/lib/data';
+import type { Product, Supplier } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const emptyProduct: Product = {
   id: '',
@@ -39,6 +40,7 @@ const emptyProduct: Product = {
   manufacturer: '',
   stock: 0,
   price: 0,
+  supplierId: '',
 };
 
 export default function ProductsPage() {
@@ -47,6 +49,13 @@ export default function ProductsPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
   const [formData, setFormData] = React.useState<Product>(emptyProduct);
+  
+  const [partsSuppliers, setPartsSuppliers] = React.useState<Supplier[]>([]);
+
+  React.useEffect(() => {
+    setLocalProducts(initialProducts);
+    setPartsSuppliers(suppliers.filter(s => s.categories.includes('PEÇAS')));
+  }, []);
 
   const openDialog = (product: Product | null = null) => {
     setEditingProduct(product);
@@ -67,6 +76,10 @@ export default function ProductsPage() {
       [name]: type === 'number' ? parseFloat(value) || 0 : value,
     }));
   };
+  
+  const handleSelectChange = (name: keyof Product, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSaveProduct = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -86,6 +99,11 @@ export default function ProductsPage() {
     setLocalProducts(updatedProducts);
     closeDialog();
   };
+  
+  const getSupplierName = (supplierId?: string) => {
+    if (!supplierId) return 'N/A';
+    return suppliers.find(s => s.id === supplierId)?.name || 'N/A';
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -102,7 +120,7 @@ export default function ProductsPage() {
             <TableRow>
               <TableHead>{t('products.table.name')}</TableHead>
               <TableHead>{t('products.table.sku')}</TableHead>
-              <TableHead>{t('products.table.manufacturer')}</TableHead>
+              <TableHead>{t('products.table.supplier')}</TableHead>
               <TableHead>{t('products.table.stock')}</TableHead>
               <TableHead>{t('products.table.price')}</TableHead>
               <TableHead className="text-right">{t('common.actions')}</TableHead>
@@ -113,7 +131,7 @@ export default function ProductsPage() {
               <TableRow key={product.id}>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.sku}</TableCell>
-                <TableCell>{product.manufacturer}</TableCell>
+                <TableCell>{getSupplierName(product.supplierId)}</TableCell>
                 <TableCell>{product.stock}</TableCell>
                 <TableCell>{product.price.toFixed(2)}</TableCell>
                 <TableCell className="text-right">
@@ -168,6 +186,19 @@ export default function ProductsPage() {
                   <Label htmlFor="price">{t('products.dialog.price')}</Label>
                   <Input id="price" name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} required />
               </div>
+               <div className="space-y-2">
+                  <Label htmlFor="supplierId">{t('products.dialog.supplier')}</Label>
+                   <Select name="supplierId" value={formData.supplierId} onValueChange={(value) => handleSelectChange('supplierId', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('products.dialog.supplierPlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {partsSuppliers.map(supplier => (
+                        <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+              </div>
           </form>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
@@ -178,5 +209,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
-    

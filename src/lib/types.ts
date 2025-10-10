@@ -198,6 +198,7 @@ export type Product = {
   manufacturer: string;
   stock: number;
   price: number;
+  supplierId?: string;
 };
 
 export type MaintenancePlan = {

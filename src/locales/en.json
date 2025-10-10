@@ -520,7 +520,8 @@
       "sku": "SKU",
       "manufacturer": "Manufacturer",
       "stock": "Stock",
-      "price": "Price ($)"
+      "price": "Price ($)",
+      "supplier": "Supplier"
     },
     "dialog": {
       "editTitle": "Edit Part",
@@ -531,7 +532,9 @@
       "sku": "SKU (Code)",
       "stock": "Stock",
       "manufacturer": "Manufacturer",
-      "price": "Price ($)"
+      "price": "Price ($)",
+      "supplier": "Default Supplier",
+      "supplierPlaceholder": "Select a supplier"
     }
   },
   "suppliers": {

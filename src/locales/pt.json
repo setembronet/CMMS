@@ -520,7 +520,8 @@
       "sku": "SKU",
       "manufacturer": "Fabricante",
       "stock": "Estoque",
-      "price": "Preço (R$)"
+      "price": "Preço (R$)",
+      "supplier": "Fornecedor"
     },
     "dialog": {
       "editTitle": "Editar Peça",
@@ -531,7 +532,9 @@
       "sku": "SKU (Código)",
       "stock": "Estoque",
       "manufacturer": "Fabricante",
-      "price": "Preço (R$)"
+      "price": "Preço (R$)",
+      "supplier": "Fornecedor Padrão",
+      "supplierPlaceholder": "Selecione um fornecedor"
     }
   },
   "suppliers": {
