@@ -25,7 +25,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const isTechnician = currentUser.cmmsRole === 'TECNICO';
   const isOrderDetailPage = pathname.startsWith('/dashboard/orders/');
 
-  // Technician on order detail page -> focused layout
+  // Case 1: Technician on the specific order detail page gets a focused view
   if (isTechnician && isOrderDetailPage) {
       return (
         <div className="flex flex-col h-screen bg-background">
@@ -34,7 +34,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       );
   }
   
-  // Technician on any other page -> mobile-first layout
+  // Case 2: Technician on any other page gets the mobile-first view with bottom nav
   if (isTechnician) {
     return (
       <div className="flex flex-col h-screen">
@@ -45,7 +45,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Default view for manager/admin -> full sidebar layout
+  // Case 3 (Default): Any other user (Manager, Admin, etc.) gets the full sidebar layout
   return (
     <SidebarProvider>
       <Sidebar variant="sidebar" collapsible="icon">
