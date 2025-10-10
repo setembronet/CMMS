@@ -83,7 +83,7 @@ export function SidebarNav() {
       <SidebarHeader>
         <Logo />
       </SidebarHeader>
-      <SidebarContent className="p-2">
+      <SidebarContent className="flex flex-col p-2">
         <SidebarMenu>
           <SidebarMenuItem>
               <SidebarMenuButton
@@ -269,9 +269,7 @@ export function SidebarNav() {
                 </SidebarMenuItem>
            </Collapsible>
         </SidebarMenu>
-      </SidebarContent>
-      <SidebarContent className="p-2 mt-auto">
-        <SidebarMenu>
+        <SidebarMenu className="mt-auto">
           <Collapsible asChild defaultOpen={isSettingsActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
