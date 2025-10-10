@@ -47,6 +47,7 @@ import { format, addDays, addMonths, addWeeks, addQuarters, addYears } from 'dat
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useClient } from '@/context/client-provider';
+import { useI18n } from '@/hooks/use-i18n';
 
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
@@ -69,6 +70,7 @@ const getNextDueDate = (last: number, frequency: MaintenanceFrequency): Date => 
 
 export default function WorkOrdersPage() {
   const { selectedClient } = useClient();
+  const { t } = useI18n();
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
   const [clientAssets, setClientAssets] = React.useState<Asset[]>([]);
   const [clientUsers, setClientUsers] = React.useState<User[]>([]);
@@ -389,7 +391,7 @@ export default function WorkOrdersPage() {
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar as Ordens de Serviço.</p>
+            <p className="text-muted-foreground">{t('workOrders.selectClientPrompt')}</p>
         </div>
     )
   }
@@ -397,23 +399,23 @@ export default function WorkOrdersPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline">Ordens de Serviço</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('workOrders.title')}</h1>
         <Button onClick={() => openDialog()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Nova Ordem de Serviço
+          {t('workOrders.new')}
         </Button>
       </div>
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Título da OS</TableHead>
-              <TableHead>Ativo</TableHead>
-              <TableHead>Agendamento</TableHead>
-              <TableHead>Técnico</TableHead>
-              <TableHead>Prioridade</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>{t('workOrders.table.title')}</TableHead>
+              <TableHead>{t('workOrders.table.asset')}</TableHead>
+              <TableHead>{t('workOrders.table.scheduledDate')}</TableHead>
+              <TableHead>{t('workOrders.table.technician')}</TableHead>
+              <TableHead>{t('workOrders.table.priority')}</TableHead>
+              <TableHead>{t('workOrders.table.status')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -440,13 +442,13 @@ export default function WorkOrdersPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
+                        <span className="sr-only">{t('common.openMenu')}</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => openDialog(order)}>
-                        Ver / Editar
+                        {t('common.edit')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -460,9 +462,9 @@ export default function WorkOrdersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{editingOrder ? 'Detalhes da Ordem de Serviço' : 'Nova Ordem de Serviço'}</DialogTitle>
+            <DialogTitle>{editingOrder ? t('workOrders.dialog.editTitle') : t('workOrders.dialog.newTitle')}</DialogTitle>
             <DialogDescription>
-             {editingOrder ? `OS #${editingOrder.id} - Criada por ${getCreatorName(editingOrder.createdByUserId)} em: ${formatDateTime(editingOrder.creationDate)}` : 'Preencha os detalhes da ordem de serviço.'}
+             {editingOrder ? t('workOrders.dialog.description', { id: editingOrder.id, user: getCreatorName(editingOrder.createdByUserId), date: formatDateTime(editingOrder.creationDate) }) : t('workOrders.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
           {formData && (
@@ -472,10 +474,10 @@ export default function WorkOrdersPage() {
                 
                 <fieldset disabled={isFormDisabled} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="assetId">Ativo</Label>
+                    <Label htmlFor="assetId">{t('workOrders.dialog.asset')}</Label>
                     <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o ativo" />
+                        <SelectValue placeholder={t('workOrders.dialog.assetPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
@@ -484,18 +486,18 @@ export default function WorkOrdersPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="title">Título</Label>
-                    <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Ex: Manutenção Corretiva Urgente"/>
+                    <Label htmlFor="title">{t('workOrders.dialog.title')}</Label>
+                    <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder={t('workOrders.dialog.titlePlaceholder')}/>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="description">Descrição</Label>
-                    <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder="Detalhe o problema ou o serviço a ser realizado."/>
+                    <Label htmlFor="description">{t('workOrders.dialog.descriptionLabel')}</Label>
+                    <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.descriptionPlaceholder')}/>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="status">Status</Label>
+                        <Label htmlFor="status">{t('workOrders.dialog.status')}</Label>
                         <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
@@ -504,7 +506,7 @@ export default function WorkOrdersPage() {
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="priority">Prioridade</Label>
+                        <Label htmlFor="priority">{t('workOrders.dialog.priority')}</Label>
                         <Select name="priority" value={formData.priority} onValueChange={(value) => handleSelectChange('priority', value as OrderPriority)} required>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
@@ -513,12 +515,12 @@ export default function WorkOrdersPage() {
                         </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="scheduledDate">Data de Agendamento</Label>
+                      <Label htmlFor="scheduledDate">{t('workOrders.dialog.scheduledDate')}</Label>
                       <Popover>
                           <PopoverTrigger asChild>
                               <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.scheduledDate && "text-muted-foreground")}>
                                   <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {formData.scheduledDate ? format(new Date(formData.scheduledDate), "PPP") : <span>Opcional</span>}
+                                  {formData.scheduledDate ? format(new Date(formData.scheduledDate), "PPP") : <span>{t('common.optional')}</span>}
                               </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
@@ -530,14 +532,14 @@ export default function WorkOrdersPage() {
                   
                   <Separator />
 
-                  <h3 className="text-base font-medium">Atribuição e Execução</h3>
+                  <h3 className="text-base font-medium">{t('workOrders.dialog.assignmentSection')}</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                          <Label htmlFor="responsibleId">Técnico Responsável</Label>
+                          <Label htmlFor="responsibleId">{t('workOrders.dialog.responsibleTechnician')}</Label>
                           <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
                               <SelectTrigger>
-                              <SelectValue placeholder="Atribuir a um técnico (opcional)" />
+                              <SelectValue placeholder={t('workOrders.dialog.responsibleTechnicianPlaceholder')} />
                               </SelectTrigger>
                               <SelectContent>
                                   {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
@@ -545,18 +547,18 @@ export default function WorkOrdersPage() {
                           </Select>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="squad">Equipe</Label>
-                          <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Ex: Equipe Alpha"/>
+                          <Label htmlFor="squad">{t('workOrders.dialog.squad')}</Label>
+                          <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.squadPlaceholder')}/>
                       </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4">
                       <div className="space-y-1">
-                          <Label className="text-sm">Início da Execução</Label>
+                          <Label className="text-sm">{t('workOrders.dialog.executionStart')}</Label>
                           <p className="text-sm text-muted-foreground">{formatDateTime(formData.startDate)}</p>
                       </div>
                       <div className="space-y-1">
-                          <Label className="text-sm">Fim da Execução</Label>
+                          <Label className="text-sm">{t('workOrders.dialog.executionEnd')}</Label>
                           <p className="text-sm text-muted-foreground">{formatDateTime(formData.endDate)}</p>
                       </div>
                   </div>
@@ -565,7 +567,7 @@ export default function WorkOrdersPage() {
                     <>
                       <Separator />
                       <Accordion type="single" collapsible defaultValue='item-0' className="w-full">
-                        <h3 className="text-base font-medium mb-2">Checklist de Execução</h3>
+                        <h3 className="text-base font-medium mb-2">{t('workOrders.dialog.checklistSection')}</h3>
                           {formData.checklist.map((group, groupIndex) => (
                             <AccordionItem value={`item-${groupIndex}`} key={group.id}>
                               <AccordionTrigger>{group.title}</AccordionTrigger>
@@ -575,7 +577,7 @@ export default function WorkOrdersPage() {
                                           <Label className="font-medium">{item.text}</Label>
                                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                               <div className="space-y-2">
-                                                  <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">Status</Label>
+                                                  <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">{t('workOrders.dialog.checklistStatus')}</Label>
                                                   <Select value={item.status} onValueChange={(value) => handleChecklistItemChange(groupIndex, itemIndex, 'status', value)}>
                                                       <SelectTrigger id={`checklist-status-${groupIndex}-${itemIndex}`}>
                                                           <SelectValue/>
@@ -586,12 +588,12 @@ export default function WorkOrdersPage() {
                                                   </Select>
                                               </div>
                                               <div className="space-y-2">
-                                                  <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">Comentário</Label>
+                                                  <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">{t('workOrders.dialog.checklistComment')}</Label>
                                                   <Input 
                                                       id={`checklist-comment-${groupIndex}-${itemIndex}`}
                                                       value={item.comment || ''}
                                                       onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'comment', e.target.value)}
-                                                      placeholder="Se 'NÃO OK', detalhe aqui..."
+                                                      placeholder={t('workOrders.dialog.checklistCommentPlaceholder')}
                                                       required={item.status === 'NÃO OK'}
                                                   />
                                               </div>
@@ -607,14 +609,14 @@ export default function WorkOrdersPage() {
 
                   <Separator />
                   
-                  <h3 className="text-base font-medium">Encerramento do Serviço</h3>
+                  <h3 className="text-base font-medium">{t('workOrders.dialog.closingSection')}</h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                          <Label htmlFor="rootCause">Causa da Falha (se aplicável)</Label>
+                          <Label htmlFor="rootCause">{t('workOrders.dialog.failureCause')}</Label>
                           <Select name="rootCause" value={formData.rootCause || ''} onValueChange={(value) => handleSelectChange('rootCause', value as RootCause)}>
                               <SelectTrigger>
-                              <SelectValue placeholder="Selecione a causa raiz" />
+                              <SelectValue placeholder={t('workOrders.dialog.failureCausePlaceholder')} />
                               </SelectTrigger>
                               <SelectContent>
                                   {rootCauses.map(cause => <SelectItem key={cause.value} value={cause.value}>{cause.label}</SelectItem>)}
@@ -622,10 +624,10 @@ export default function WorkOrdersPage() {
                           </Select>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="recommendedAction">Ação Recomendada</Label>
+                          <Label htmlFor="recommendedAction">{t('workOrders.dialog.recommendedAction')}</Label>
                           <Select name="recommendedAction" value={formData.recommendedAction || ''} onValueChange={(value) => handleSelectChange('recommendedAction', value as RecommendedAction)}>
                               <SelectTrigger>
-                              <SelectValue placeholder="Selecione a próxima ação" />
+                              <SelectValue placeholder={t('workOrders.dialog.recommendedActionPlaceholder')} />
                               </SelectTrigger>
                               <SelectContent>
                                   {recommendedActions.map(action => <SelectItem key={action.value} value={action.value}>{action.label}</SelectItem>)}
@@ -636,19 +638,19 @@ export default function WorkOrdersPage() {
 
                   <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                          <h3 className="text-base font-medium">Peças Utilizadas</h3>
+                          <h3 className="text-base font-medium">{t('workOrders.dialog.partsSection')}</h3>
                           <Button type="button" size="sm" variant="outline" onClick={handleAddPart}>
-                              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Peça
+                              <PlusCircle className="mr-2 h-4 w-4" /> {t('workOrders.dialog.addPart')}
                           </Button>
                       </div>
                       <div className="rounded-md border">
                           <Table>
                               <TableHeader>
                                   <TableRow>
-                                      <TableHead className="w-[50%]">Peça</TableHead>
-                                      <TableHead>Qtd</TableHead>
-                                      <TableHead>Custo</TableHead>
-                                      <TableHead>Estoque</TableHead>
+                                      <TableHead className="w-[50%]">{t('workOrders.dialog.part')}</TableHead>
+                                      <TableHead>{t('workOrders.dialog.quantity')}</TableHead>
+                                      <TableHead>{t('workOrders.dialog.cost')}</TableHead>
+                                      <TableHead>{t('workOrders.dialog.stock')}</TableHead>
                                       <TableHead className="text-right"></TableHead>
                                   </TableRow>
                               </TableHeader>
@@ -661,7 +663,7 @@ export default function WorkOrdersPage() {
                                           <TableCell>
                                               <Select value={part.productId} onValueChange={(value) => handlePartChange(index, 'productId', value)}>
                                                   <SelectTrigger>
-                                                      <SelectValue placeholder="Selecione uma peça" />
+                                                      <SelectValue placeholder={t('workOrders.dialog.partPlaceholder')} />
                                                   </SelectTrigger>
                                                   <SelectContent>
                                                       {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -692,22 +694,22 @@ export default function WorkOrdersPage() {
                                   })}
                                   {(formData.partsUsed || []).length === 0 && (
                                       <TableRow>
-                                          <TableCell colSpan={5} className="text-center text-muted-foreground">Nenhuma peça adicionada.</TableCell>
+                                          <TableCell colSpan={5} className="text-center text-muted-foreground">{t('workOrders.dialog.noParts')}</TableCell>
                                       </TableRow>
                                   )}
                               </TableBody>
                           </Table>
                       </div>
                       <div className="flex justify-end font-medium">
-                          Custo Total das Peças: R$ {calculateTotalCost().toFixed(2)}
+                          {t('workOrders.dialog.totalPartsCost')}: R$ {calculateTotalCost().toFixed(2)}
                       </div>
                   </div>
 
                   <Separator />
 
                   <div className="space-y-2">
-                    <Label htmlFor="internalObservation">Observação Interna (visível apenas para a equipe)</Label>
-                    <Textarea id="internalObservation" name="internalObservation" value={formData.internalObservation || ''} onChange={handleInputChange} placeholder="Detalhes técnicos, histórico relevante, etc."/>
+                    <Label htmlFor="internalObservation">{t('workOrders.dialog.internalObservation')}</Label>
+                    <Textarea id="internalObservation" name="internalObservation" value={formData.internalObservation || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.internalObservationPlaceholder')}/>
                   </div>
                 </fieldset>
               </form>
@@ -716,17 +718,17 @@ export default function WorkOrdersPage() {
               {isFormDisabled ? (
                   <Button variant="secondary" onClick={handleReopenOrder}>
                     <RotateCcw className="mr-2 h-4 w-4" />
-                    Reabrir OS
+                    {t('workOrders.dialog.reopen')}
                   </Button>
               ) : (
                   <div /> // Placeholder to keep justify-between working
               )}
               <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={closeDialog}>
-                      {isFormDisabled ? 'Fechar' : 'Cancelar'}
+                      {isFormDisabled ? t('workOrders.dialog.close') : t('common.cancel')}
                   </Button>
                   {!isFormDisabled && (
-                      <Button type="submit" form="order-form">Salvar</Button>
+                      <Button type="submit" form="order-form">{t('common.save')}</Button>
                   )}
               </div>
             </DialogFooter>
@@ -736,5 +738,6 @@ export default function WorkOrdersPage() {
       </Dialog>
     </div>
   );
+}
 
     
