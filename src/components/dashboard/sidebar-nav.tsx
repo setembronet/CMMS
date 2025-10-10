@@ -272,7 +272,6 @@ export function SidebarNav() {
       </SidebarContent>
       <SidebarContent className="p-2 mt-auto">
         <SidebarMenu>
-
           <Collapsible asChild defaultOpen={isSettingsActive}>
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
