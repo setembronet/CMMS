@@ -38,8 +38,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as allProducts } from '@/lib/data';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle } from 'lucide-react';
+import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -74,12 +74,13 @@ export default function WorkOrdersPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
   const [formData, setFormData] = React.useState<WorkOrder>(emptyWorkOrder);
-  const [products] = React.useState<Product[]>(allProducts);
+  const [products, setLocalProducts] = React.useState<Product[]>(initialProducts);
 
   React.useEffect(() => {
     setClientAssets(allAssets.filter(a => a.clientId === TEST_CLIENT_ID));
     // Only show users that belong to the client and are technicians
     setClientUsers(allUsers.filter(u => u.clientId === TEST_CLIENT_ID && u.cmmsRole === 'TECNICO'));
+    setLocalProducts(initialProducts);
   }, []);
 
   React.useEffect(() => {
@@ -94,8 +95,11 @@ export default function WorkOrdersPage() {
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
   const getTechnicianName = (id?: string) => id ? allUsers.find(u => u.id === id)?.name : 'N/A';
-  const getProductName = (id: string) => products.find(p => p.id === id)?.name || 'N/A';
-  const getProductPrice = (id: string) => products.find(p => p.id === id)?.price || 0;
+  
+  const getProduct = (id: string) => products.find(p => p.id === id);
+  const getProductName = (id: string) => getProduct(id)?.name || 'N/A';
+  const getProductPrice = (id: string) => getProduct(id)?.price || 0;
+  const getProductStock = (id: string) => getProduct(id)?.stock || 0;
 
 
   const openDialog = (order: WorkOrder | null = null) => {
@@ -187,6 +191,32 @@ export default function WorkOrdersPage() {
       creationDate: editingOrder?.creationDate || new Date().getTime(),
       createdByUserId: editingOrder?.createdByUserId || CURRENT_USER_ID,
     };
+
+    // --- Stock Logic ---
+    const originalParts = editingOrder?.partsUsed || [];
+    const newParts = newOrder.partsUsed || [];
+    const stockChanges = new Map<string, number>();
+
+    // Calculate net change for each product
+    originalParts.forEach(part => {
+        stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) - part.quantity);
+    });
+    newParts.forEach(part => {
+        stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) + part.quantity);
+    });
+
+    const updatedProducts = products.map(product => {
+        if (stockChanges.has(product.id)) {
+            const change = stockChanges.get(product.id) || 0;
+            return { ...product, stock: product.stock - change };
+        }
+        return product;
+    });
+
+    setProducts(updatedProducts); // Update global data source
+    setLocalProducts(updatedProducts); // Update local state for UI
+    // --- End Stock Logic ---
+
 
     if (editingOrder) {
       setWorkOrders(workOrders.map(wo => (wo.id === newOrder.id ? newOrder : wo)));
@@ -409,14 +439,18 @@ export default function WorkOrdersPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[60%]">Peça</TableHead>
+                                    <TableHead className="w-[50%]">Peça</TableHead>
                                     <TableHead>Qtd</TableHead>
                                     <TableHead>Custo</TableHead>
+                                    <TableHead>Estoque</TableHead>
                                     <TableHead className="text-right"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {(formData.partsUsed || []).map((part, index) => (
+                                {(formData.partsUsed || []).map((part, index) => {
+                                  const stock = getProductStock(part.productId);
+                                  const insufficientStock = part.quantity > stock;
+                                  return (
                                     <TableRow key={index}>
                                         <TableCell>
                                             <Select value={part.productId} onValueChange={(value) => handlePartChange(index, 'productId', value)}>
@@ -429,10 +463,18 @@ export default function WorkOrdersPage() {
                                             </Select>
                                         </TableCell>
                                         <TableCell>
-                                            <Input type="number" value={part.quantity} onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value, 10) || 1)} min="1"/>
+                                            <Input type="number" value={part.quantity} onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value, 10) || 1)} min="1" className={cn(insufficientStock && "border-destructive")}/>
                                         </TableCell>
                                         <TableCell>
                                             R$ {(getProductPrice(part.productId) * part.quantity).toFixed(2)}
+                                        </TableCell>
+                                        <TableCell className={cn(insufficientStock && "text-destructive")}>
+                                            {insufficientStock ? (
+                                                <div className="flex items-center gap-1">
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                    {stock}
+                                                </div>
+                                            ) : stock }
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePart(index)}>
@@ -440,10 +482,11 @@ export default function WorkOrdersPage() {
                                             </Button>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                  )
+                                })}
                                 {(formData.partsUsed || []).length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center text-muted-foreground">Nenhuma peça adicionada.</TableCell>
+                                        <TableCell colSpan={5} className="text-center text-muted-foreground">Nenhuma peça adicionada.</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -486,3 +529,5 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
+
+    
