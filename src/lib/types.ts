@@ -60,6 +60,8 @@ export type CompanyStatus = 'active' | 'inactive';
 export type OrderStatus = 'ABERTO' | 'EM ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 export type MaintenanceFrequency = 'DIARIA' | 'SEMANAL' | 'QUINZENAL' | 'MENSAL' | 'TRIMESTRAL' | 'SEMESTRAL' | 'ANUAL';
+export type ContractType = 'Integral' | 'Mão de Obra';
+
 
 // Roles for SaaS management (internal users)
 export type SaaSUserRole = 'ADMIN' | 'FINANCEIRO' | 'SUPORTE' | 'VIEWER';
@@ -186,8 +188,11 @@ export type MaintenancePlan = {
 
 export type Contract = {
   id: string;
+  title: string;
   customerLocationId: string;
-  startDate: number;
-  endDate: number;
+  startDate: number; // timestamp
+  endDate: number; // timestamp
+  contractType: ContractType;
+  coveredAssetIds: string[];
   plans: MaintenancePlan[];
 };

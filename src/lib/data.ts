@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -189,15 +189,39 @@ export let products: Product[] = [
     { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', stock: 10, price: 2500.00 },
 ];
 
+export const maintenanceFrequencies: { value: MaintenanceFrequency, label: string }[] = [
+    { value: 'DIARIA', label: 'Diária' },
+    { value: 'SEMANAL', label: 'Semanal' },
+    { value: 'QUINZENAL', label: 'Quinzenal' },
+    { value: 'MENSAL', label: 'Mensal' },
+    { value: 'TRIMESTRAL', label: 'Trimestral' },
+    { value: 'SEMESTRAL', label: 'Semestral' },
+    { value: 'ANUAL', label: 'Anual' },
+];
+
+
 export let contracts: Contract[] = [
   {
     id: 'contract-01',
+    title: 'Contrato de Manutenção Padrão 2024',
     customerLocationId: 'loc-01',
     startDate: new Date(2024, 0, 1).getTime(),
     endDate: new Date(2024, 11, 31).getTime(),
+    contractType: 'Integral',
+    coveredAssetIds: ['asset-01'],
     plans: [
       { id: 'mp-01', assetId: 'asset-01', frequency: 'MENSAL', description: 'Inspeção mensal e lubrificação', lastGenerated: new Date(2024, 6, 1).getTime() },
     ]
+  },
+    {
+    id: 'contract-02',
+    title: 'Contrato Shopping Plaza 2024',
+    customerLocationId: 'loc-02',
+    startDate: new Date(2024, 0, 1).getTime(),
+    endDate: new Date(2024, 7, 31).getTime(),
+    contractType: 'Mão de Obra',
+    coveredAssetIds: ['asset-02'],
+    plans: []
   }
 ];
 
