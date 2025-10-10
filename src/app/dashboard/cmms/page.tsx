@@ -1,5 +1,6 @@
 
 'use client';
+import * as React from 'react';
 import {
   Card,
   CardContent,
@@ -21,27 +22,39 @@ import { workOrders, assets, users } from '@/lib/data';
 import { useI18n } from '@/hooks/use-i18n';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/types';
 import { format } from 'date-fns';
-
-const TEST_CLIENT_ID = 'client-01';
+import { useClient } from '@/context/client-provider';
 
 export default function DashboardCmmsPage() {
   const { t } = useI18n();
+  const { selectedClient } = useClient();
 
-  // --- Dynamic Data Calculation for CMMS ---
-  const clientWorkOrders = workOrders.filter(wo => wo.clientId === TEST_CLIENT_ID);
-  const clientAssets = assets.filter(a => a.clientId === TEST_CLIENT_ID);
-  const clientUsers = users.filter(u => u.clientId === TEST_CLIENT_ID);
+  const {
+    openWorkOrders,
+    urgentWorkOrders,
+    assetsInMaintenance,
+    activeTechnicians,
+    recentActivities,
+  } = React.useMemo(() => {
+    if (!selectedClient) {
+      return { openWorkOrders: [], urgentWorkOrders: [], assetsInMaintenance: [], activeTechnicians: [], recentActivities: [] };
+    }
+    const clientWorkOrders = workOrders.filter(wo => wo.clientId === selectedClient.id);
+    const clientAssets = assets.filter(a => a.clientId === selectedClient.id);
+    const clientUsers = users.filter(u => u.clientId === selectedClient.id);
 
-  const openWorkOrders = clientWorkOrders.filter(wo => wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO');
-  const urgentWorkOrders = clientWorkOrders.filter(wo => wo.priority === 'Urgente' && wo.status !== 'CONCLUIDO' && wo.status !== 'CANCELADO');
-  const assetsInMaintenance = clientAssets.filter(asset => 
-    clientWorkOrders.some(wo => wo.assetId === asset.id && (wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO'))
-  );
-  const activeTechnicians = clientUsers.filter(u => u.cmmsRole === 'TECNICO');
+    const openWorkOrders = clientWorkOrders.filter(wo => wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO');
+    const urgentWorkOrders = clientWorkOrders.filter(wo => wo.priority === 'Urgente' && wo.status !== 'CONCLUIDO' && wo.status !== 'CANCELADO');
+    const assetsInMaintenance = clientAssets.filter(asset => 
+      clientWorkOrders.some(wo => wo.assetId === asset.id && (wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO'))
+    );
+    const activeTechnicians = clientUsers.filter(u => u.cmmsRole === 'TECNICO');
 
-  const recentActivities = [...clientWorkOrders]
-    .sort((a, b) => b.creationDate - a.creationDate)
-    .slice(0, 5);
+    const recentActivities = [...clientWorkOrders]
+      .sort((a, b) => b.creationDate - a.creationDate)
+      .slice(0, 5);
+      
+    return { openWorkOrders, urgentWorkOrders, assetsInMaintenance, activeTechnicians, recentActivities };
+  }, [selectedClient]);
   
   const getAssetName = (id: string) => assets.find(a => a.id === id)?.name || 'N/A';
 
@@ -56,6 +69,15 @@ export default function DashboardCmmsPage() {
   };
   
   const formatDate = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy') : 'N/A';
+
+  if (!selectedClient) {
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <h1 className="text-3xl font-bold font-headline mb-4">{t('cmmsDashboard.title')}</h1>
+            <p className="text-muted-foreground">Selecione um cliente no menu superior para visualizar o dashboard operacional.</p>
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -138,3 +160,5 @@ export default function DashboardCmmsPage() {
     </div>
   );
 }
+
+    

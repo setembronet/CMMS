@@ -43,27 +43,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useClient } from '@/context/client-provider';
 
-// --- Development Fix: Use a single client for easier debugging ---
-const TEST_CLIENT_ID = 'client-01';
-const testClient = companies.find(c => c.id === TEST_CLIENT_ID);
-const clientPlan = plans.find(p => p.id === testClient?.planId);
-// ----------------------------------------------------------------
-
-const emptyUser: User & { password?: string, confirmPassword?: string } = {
-    id: '',
-    name: '',
-    email: '',
-    role: '',
-    cmmsRole: null, 
-    saasRole: 'VIEWER',
-    clientId: TEST_CLIENT_ID, // Default to the test client
-    clientName: testClient?.name,
-    squad: '',
-    avatarUrl: '',
-    password: '',
-    confirmPassword: '',
-};
 
 type PasswordStrength = {
   level: 'Fraca' | 'Média' | 'Forte';
@@ -73,46 +54,61 @@ type PasswordStrength = {
 
 
 export default function CMMSUsersPage() {
-  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => u.clientId === TEST_CLIENT_ID));
+  const { selectedClient } = useClient();
+  const [users, setUsers] = React.useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
-  const [formData, setFormData] = React.useState(emptyUser);
+  const [formData, setFormData] = React.useState<User & { password?: string, confirmPassword?: string } | null>(null);
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
   const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>([]);
 
+  const clientPlan = React.useMemo(() => plans.find(p => p.id === selectedClient?.planId), [selectedClient]);
   const technicianUsersCount = users.filter(u => u.cmmsRole === 'TECNICO').length;
   const technicianLimit = clientPlan?.technicianUserLimit ?? 0;
   const hasReachedTechnicianLimit = technicianLimit !== -1 && technicianUsersCount >= technicianLimit;
 
+  const emptyUser: User & { password?: string, confirmPassword?: string } = React.useMemo(() => ({
+      id: '',
+      name: '',
+      email: '',
+      role: '',
+      cmmsRole: null, 
+      saasRole: 'VIEWER',
+      clientId: selectedClient?.id || '',
+      clientName: selectedClient?.name || '',
+      squad: '',
+      avatarUrl: '',
+      password: '',
+      confirmPassword: '',
+  }), [selectedClient]);
 
   React.useEffect(() => {
-    if (testClient) {
-      const company = testClient;
+    if (selectedClient) {
+      setUsers(initialUsers.filter(u => u.clientId === selectedClient.id));
+      
+      const company = selectedClient;
       if (company.activeSegments.length > 0) {
-        // Get all role IDs applicable to the company's segments
         const applicableRoleIds = new Set<string>();
         company.activeSegments.forEach(segmentId => {
           const segment = segments.find(s => s.id === segmentId);
           (segment?.applicableRoles || []).forEach(roleId => applicableRoleIds.add(roleId));
         });
-
-        // Filter the main roles list
         const filteredRoles = allRoles.filter(role => applicableRoleIds.has(role.id));
         setAvailableRoles(filteredRoles);
       } else {
         setAvailableRoles([]);
       }
     } else {
+      setUsers([]);
       setAvailableRoles([]);
     }
-  }, []);
+  }, [selectedClient]);
 
   React.useEffect(() => {
-    // When the dialog opens for a new user, check if their role needs to be reset
-    if (isDialogOpen && !editingUser && formData.cmmsRole && !availableRoles.some(r => r.id === formData.cmmsRole)) {
+    if (isDialogOpen && !editingUser && formData?.cmmsRole && !availableRoles.some(r => r.id === formData.cmmsRole)) {
         handleSelectChange('cmmsRole', '');
     }
-  }, [isDialogOpen, editingUser, formData.cmmsRole, availableRoles]);
+  }, [isDialogOpen, editingUser, formData, availableRoles]);
 
   const calculatePasswordStrength = (password: string): PasswordStrength => {
     let score = 0;
@@ -138,12 +134,14 @@ export default function CMMSUsersPage() {
   const closeDialog = () => {
     setEditingUser(null);
     setIsDialogOpen(false);
-    setFormData(emptyUser);
+    setFormData(null);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!formData) return;
     const { name, value } = e.target;
     setFormData(prev => {
+        if (!prev) return null;
         const newFormData = { ...prev, [name]: value };
         if (name === 'password') {
             setPasswordStrength(value ? calculatePasswordStrength(value) : null);
@@ -153,12 +151,13 @@ export default function CMMSUsersPage() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (!formData) return;
+    setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
   const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    if (!formData || !selectedClient) return;
     if (isSaveDisabled) return;
 
     if (!editingUser && formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit) {
@@ -169,8 +168,8 @@ export default function CMMSUsersPage() {
     const newUser: User = {
       ...formData,
       id: editingUser?.id || `user-0${initialUsers.length + 1}`,
-      clientId: TEST_CLIENT_ID,
-      clientName: testClient?.name,
+      clientId: selectedClient.id,
+      clientName: selectedClient.name,
       role: formData.cmmsRole ?? '',
     };
 
@@ -179,12 +178,11 @@ export default function CMMSUsersPage() {
     } else {
       setUsers([newUser, ...users]);
     }
-    // Also update the global list
-    // setGlobalUsers(...) would go here in a real app
     closeDialog();
   };
   
   const isSaveDisabled = 
+    !formData ||
     (!!formData.password && passwordStrength?.level === 'Fraca') ||
     (formData.password !== formData.confirmPassword) ||
     !formData.cmmsRole ||
@@ -197,21 +195,28 @@ export default function CMMSUsersPage() {
   };
   
   const NewUserButton = () => (
-    <Button onClick={() => openDialog()}>
+    <Button onClick={() => openDialog()} disabled={!selectedClient}>
         <PlusCircle className="mr-2 h-4 w-4" />
         Novo Usuário
     </Button>
   );
 
+  if (!selectedClient) {
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar os usuários.</p>
+        </div>
+    )
+  }
+
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-headline">Usuários de {testClient?.name || 'Empresa'}</h1>
+          <h1 className="text-3xl font-bold font-headline">Usuários de {selectedClient?.name || 'Empresa'}</h1>
            {hasReachedTechnicianLimit ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                {/* The button is not disabled itself, logic is on the form */}
                 <span><NewUserButton /></span>
               </TooltipTrigger>
               <TooltipContent>
@@ -274,88 +279,90 @@ export default function CMMSUsersPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle>{editingUser ? 'Editar Usuário' : `Novo Usuário para ${testClient?.name}`}</DialogTitle>
+              <DialogTitle>{editingUser ? 'Editar Usuário' : `Novo Usuário para ${selectedClient?.name}`}</DialogTitle>
             </DialogHeader>
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 150px)' }}>
               <ScrollArea className="h-full pr-6 -mx-6 px-6">
-                <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
-                  <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16">
-                        {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
-                        <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="w-full space-y-2">
-                        <Label htmlFor="avatarUrl">URL do Avatar</Label>
-                        <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
-                      </div>
-                  </div>
+                {formData && (
+                  <form id="user-form" onSubmit={handleSaveUser} className="grid gap-4 py-4 h-full">
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-16 w-16">
+                          {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt={formData.name} />}
+                          <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="w-full space-y-2">
+                          <Label htmlFor="avatarUrl">URL do Avatar</Label>
+                          <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleInputChange} />
+                        </div>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome</Label>
-                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nome</Label>
+                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha</Label>
-                    <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? 'Deixe em branco para não alterar' : ''} />
-                  </div>
-                  
-                  {passwordStrength && (
-                      <div className="space-y-2">
-                          <div className="flex justify-between items-center text-xs">
-                              <Label>Força da Senha</Label>
-                              <span className={cn(
-                                  passwordStrength.level === 'Fraca' && 'text-red-500',
-                                  passwordStrength.level === 'Média' && 'text-yellow-500',
-                                  passwordStrength.level === 'Forte' && 'text-green-500'
-                              )}>{passwordStrength.level}</span>
-                          </div>
-                          <Progress value={passwordStrength.value} className={cn("h-2", passwordStrength.color)} />
-                          <p className="text-xs text-muted-foreground">
-                              Use 8+ caracteres com letras, números e símbolos.
-                          </p>
-                      </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                    <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword || ''} onChange={handleInputChange} required={!!formData.password} />
-                    {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                      <p className="text-sm text-destructive">As senhas não coincidem.</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Senha</Label>
+                      <Input id="password" name="password" type="password" value={formData.password || ''} onChange={handleInputChange} required={!editingUser} placeholder={editingUser ? 'Deixe em branco para não alterar' : ''} />
+                    </div>
+                    
+                    {passwordStrength && (
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center text-xs">
+                                <Label>Força da Senha</Label>
+                                <span className={cn(
+                                    passwordStrength.level === 'Fraca' && 'text-red-500',
+                                    passwordStrength.level === 'Média' && 'text-yellow-500',
+                                    passwordStrength.level === 'Forte' && 'text-green-500'
+                                )}>{passwordStrength.level}</span>
+                            </div>
+                            <Progress value={passwordStrength.value} className={cn("h-2", passwordStrength.color)} />
+                            <p className="text-xs text-muted-foreground">
+                                Use 8+ caracteres com letras, números e símbolos.
+                            </p>
+                        </div>
                     )}
-                  </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                      <Input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword || ''} onChange={handleInputChange} required={!!formData.password} />
+                      {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                        <p className="text-sm text-destructive">As senhas não coincidem.</p>
+                      )}
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Empresa</Label>
-                    <Input value={testClient?.name || ''} disabled />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Empresa</Label>
+                      <Input value={selectedClient?.name || ''} disabled />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="cmmsRole">Função CMMS</Label>
-                    <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder={availableRoles.length > 0 ? "Selecione uma função" : "Nenhuma função aplicável"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableRoles.map(role => (
-                          <SelectItem key={role.id} value={role.id} disabled={role.id === 'TECNICO' && hasReachedTechnicianLimit && !editingUser}>{role.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                     {formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit && !editingUser && (
-                        <p className="text-sm text-destructive">O limite de técnicos para este plano foi atingido.</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="squad">Equipe</Label>
-                    <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Opcional para técnicos" />
-                  </div>
-                </form>
+                    <div className="space-y-2">
+                      <Label htmlFor="cmmsRole">Função CMMS</Label>
+                      <Select name="cmmsRole" value={formData.cmmsRole || ''} onValueChange={(value) => handleSelectChange('cmmsRole', value)} required>
+                        <SelectTrigger>
+                          <SelectValue placeholder={availableRoles.length > 0 ? "Selecione uma função" : "Nenhuma função aplicável"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableRoles.map(role => (
+                            <SelectItem key={role.id} value={role.id} disabled={role.id === 'TECNICO' && hasReachedTechnicianLimit && !editingUser}>{role.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit && !editingUser && (
+                          <p className="text-sm text-destructive">O limite de técnicos para este plano foi atingido.</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="squad">Equipe</Label>
+                      <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Opcional para técnicos" />
+                    </div>
+                  </form>
+                )}
               </ScrollArea>
             </div>
             <DialogFooter>

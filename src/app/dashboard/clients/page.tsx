@@ -39,11 +39,9 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useClient } from '@/context/client-provider';
 
-// --- Development Fix: Use a single client for easier debugging ---
-const TEST_CLIENT_ID = 'client-01';
 const CURRENT_USER_ID = 'user-04'; // Mock logged-in user
-const testClient = companies.find(c => c.id === TEST_CLIENT_ID);
 
 const contractStatuses: ContractStatus[] = ['Vigente', 'Próximo a Vencer', 'Vencido'];
 const interactionTypes: {value: InteractionType, label: string}[] = [
@@ -54,24 +52,6 @@ const interactionTypes: {value: InteractionType, label: string}[] = [
     { value: 'OUTRO', label: 'Outro' },
 ];
 
-const emptyLocation: CustomerLocation = {
-  id: '',
-  name: '',
-  clientId: TEST_CLIENT_ID,
-  contractStatus: 'Vigente',
-  address: {
-    street: '',
-    number: '',
-    complement: '',
-    neighborhood: '',
-    city: '',
-    state: '',
-    zipCode: '',
-  },
-  contacts: [],
-  interactions: [],
-};
-
 const emptyContact: Contact = {
   id: '',
   name: '',
@@ -80,25 +60,45 @@ const emptyContact: Contact = {
   phone: '',
   observation: ''
 }
-// ----------------------------------------------------------------
 
 export default function ClientsPage() {
-  const [locations, setLocations] = React.useState<CustomerLocation[]>(initialLocations.filter(l => l.clientId === TEST_CLIENT_ID));
+  const { selectedClient } = useClient();
+  const [locations, setLocations] = React.useState<CustomerLocation[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
-  const [formData, setFormData] = React.useState<CustomerLocation>(emptyLocation);
+  const [formData, setFormData] = React.useState<CustomerLocation | null>(null);
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = React.useState(false);
   const [invoicingLocation, setInvoicingLocation] = React.useState<CustomerLocation | null>(null);
+
+  const emptyLocation: CustomerLocation = React.useMemo(() => ({
+    id: '',
+    name: '',
+    clientId: selectedClient?.id || '',
+    contractStatus: 'Vigente',
+    address: {
+      street: '',
+      number: '',
+      complement: '',
+      neighborhood: '',
+      city: '',
+      state: '',
+      zipCode: '',
+    },
+    contacts: [],
+    interactions: [],
+  }), [selectedClient]);
   
   React.useEffect(() => {
-    // This will keep the local state in sync if the global data changes.
-    const currentLocations = initialLocations.filter(l => l.clientId === TEST_CLIENT_ID)
-    setLocations(currentLocations);
-  }, []);
+    if (selectedClient) {
+      const currentLocations = initialLocations.filter(l => l.clientId === selectedClient.id)
+      setLocations(currentLocations);
+    } else {
+      setLocations([]);
+    }
+  }, [selectedClient]);
 
   const openDialog = (location: CustomerLocation | null = null) => {
     setEditingLocation(location);
-    // Deep copy to avoid modifying the original object
     const locationData = location 
       ? JSON.parse(JSON.stringify(location)) 
       : JSON.parse(JSON.stringify(emptyLocation));
@@ -115,54 +115,60 @@ export default function ClientsPage() {
   const closeDialog = () => {
     setEditingLocation(null);
     setIsDialogOpen(false);
-    setFormData(emptyLocation);
+    setFormData(null);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!formData) return;
     const { name, value } = e.target;
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setFormData(prev => ({
+      setFormData(prev => prev ? ({
         ...prev,
         [parent]: {
           // @ts-ignore
           ...prev[parent],
           [child]: value
         }
-      }));
+      }) : null);
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
     }
   };
 
   const handleSelectChange = (name: keyof CustomerLocation, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (!formData) return;
+    setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
   const handleContactChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!formData) return;
     const { name, value } = e.target;
     const newContacts = [...(formData.contacts || [])];
     // @ts-ignore
     newContacts[index][name] = value;
-    setFormData(prev => ({ ...prev, contacts: newContacts }));
+    setFormData(prev => prev ? ({ ...prev, contacts: newContacts }) : null);
   };
 
   const addContact = () => {
+    if (!formData) return;
     const newContact: Contact = { ...emptyContact, id: `contact-${Date.now()}` };
-    setFormData(prev => ({
+    setFormData(prev => prev ? ({
         ...prev,
         contacts: [...(prev.contacts || []), newContact],
-    }));
+    }) : null);
   };
 
   const removeContact = (index: number) => {
-    setFormData(prev => ({
+    if (!formData) return;
+    setFormData(prev => prev ? ({
         ...prev,
         contacts: (prev.contacts || []).filter((_, i) => i !== index),
-    }));
+    }) : null);
   }
 
   const addInteraction = () => {
+      if (!formData) return;
       const newInteraction: Interaction = {
           id: `int-${Date.now()}`,
           date: new Date().getTime(),
@@ -170,35 +176,39 @@ export default function ClientsPage() {
           description: '',
           userId: CURRENT_USER_ID,
       };
-      setFormData(prev => ({
+      setFormData(prev => prev ? ({
           ...prev,
           interactions: [newInteraction, ...(prev.interactions || [])],
-      }));
+      }) : null);
   };
 
   const removeInteraction = (index: number) => {
-      setFormData(prev => ({
+      if (!formData) return;
+      setFormData(prev => prev ? ({
           ...prev,
           interactions: (prev.interactions || []).filter((_, i) => i !== index),
-      }));
+      }) : null);
   };
   
   const handleInteractionChange = (index: number, e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      if (!formData) return;
       const { name, value } = e.target;
       const newInteractions = [...(formData.interactions || [])];
       // @ts-ignore
       newInteractions[index][name] = value;
-      setFormData(prev => ({...prev, interactions: newInteractions}));
+      setFormData(prev => prev ? ({...prev, interactions: newInteractions}) : null);
   };
   
   const handleInteractionTypeChange = (index: number, value: InteractionType) => {
+      if (!formData) return;
       const newInteractions = [...(formData.interactions || [])];
       newInteractions[index].type = value;
-      setFormData(prev => ({...prev, interactions: newInteractions}));
+      setFormData(prev => prev ? ({...prev, interactions: newInteractions}) : null);
   }
 
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    if (!formData) return;
     const cep = e.target.value.replace(/\D/g, '');
     if (cep.length !== 8) return;
 
@@ -206,7 +216,7 @@ export default function ClientsPage() {
       const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await response.json();
       if (!data.erro) {
-        setFormData(prev => ({
+        setFormData(prev => prev ? ({
           ...prev,
           address: {
             ...prev.address,
@@ -215,7 +225,7 @@ export default function ClientsPage() {
             city: data.localidade,
             state: data.uf,
           },
-        }));
+        }) : null);
       }
     } catch (error) {
       console.error("Falha ao buscar CEP:", error);
@@ -224,6 +234,7 @@ export default function ClientsPage() {
   
   const handleSaveLocation = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!formData) return;
     let updatedLocations;
     
     if (editingLocation) {
@@ -231,14 +242,14 @@ export default function ClientsPage() {
     } else {
       const newLocation: CustomerLocation = {
         ...formData,
-        clientId: TEST_CLIENT_ID,
+        clientId: selectedClient?.id || '',
         id: `loc-0${initialLocations.length + 1}`,
       };
       updatedLocations = [newLocation, ...initialLocations];
     }
     
     setCustomerLocations(updatedLocations);
-    setLocations(updatedLocations.filter(l => l.clientId === TEST_CLIENT_ID));
+    setLocations(updatedLocations.filter(l => l.clientId === selectedClient?.id));
     closeDialog();
   };
 
@@ -295,11 +306,20 @@ export default function ClientsPage() {
         .slice(0, 10); // get last 10 for simplicity
   };
 
+  if (!selectedClient) {
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar os clientes finais.</p>
+        </div>
+    )
+  }
+
+
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-headline">Clientes Finais de {testClient?.name || '...'}</h1>
+          <h1 className="text-3xl font-bold font-headline">Clientes Finais de {selectedClient?.name || '...'}</h1>
           <Button onClick={() => openDialog()}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Novo Cliente
@@ -403,174 +423,178 @@ export default function ClientsPage() {
             <DialogHeader>
               <DialogTitle>{editingLocation ? 'Editar Cliente Final' : 'Novo Cliente Final'}</DialogTitle>
               <DialogDescription>
-                {editingLocation ? 'Atualize os detalhes do cliente e seus contatos.' : `Cadastre um novo cliente final para ${testClient?.name || ''}.`}
+                {editingLocation ? 'Atualize os detalhes do cliente e seus contatos.' : `Cadastre um novo cliente final para ${selectedClient?.name || ''}.`}
               </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-              <form onSubmit={handleSaveLocation} id="location-form" className="space-y-6 py-4 px-1">
-                <h3 className="text-lg font-medium">Dados Cadastrais</h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome do Cliente Final</Label>
-                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Condomínio Edifício Central"/>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="contractStatus">Status do Contrato</Label>
-                        <Select name="contractStatus" value={formData.contractStatus} onValueChange={(value) => handleSelectChange('contractStatus', value as ContractStatus)} required>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione o status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {contractStatuses.map(status => (
-                                    <SelectItem key={status} value={status}>{status}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2 md:col-span-1">
-                          <Label htmlFor="zipCode">CEP</Label>
-                          <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode || ''} onChange={handleInputChange} onBlur={handleCepBlur} />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor="street">Rua</Label>
-                          <Input id="street" name="address.street" value={formData.address?.street || ''} onChange={handleInputChange} />
-                      </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="number">Número</Label>
-                            <Input id="number" name="address.number" value={formData.address?.number || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="complement">Complemento</Label>
-                            <Input id="complement" name="address.complement" value={formData.address?.complement || ''} onChange={handleInputChange} />
-                        </div>
-                    </div>
+            {formData && (
+              <>
+              <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+                <form onSubmit={handleSaveLocation} id="location-form" className="space-y-6 py-4 px-1">
+                  <h3 className="text-lg font-medium">Dados Cadastrais</h3>
+                  <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                          <Label htmlFor="neighborhood">Bairro</Label>
-                          <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood || ''} onChange={handleInputChange} />
+                        <Label htmlFor="name">Nome do Cliente Final</Label>
+                        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Ex: Condomínio Edifício Central"/>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="city">Cidade</Label>
-                          <Input id="city" name="address.city" value={formData.address?.city || ''} onChange={handleInputChange} />
+                          <Label htmlFor="contractStatus">Status do Contrato</Label>
+                          <Select name="contractStatus" value={formData.contractStatus} onValueChange={(value) => handleSelectChange('contractStatus', value as ContractStatus)} required>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {contractStatuses.map(status => (
+                                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="state">Estado</Label>
-                        <Input id="state" name="address.state" value={formData.address?.state || ''} onChange={handleInputChange} />
-                    </div>
-                </div>
-                
-                <Separator />
 
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-medium">Contatos</h3>
-                      <Button type="button" variant="outline" size="sm" onClick={addContact}>
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Adicionar Contato
-                      </Button>
-                  </div>
-                  <div className="space-y-4">
-                    {(formData.contacts || []).map((contact, index) => (
-                      <div key={contact.id} className="p-4 border rounded-lg space-y-4 relative">
-                          <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeContact(index)}>
-                              <Trash2 className="h-4 w-4 text-destructive"/>
-                              <span className="sr-only">Remover Contato</span>
-                          </Button>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor={`contact-name-${index}`}>Nome Completo</Label>
-                              <Input id={`contact-name-${index}`} name="name" value={contact.name} onChange={e => handleContactChange(index, e)} required/>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`contact-role-${index}`}>Função</Label>
-                              <Input id={`contact-role-${index}`} name="role" value={contact.role} onChange={e => handleContactChange(index, e)} required placeholder="Ex: Síndico, Zelador..."/>
-                            </div>
-                          </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor={`contact-phone-${index}`}>Telefone</Label>
-                                <Input id={`contact-phone-${index}`} name="phone" value={contact.phone || ''} onChange={e => handleContactChange(index, e)} />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`contact-email-${index}`}>Email</Label>
-                                <Input id={`contact-email-${index}`} name="email" type="email" value={contact.email || ''} onChange={e => handleContactChange(index, e)} />
-                              </div>
-                          </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2 md:col-span-1">
+                            <Label htmlFor="zipCode">CEP</Label>
+                            <Input id="zipCode" name="address.zipCode" value={formData.address?.zipCode || ''} onChange={handleInputChange} onBlur={handleCepBlur} />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="street">Rua</Label>
+                            <Input id="street" name="address.street" value={formData.address?.street || ''} onChange={handleInputChange} />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
-                              <Label htmlFor={`contact-observation-${index}`}>Observação (Uso Interno)</Label>
-                              <Textarea id={`contact-observation-${index}`} name="observation" value={contact.observation || ''} onChange={e => handleContactChange(index, e)} />
+                              <Label htmlFor="number">Número</Label>
+                              <Input id="number" name="address.number" value={formData.address?.number || ''} onChange={handleInputChange} />
+                          </div>
+                          <div className="space-y-2 md:col-span-2">
+                              <Label htmlFor="complement">Complemento</Label>
+                              <Input id="complement" name="address.complement" value={formData.address?.complement || ''} onChange={handleInputChange} />
                           </div>
                       </div>
-                    ))}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="neighborhood">Bairro</Label>
+                            <Input id="neighborhood" name="address.neighborhood" value={formData.address?.neighborhood || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="city">Cidade</Label>
+                            <Input id="city" name="address.city" value={formData.address?.city || ''} onChange={handleInputChange} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="state">Estado</Label>
+                          <Input id="state" name="address.state" value={formData.address?.state || ''} onChange={handleInputChange} />
+                      </div>
                   </div>
-                </div>
+                  
+                  <Separator />
 
-                <Separator />
-                
-                <div>
+                  <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-medium">Histórico de Interações (CRM)</h3>
-                      <Button type="button" variant="outline" size="sm" onClick={addInteraction}>
-                          <MessageSquarePlus className="mr-2 h-4 w-4" />
-                          Registrar Interação
-                      </Button>
-                  </div>
-                   <div className="space-y-4">
-                      {(formData.interactions || []).map((interaction, index) => (
-                          <div key={interaction.id} className="p-4 border rounded-lg space-y-3 relative">
-                              <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeInteraction(index)}>
-                                  <Trash2 className="h-4 w-4 text-destructive"/>
-                                  <span className="sr-only">Remover Interação</span>
-                              </Button>
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="h-3 w-3"/>
-                                    <span>{format(new Date(interaction.date), "dd/MM/yyyy HH:mm", { locale: ptBR })} por {getUserName(interaction.userId)}</span>
-                                </div>
+                        <h3 className="text-lg font-medium">Contatos</h3>
+                        <Button type="button" variant="outline" size="sm" onClick={addContact}>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Adicionar Contato
+                        </Button>
+                    </div>
+                    <div className="space-y-4">
+                      {(formData.contacts || []).map((contact, index) => (
+                        <div key={contact.id} className="p-4 border rounded-lg space-y-4 relative">
+                            <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeContact(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive"/>
+                                <span className="sr-only">Remover Contato</span>
+                            </Button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor={`contact-name-${index}`}>Nome Completo</Label>
+                                <Input id={`contact-name-${index}`} name="name" value={contact.name} onChange={e => handleContactChange(index, e)} required/>
                               </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
-                                <div className="space-y-2 sm:col-span-2">
-                                  <Label htmlFor={`interaction-type-${index}`}>Tipo</Label>
-                                  <Select value={interaction.type} onValueChange={(value) => handleInteractionTypeChange(index, value as InteractionType)}>
-                                      <SelectTrigger id={`interaction-type-${index}`}>
-                                          <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                          {interactionTypes.map(type => (
-                                              <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                                          ))}
-                                      </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="space-y-2 sm:col-span-4">
-                                  <Label htmlFor={`interaction-desc-${index}`}>Descrição</Label>
-                                  <Textarea 
-                                      id={`interaction-desc-${index}`} 
-                                      name="description" 
-                                      value={interaction.description}
-                                      onChange={(e) => handleInteractionChange(index, e)}
-                                      placeholder="Descreva a interação..."
-                                  />
-                                </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`contact-role-${index}`}>Função</Label>
+                                <Input id={`contact-role-${index}`} name="role" value={contact.role} onChange={e => handleContactChange(index, e)} required placeholder="Ex: Síndico, Zelador..."/>
                               </div>
-                          </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`contact-phone-${index}`}>Telefone</Label>
+                                  <Input id={`contact-phone-${index}`} name="phone" value={contact.phone || ''} onChange={e => handleContactChange(index, e)} />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`contact-email-${index}`}>Email</Label>
+                                  <Input id={`contact-email-${index}`} name="email" type="email" value={contact.email || ''} onChange={e => handleContactChange(index, e)} />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor={`contact-observation-${index}`}>Observação (Uso Interno)</Label>
+                                <Textarea id={`contact-observation-${index}`} name="observation" value={contact.observation || ''} onChange={e => handleContactChange(index, e)} />
+                            </div>
+                        </div>
                       ))}
+                    </div>
                   </div>
-                </div>
 
-              </form>
-            </ScrollArea>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-              <Button type="submit" form="location-form">Salvar</Button>
-            </DialogFooter>
+                  <Separator />
+                  
+                  <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-medium">Histórico de Interações (CRM)</h3>
+                        <Button type="button" variant="outline" size="sm" onClick={addInteraction}>
+                            <MessageSquarePlus className="mr-2 h-4 w-4" />
+                            Registrar Interação
+                        </Button>
+                    </div>
+                    <div className="space-y-4">
+                        {(formData.interactions || []).map((interaction, index) => (
+                            <div key={interaction.id} className="p-4 border rounded-lg space-y-3 relative">
+                                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeInteraction(index)}>
+                                    <Trash2 className="h-4 w-4 text-destructive"/>
+                                    <span className="sr-only">Remover Interação</span>
+                                </Button>
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                  <div className="flex items-center gap-1.5">
+                                      <Clock className="h-3 w-3"/>
+                                      <span>{format(new Date(interaction.date), "dd/MM/yyyy HH:mm", { locale: ptBR })} por {getUserName(interaction.userId)}</span>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
+                                  <div className="space-y-2 sm:col-span-2">
+                                    <Label htmlFor={`interaction-type-${index}`}>Tipo</Label>
+                                    <Select value={interaction.type} onValueChange={(value) => handleInteractionTypeChange(index, value as InteractionType)}>
+                                        <SelectTrigger id={`interaction-type-${index}`}>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {interactionTypes.map(type => (
+                                                <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-2 sm:col-span-4">
+                                    <Label htmlFor={`interaction-desc-${index}`}>Descrição</Label>
+                                    <Textarea 
+                                        id={`interaction-desc-${index}`} 
+                                        name="description" 
+                                        value={interaction.description}
+                                        onChange={(e) => handleInteractionChange(index, e)}
+                                        placeholder="Descreva a interação..."
+                                    />
+                                  </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                  </div>
+
+                </form>
+              </ScrollArea>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
+                <Button type="submit" form="location-form">Salvar</Button>
+              </DialogFooter>
+              </>
+            )}
           </DialogContent>
         </Dialog>
 
@@ -641,3 +665,5 @@ export default function ClientsPage() {
     </TooltipProvider>
   );
 }
+
+    

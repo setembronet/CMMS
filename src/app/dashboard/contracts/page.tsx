@@ -40,25 +40,13 @@ import {
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Trash2, FileText } from 'lucide-react';
 import { contracts as initialContracts, setContracts, customerLocations as allLocations, assets as allAssets, maintenanceFrequencies } from '@/lib/data';
-import type { Contract, MaintenancePlan, ContractType, MaintenanceFrequency, CustomerLocation, Asset } from '@/lib/types';
+import type { Contract, MaintenancePlan, ContractType, MaintenanceFrequency, CustomerLocation, Asset, ContractStatus } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-const TEST_CLIENT_ID = 'client-01';
-
-const emptyContract: Contract = {
-  id: '',
-  title: '',
-  customerLocationId: '',
-  startDate: new Date().getTime(),
-  endDate: new Date().getTime(),
-  contractType: 'Mão de Obra',
-  coveredAssetIds: [],
-  plans: [],
-};
+import { useClient } from '@/context/client-provider';
 
 const emptyPlan: Omit<MaintenancePlan, 'id' | 'lastGenerated'> = {
   assetId: '',
@@ -67,26 +55,44 @@ const emptyPlan: Omit<MaintenancePlan, 'id' | 'lastGenerated'> = {
 };
 
 export default function ContractsPage() {
-  const [contracts, setLocalContracts] = React.useState<Contract[]>(initialContracts);
+  const { selectedClient } = useClient();
+  const [contracts, setLocalContracts] = React.useState<Contract[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingContract, setEditingContract] = React.useState<Contract | null>(null);
-  const [formData, setFormData] = React.useState<Contract>(emptyContract);
+  const [formData, setFormData] = React.useState<Contract | null>(null);
   
   const [availableLocations, setAvailableLocations] = React.useState<CustomerLocation[]>([]);
   const [availableAssets, setAvailableAssets] = React.useState<Asset[]>([]);
 
+  const emptyContract: Contract = React.useMemo(() => ({
+    id: '',
+    title: '',
+    customerLocationId: '',
+    startDate: new Date().getTime(),
+    endDate: new Date().getTime(),
+    contractType: 'Mão de Obra',
+    coveredAssetIds: [],
+    plans: [],
+  }), []);
+
+
   React.useEffect(() => {
-    // Filter locations by the current test client
-    setAvailableLocations(allLocations.filter(l => l.clientId === TEST_CLIENT_ID));
-  }, []);
+    if (selectedClient) {
+      setLocalContracts(initialContracts.filter(c => availableLocations.some(l => l.clientId === selectedClient.id && l.id === c.customerLocationId)));
+      setAvailableLocations(allLocations.filter(l => l.clientId === selectedClient.id));
+    } else {
+      setLocalContracts([]);
+      setAvailableLocations([]);
+    }
+  }, [selectedClient, availableLocations]);
   
   React.useEffect(() => {
-    if (formData.customerLocationId) {
+    if (formData?.customerLocationId) {
         setAvailableAssets(allAssets.filter(a => a.customerLocationId === formData.customerLocationId));
     } else {
         setAvailableAssets([]);
     }
-  }, [formData.customerLocationId]);
+  }, [formData]);
 
   const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
@@ -101,26 +107,30 @@ export default function ContractsPage() {
   const closeDialog = () => {
     setEditingContract(null);
     setIsDialogOpen(false);
-    setFormData(emptyContract);
+    setFormData(null);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!formData) return;
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
   const handleSelectChange = (name: keyof Contract, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (!formData) return;
+    setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
   
   const handleDateChange = (name: keyof Contract, date: Date | undefined) => {
-    if (date) {
-        setFormData(prev => ({...prev, [name]: date.getTime()}));
+    if (date && formData) {
+        setFormData(prev => prev ? ({...prev, [name]: date.getTime()}) : null);
     }
   }
 
   const handleAssetCoverageChange = (assetId: string, checked: boolean) => {
+    if (!formData) return;
     setFormData(prev => {
+        if (!prev) return null;
         const currentAssets = prev.coveredAssetIds || [];
         if (checked) {
             return {...prev, coveredAssetIds: [...currentAssets, assetId]};
@@ -131,30 +141,34 @@ export default function ContractsPage() {
   };
   
   const addMaintenancePlan = () => {
+    if (!formData) return;
     const newPlan = { ...emptyPlan, id: `plan-${Date.now()}`, lastGenerated: new Date().getTime() };
-    setFormData(prev => ({
+    setFormData(prev => prev ? ({
       ...prev,
       plans: [...(prev.plans || []), newPlan]
-    }));
+    }) : null);
   };
 
   const removeMaintenancePlan = (planId: string) => {
-    setFormData(prev => ({
+    if (!formData) return;
+    setFormData(prev => prev ? ({
       ...prev,
       plans: (prev.plans || []).filter(p => p.id !== planId)
-    }));
+    }) : null);
   };
   
   const handlePlanChange = (planId: string, field: keyof MaintenancePlan, value: string) => {
-     setFormData(prev => ({
+     if (!formData) return;
+     setFormData(prev => prev ? ({
       ...prev,
       plans: (prev.plans || []).map(p => p.id === planId ? { ...p, [field]: value } : p)
-    }));
+    }) : null);
   };
 
 
   const handleSaveContract = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!formData) return;
     const newContract: Contract = {
       ...formData,
       id: editingContract?.id || `contract-${Date.now()}`,
@@ -168,7 +182,7 @@ export default function ContractsPage() {
     }
     
     setContracts(updatedContracts);
-    setLocalContracts(updatedContracts);
+    setLocalContracts(updatedContracts.filter(c => availableLocations.some(l => l.clientId === selectedClient?.id && l.id === c.customerLocationId)));
     closeDialog();
   };
   
@@ -189,6 +203,13 @@ export default function ContractsPage() {
       }
   }
 
+  if (!selectedClient) {
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar os contratos.</p>
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -257,142 +278,148 @@ export default function ContractsPage() {
                 Gerencie os detalhes do contrato, ativos cobertos e planos de manutenção preventiva.
               </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-                <form id="contract-form" onSubmit={handleSaveContract} className="space-y-6 py-4 px-1">
-                    <h3 className="text-lg font-medium">Dados Gerais do Contrato</h3>
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="customerLocationId">Cliente Final</Label>
-                                <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
-                                    <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
-                                    <SelectContent>
-                                        {availableLocations.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="title">Título do Contrato</Label>
-                                <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Ex: Contrato de Manutenção 2024"/>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                             <div className="space-y-2">
-                                 <Label htmlFor="startDate">Data de Início</Label>
-                                 <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.startDate && "text-muted-foreground")}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {formData.startDate ? format(new Date(formData.startDate), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(formData.startDate)} onSelect={(d) => handleDateChange('startDate', d)} initialFocus /></PopoverContent>
-                                </Popover>
-                             </div>
-                             <div className="space-y-2">
-                                 <Label htmlFor="endDate">Data de Fim</Label>
-                                 <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.endDate && "text-muted-foreground")}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {formData.endDate ? format(new Date(formData.endDate), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(formData.endDate)} onSelect={(d) => handleDateChange('endDate', d)} initialFocus /></PopoverContent>
-                                </Popover>
-                             </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="contractType">Tipo de Cobertura</Label>
-                                <Select name="contractType" value={formData.contractType} onValueChange={(v) => handleSelectChange('contractType', v as ContractType)} required>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Integral">Integral (Peças inclusas)</SelectItem>
-                                        <SelectItem value="Mão de Obra">Mão de Obra</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                             </div>
-                        </div>
-                    </div>
+            {formData && (
+              <>
+              <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+                  <form id="contract-form" onSubmit={handleSaveContract} className="space-y-6 py-4 px-1">
+                      <h3 className="text-lg font-medium">Dados Gerais do Contrato</h3>
+                      <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                  <Label htmlFor="customerLocationId">Cliente Final</Label>
+                                  <Select name="customerLocationId" value={formData.customerLocationId} onValueChange={(value) => handleSelectChange('customerLocationId', value)} required>
+                                      <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                                      <SelectContent>
+                                          {availableLocations.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                              <div className="space-y-2">
+                                  <Label htmlFor="title">Título do Contrato</Label>
+                                  <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Ex: Contrato de Manutenção 2024"/>
+                              </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                  <Label htmlFor="startDate">Data de Início</Label>
+                                  <Popover>
+                                      <PopoverTrigger asChild>
+                                          <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.startDate && "text-muted-foreground")}>
+                                              <CalendarIcon className="mr-2 h-4 w-4" />
+                                              {formData.startDate ? format(new Date(formData.startDate), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                                          </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(formData.startDate)} onSelect={(d) => handleDateChange('startDate', d)} initialFocus /></PopoverContent>
+                                  </Popover>
+                              </div>
+                              <div className="space-y-2">
+                                  <Label htmlFor="endDate">Data de Fim</Label>
+                                  <Popover>
+                                      <PopoverTrigger asChild>
+                                          <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.endDate && "text-muted-foreground")}>
+                                              <CalendarIcon className="mr-2 h-4 w-4" />
+                                              {formData.endDate ? format(new Date(formData.endDate), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                                          </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(formData.endDate)} onSelect={(d) => handleDateChange('endDate', d)} initialFocus /></PopoverContent>
+                                  </Popover>
+                              </div>
+                              <div className="space-y-2">
+                                  <Label htmlFor="contractType">Tipo de Cobertura</Label>
+                                  <Select name="contractType" value={formData.contractType} onValueChange={(v) => handleSelectChange('contractType', v as ContractType)} required>
+                                      <SelectTrigger><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                          <SelectItem value="Integral">Integral (Peças inclusas)</SelectItem>
+                                          <SelectItem value="Mão de Obra">Mão de Obra</SelectItem>
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                          </div>
+                      </div>
 
-                    <Separator />
+                      <Separator />
 
-                    <div>
-                        <h3 className="text-lg font-medium">Ativos Cobertos pelo Contrato</h3>
-                        <div className="rounded-lg border p-4 mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {availableAssets.length > 0 ? availableAssets.map(asset => (
-                                <div key={asset.id} className="flex items-center gap-2">
-                                    <Checkbox 
-                                        id={`asset-${asset.id}`}
-                                        checked={formData.coveredAssetIds.includes(asset.id)}
-                                        onCheckedChange={(checked) => handleAssetCoverageChange(asset.id, !!checked)}
-                                    />
-                                    <Label htmlFor={`asset-${asset.id}`} className="font-normal">{asset.name}</Label>
-                                </div>
-                            )) : <p className="text-sm text-muted-foreground col-span-full">Selecione um cliente final para ver os ativos.</p>}
-                        </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-medium">Planos de Manutenção Preventiva</h3>
-                             <Button type="button" variant="outline" size="sm" onClick={addMaintenancePlan} disabled={formData.coveredAssetIds.length === 0}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Adicionar Plano
-                            </Button>
-                        </div>
-                        <div className="space-y-4">
-                            {(formData.plans || []).map(plan => (
-                                <div key={plan.id} className="p-4 border rounded-lg space-y-4 relative">
-                                    <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeMaintenancePlan(plan.id)}>
-                                        <Trash2 className="h-4 w-4 text-destructive"/>
-                                        <span className="sr-only">Remover Plano</span>
-                                    </Button>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="space-y-2 md:col-span-2">
-                                            <Label htmlFor={`plan-desc-${plan.id}`}>Descrição do Serviço</Label>
-                                            <Input id={`plan-desc-${plan.id}`} value={plan.description} onChange={e => handlePlanChange(plan.id, 'description', e.target.value)} required placeholder="Ex: Inspeção e lubrificação geral" />
-                                        </div>
-                                         <div className="space-y-2">
-                                            <Label htmlFor={`plan-freq-${plan.id}`}>Frequência</Label>
-                                            <Select value={plan.frequency} onValueChange={v => handlePlanChange(plan.id, 'frequency', v as MaintenanceFrequency)}>
-                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                <SelectContent>
-                                                    {maintenanceFrequencies.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`plan-asset-${plan.id}`}>Ativo</Label>
-                                        <Select value={plan.assetId} onValueChange={v => handlePlanChange(plan.id, 'assetId', v)} required>
-                                            <SelectTrigger><SelectValue placeholder="Selecione o ativo para este plano" /></SelectTrigger>
-                                            <SelectContent>
-                                                {formData.coveredAssetIds.map(assetId => (
-                                                    <SelectItem key={assetId} value={assetId}>{getAssetName(assetId)}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            ))}
-                            {(formData.plans || []).length === 0 && (
-                                <div className="text-center py-8 px-4 border border-dashed rounded-lg">
-                                    <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
-                                    <p className="mt-2 text-sm text-muted-foreground">Nenhum plano de manutenção preventiva adicionado.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </form>
-            </ScrollArea>
-            <DialogFooter>
-                <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
-                <Button type="submit" form="contract-form">Salvar Contrato</Button>
-            </DialogFooter>
+                      <div>
+                          <h3 className="text-lg font-medium">Ativos Cobertos pelo Contrato</h3>
+                          <div className="rounded-lg border p-4 mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
+                              {availableAssets.length > 0 ? availableAssets.map(asset => (
+                                  <div key={asset.id} className="flex items-center gap-2">
+                                      <Checkbox 
+                                          id={`asset-${asset.id}`}
+                                          checked={formData.coveredAssetIds.includes(asset.id)}
+                                          onCheckedChange={(checked) => handleAssetCoverageChange(asset.id, !!checked)}
+                                      />
+                                      <Label htmlFor={`asset-${asset.id}`} className="font-normal">{asset.name}</Label>
+                                  </div>
+                              )) : <p className="text-sm text-muted-foreground col-span-full">Selecione um cliente final para ver os ativos.</p>}
+                          </div>
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div>
+                          <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-medium">Planos de Manutenção Preventiva</h3>
+                              <Button type="button" variant="outline" size="sm" onClick={addMaintenancePlan} disabled={formData.coveredAssetIds.length === 0}>
+                                  <PlusCircle className="mr-2 h-4 w-4" />
+                                  Adicionar Plano
+                              </Button>
+                          </div>
+                          <div className="space-y-4">
+                              {(formData.plans || []).map(plan => (
+                                  <div key={plan.id} className="p-4 border rounded-lg space-y-4 relative">
+                                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeMaintenancePlan(plan.id)}>
+                                          <Trash2 className="h-4 w-4 text-destructive"/>
+                                          <span className="sr-only">Remover Plano</span>
+                                      </Button>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                          <div className="space-y-2 md:col-span-2">
+                                              <Label htmlFor={`plan-desc-${plan.id}`}>Descrição do Serviço</Label>
+                                              <Input id={`plan-desc-${plan.id}`} value={plan.description} onChange={e => handlePlanChange(plan.id, 'description', e.target.value)} required placeholder="Ex: Inspeção e lubrificação geral" />
+                                          </div>
+                                          <div className="space-y-2">
+                                              <Label htmlFor={`plan-freq-${plan.id}`}>Frequência</Label>
+                                              <Select value={plan.frequency} onValueChange={v => handlePlanChange(plan.id, 'frequency', v as MaintenanceFrequency)}>
+                                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                                  <SelectContent>
+                                                      {maintenanceFrequencies.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                                                  </SelectContent>
+                                              </Select>
+                                          </div>
+                                      </div>
+                                      <div className="space-y-2">
+                                          <Label htmlFor={`plan-asset-${plan.id}`}>Ativo</Label>
+                                          <Select value={plan.assetId} onValueChange={v => handlePlanChange(plan.id, 'assetId', v)} required>
+                                              <SelectTrigger><SelectValue placeholder="Selecione o ativo para este plano" /></SelectTrigger>
+                                              <SelectContent>
+                                                  {formData.coveredAssetIds.map(assetId => (
+                                                      <SelectItem key={assetId} value={assetId}>{getAssetName(assetId)}</SelectItem>
+                                                  ))}
+                                              </SelectContent>
+                                          </Select>
+                                      </div>
+                                  </div>
+                              ))}
+                              {(formData.plans || []).length === 0 && (
+                                  <div className="text-center py-8 px-4 border border-dashed rounded-lg">
+                                      <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+                                      <p className="mt-2 text-sm text-muted-foreground">Nenhum plano de manutenção preventiva adicionado.</p>
+                                  </div>
+                              )}
+                          </div>
+                      </div>
+                  </form>
+              </ScrollArea>
+              <DialogFooter>
+                  <Button type="button" variant="outline" onClick={closeDialog}>Cancelar</Button>
+                  <Button type="submit" form="contract-form">Salvar Contrato</Button>
+              </DialogFooter>
+              </>
+            )}
           </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    

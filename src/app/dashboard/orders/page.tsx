@@ -46,28 +46,14 @@ import { cn } from '@/lib/utils';
 import { format, addDays, addMonths, addWeeks, addQuarters, addYears } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useClient } from '@/context/client-provider';
 
-const TEST_CLIENT_ID = 'client-01';
+
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
 
 const orderStatuses: OrderStatus[] = ['ABERTO', 'EM ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
 const orderPriorities: OrderPriority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
 const checklistStatuses: ChecklistItemStatus[] = ['OK', 'NÃO OK', 'N/A'];
-
-const emptyWorkOrder: WorkOrder = {
-  id: '',
-  title: '',
-  description: '',
-  clientId: TEST_CLIENT_ID,
-  assetId: '',
-  status: 'ABERTO',
-  priority: 'Média',
-  creationDate: new Date().getTime(),
-  createdByUserId: CURRENT_USER_ID,
-  internalObservation: '',
-  squad: '',
-  partsUsed: [],
-};
 
 const getNextDueDate = (last: number, frequency: MaintenanceFrequency): Date => {
     switch (frequency) {
@@ -81,82 +67,112 @@ const getNextDueDate = (last: number, frequency: MaintenanceFrequency): Date => 
     }
 };
 
-const generatePreventiveWorkOrders = (existingWorkOrders: WorkOrder[]): WorkOrder[] => {
-    const newWorkOrders: WorkOrder[] = [];
-    const today = new Date();
-    const lookaheadDate = addDays(today, 7);
-    const clientContracts = contracts.filter(c => allAssets.some(a => a.customerLocationId === c.customerLocationId && a.clientId === TEST_CLIENT_ID));
-
-    clientContracts.forEach(contract => {
-        contract.plans.forEach(plan => {
-            let nextDueDate = getNextDueDate(plan.lastGenerated, plan.frequency);
-            
-            while (nextDueDate <= lookaheadDate) {
-                 const alreadyExists = existingWorkOrders.some(wo => 
-                    wo.isPreventive && 
-                    wo.assetId === plan.assetId && 
-                    wo.description === `Manutenção preventiva programada conforme plano: ${plan.description}` &&
-                    format(new Date(wo.scheduledDate || 0), 'yyyy-MM-dd') === format(nextDueDate, 'yyyy-MM-dd')
-                );
-
-                if (!alreadyExists) {
-                    const newWo: WorkOrder = {
-                        ...emptyWorkOrder,
-                        id: `os-prev-${plan.id}-${format(nextDueDate, 'yyyyMMdd')}`,
-                        title: `Preventiva: ${plan.description}`,
-                        description: `Manutenção preventiva programada conforme plano: ${plan.description}`,
-                        assetId: plan.assetId,
-                        priority: 'Média',
-                        isPreventive: true,
-                        scheduledDate: nextDueDate.getTime(),
-                        creationDate: new Date().getTime(),
-                    };
-                    newWorkOrders.push(newWo);
-                }
-                nextDueDate = getNextDueDate(nextDueDate.getTime(), plan.frequency);
-            }
-        });
-    });
-
-    return newWorkOrders;
-};
-
-
 export default function WorkOrdersPage() {
-  const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>(initialWorkOrders.filter(wo => wo.clientId === TEST_CLIENT_ID));
+  const { selectedClient } = useClient();
+  const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
   const [clientAssets, setClientAssets] = React.useState<Asset[]>([]);
   const [clientUsers, setClientUsers] = React.useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
-  const [formData, setFormData] = React.useState<WorkOrder>(emptyWorkOrder);
+  const [formData, setFormData] = React.useState<WorkOrder | null>(null);
   const [products, setLocalProducts] = React.useState<Product[]>(initialProducts);
 
+  const emptyWorkOrder: WorkOrder = React.useMemo(() => ({
+    id: '',
+    title: '',
+    description: '',
+    clientId: selectedClient?.id || '',
+    assetId: '',
+    status: 'ABERTO',
+    priority: 'Média',
+    creationDate: new Date().getTime(),
+    createdByUserId: CURRENT_USER_ID,
+    internalObservation: '',
+    squad: '',
+    partsUsed: [],
+  }), [selectedClient]);
+
+  const generatePreventiveWorkOrders = React.useCallback((existingWorkOrders: WorkOrder[], clientId: string): WorkOrder[] => {
+      const newWorkOrders: WorkOrder[] = [];
+      const today = new Date();
+      const lookaheadDate = addDays(today, 7);
+      
+      const clientContracts = contracts.filter(c => {
+          const location = allAssets.find(a => a.id === c.coveredAssetIds[0])?.customerLocationId;
+          const contractClient = allLocations.find(l => l.id === location)?.clientId;
+          return contractClient === clientId;
+      });
+
+      clientContracts.forEach(contract => {
+          contract.plans.forEach(plan => {
+              let nextDueDate = getNextDueDate(plan.lastGenerated, plan.frequency);
+              
+              while (nextDueDate <= lookaheadDate) {
+                  const alreadyExists = existingWorkOrders.some(wo => 
+                      wo.isPreventive && 
+                      wo.assetId === plan.assetId && 
+                      wo.description === `Manutenção preventiva programada conforme plano: ${plan.description}` &&
+                      format(new Date(wo.scheduledDate || 0), 'yyyy-MM-dd') === format(nextDueDate, 'yyyy-MM-dd')
+                  );
+
+                  if (!alreadyExists) {
+                      const newWo: WorkOrder = {
+                          ...emptyWorkOrder,
+                          id: `os-prev-${plan.id}-${format(nextDueDate, 'yyyyMMdd')}`,
+                          title: `Preventiva: ${plan.description}`,
+                          description: `Manutenção preventiva programada conforme plano: ${plan.description}`,
+                          assetId: plan.assetId,
+                          priority: 'Média',
+                          isPreventive: true,
+                          scheduledDate: nextDueDate.getTime(),
+                          creationDate: new Date().getTime(),
+                          clientId: clientId,
+                      };
+                      newWorkOrders.push(newWo);
+                  }
+                  nextDueDate = getNextDueDate(nextDueDate.getTime(), plan.frequency);
+              }
+          });
+      });
+
+      return newWorkOrders;
+  }, [emptyWorkOrder]);
+
+
   React.useEffect(() => {
-    const newPreventiveOrders = generatePreventiveWorkOrders(initialWorkOrders);
-    if (newPreventiveOrders.length > 0) {
-        const allOrders = [...initialWorkOrders, ...newPreventiveOrders];
-        setGlobalWorkOrders(allOrders);
-        setWorkOrders(allOrders.filter(wo => wo.clientId === TEST_CLIENT_ID));
+    if (selectedClient) {
+      const newPreventiveOrders = generatePreventiveWorkOrders(initialWorkOrders, selectedClient.id);
+      let allClientOrders = initialWorkOrders.filter(wo => wo.clientId === selectedClient.id);
+
+      if (newPreventiveOrders.length > 0) {
+          const currentAndNew = [...allClientOrders, ...newPreventiveOrders];
+          const allGlobalOrders = [...initialWorkOrders, ...newPreventiveOrders];
+          // This is a mock update. In a real app, you'd have a more robust system.
+          // setGlobalWorkOrders(allGlobalOrders); 
+          setWorkOrders(currentAndNew);
+      } else {
+          setWorkOrders(allClientOrders);
+      }
+
+      setClientAssets(allAssets.filter(a => a.clientId === selectedClient.id));
+      setClientUsers(allUsers.filter(u => u.clientId === selectedClient.id && u.cmmsRole === 'TECNICO'));
     } else {
-        setWorkOrders(initialWorkOrders.filter(wo => wo.clientId === TEST_CLIENT_ID));
+      setWorkOrders([]);
+      setClientAssets([]);
+      setClientUsers([]);
     }
-  }, []);
-
-  React.useEffect(() => {
-    setClientAssets(allAssets.filter(a => a.clientId === TEST_CLIENT_ID));
-    // Only show users that belong to the client and are technicians
-    setClientUsers(allUsers.filter(u => u.clientId === TEST_CLIENT_ID && u.cmmsRole === 'TECNICO'));
     setLocalProducts(initialProducts);
-  }, []);
+  }, [selectedClient, generatePreventiveWorkOrders]);
+
 
   React.useEffect(() => {
-    if (formData.responsibleId) {
+    if (formData?.responsibleId) {
         const selectedUser = clientUsers.find(u => u.id === formData.responsibleId);
         if (selectedUser?.squad && !formData.squad) { // only autofill if squad is empty
-            setFormData(prev => ({...prev, squad: selectedUser.squad}));
+            setFormData(prev => prev ? ({...prev, squad: selectedUser.squad}) : null);
         }
     }
-  }, [formData.responsibleId, clientUsers, formData.squad]);
+  }, [formData, clientUsers]);
 
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
@@ -171,39 +187,41 @@ export default function WorkOrdersPage() {
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
+    let orderData: WorkOrder;
+
     if (order) {
-        const orderData = JSON.parse(JSON.stringify(order));
-        // If checklist doesn't exist, and asset is an elevator, add template
-        if (!orderData.checklist && getAssetSegment(orderData.assetId) === 'ELEVATOR') {
-          orderData.checklist = JSON.parse(JSON.stringify(elevatorChecklistTemplate));
-        }
-        setFormData(orderData);
+        orderData = JSON.parse(JSON.stringify(order));
     } else {
-        const newOrderData = JSON.parse(JSON.stringify({...emptyWorkOrder, createdByUserId: CURRENT_USER_ID, clientId: TEST_CLIENT_ID}));
-        if (getAssetSegment(newOrderData.assetId) === 'ELEVATOR') {
-          newOrderData.checklist = JSON.parse(JSON.stringify(elevatorChecklistTemplate));
-        }
-        setFormData(newOrderData);
+        orderData = JSON.parse(JSON.stringify(emptyWorkOrder));
     }
+
+    if (!orderData.checklist && getAssetSegment(orderData.assetId) === 'ELEVATOR') {
+      orderData.checklist = JSON.parse(JSON.stringify(elevatorChecklistTemplate));
+    }
+    
+    setFormData(orderData);
     setIsDialogOpen(true);
   };
   
   const closeDialog = () => {
     setEditingOrder(null);
     setIsDialogOpen(false);
-    setFormData(emptyWorkOrder);
+    setFormData(null);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!formData) return;
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
   const handleSelectChange = (name: keyof WorkOrder, value: string) => {
+    if (!formData) return;
     const oldStatus = formData.status;
     const newStatus = name === 'status' ? value as OrderStatus : oldStatus;
     
     setFormData(prev => {
+        if (!prev) return null;
         let newStartDate = prev.startDate;
         let newEndDate = prev.endDate;
         let newChecklist = prev.checklist;
@@ -240,33 +258,39 @@ export default function WorkOrdersPage() {
   };
 
   const handleDateChange = (name: keyof WorkOrder, date: Date | undefined) => {
-    setFormData(prev => ({...prev, [name]: date?.getTime()}));
+    if (!formData) return;
+    setFormData(prev => prev ? ({...prev, [name]: date?.getTime()}) : null);
   }
 
   const handleAddPart = () => {
+    if (!formData) return;
     const newPart: WorkOrderPart = { productId: '', quantity: 1 };
-    setFormData(prev => ({ ...prev, partsUsed: [...(prev.partsUsed || []), newPart] }));
+    setFormData(prev => prev ? ({ ...prev, partsUsed: [...(prev.partsUsed || []), newPart] }) : null);
   };
 
   const handlePartChange = (index: number, field: keyof WorkOrderPart, value: string | number) => {
+    if (!formData) return;
     const newParts = [...(formData.partsUsed || [])];
     // @ts-ignore
     newParts[index][field] = value;
-    setFormData(prev => ({ ...prev, partsUsed: newParts }));
+    setFormData(prev => prev ? ({ ...prev, partsUsed: newParts }) : null);
   };
 
   const handleRemovePart = (index: number) => {
-    setFormData(prev => ({ ...prev, partsUsed: (prev.partsUsed || []).filter((_, i) => i !== index) }));
+    if (!formData) return;
+    setFormData(prev => prev ? ({ ...prev, partsUsed: (prev.partsUsed || []).filter((_, i) => i !== index) }) : null);
   };
 
   const handleChecklistItemChange = (groupIndex: number, itemIndex: number, field: keyof ChecklistItem, value: string) => {
+    if (!formData || !formData.checklist) return;
     const newChecklist = JSON.parse(JSON.stringify(formData.checklist)) as Checklist;
     // @ts-ignore
     newChecklist[groupIndex].items[itemIndex][field] = value;
-    setFormData(prev => ({...prev, checklist: newChecklist}));
+    setFormData(prev => prev ? ({...prev, checklist: newChecklist}) : null);
   };
 
   const calculateTotalCost = () => {
+    if (!formData) return 0;
     return (formData.partsUsed || []).reduce((total, part) => {
       const product = products.find(p => p.id === part.productId);
       return total + (product ? product.price * part.quantity : 0);
@@ -276,10 +300,11 @@ export default function WorkOrdersPage() {
 
   const handleSaveOrder = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!formData || !selectedClient) return;
 
     const newOrder: WorkOrder = {
       ...formData,
-      clientId: TEST_CLIENT_ID,
+      clientId: selectedClient.id,
       id: editingOrder?.id || `os-${Date.now()}`,
       creationDate: editingOrder?.creationDate || new Date().getTime(),
       createdByUserId: editingOrder?.createdByUserId || CURRENT_USER_ID,
@@ -290,7 +315,6 @@ export default function WorkOrdersPage() {
     const newParts = newOrder.partsUsed || [];
     const stockChanges = new Map<string, number>();
 
-    // Calculate net change for each product
     originalParts.forEach(part => {
         stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) - part.quantity);
     });
@@ -318,18 +342,18 @@ export default function WorkOrdersPage() {
       allWorkOrders = [newOrder, ...initialWorkOrders];
     }
     setGlobalWorkOrders(allWorkOrders);
-    setWorkOrders(allWorkOrders.filter(wo => wo.clientId === TEST_CLIENT_ID));
+    setWorkOrders(allWorkOrders.filter(wo => wo.clientId === selectedClient.id));
     
     closeDialog();
   };
 
   const handleReopenOrder = () => {
     if (!formData) return;
-    setFormData(prev => ({
+    setFormData(prev => prev ? ({
         ...prev, 
         status: 'ABERTO',
         endDate: undefined, // Clear end date on reopen
-    }));
+    }) : null);
   };
   
   const getStatusBadgeVariant = (status: OrderStatus) => {
@@ -357,10 +381,18 @@ export default function WorkOrdersPage() {
     return allUsers.find(u => u.id === userId)?.name || 'Desconhecido';
   };
 
-  const isFormDisabled = formData.status === 'CONCLUIDO' || formData.status === 'CANCELADO';
+  const isFormDisabled = formData?.status === 'CONCLUIDO' || formData?.status === 'CANCELADO';
   
   const formatDate = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy') : 'N/A';
   const formatDateTime = (timestamp?: number) => timestamp ? format(new Date(timestamp), 'dd/MM/yyyy HH:mm') : 'N/A';
+
+  if (!selectedClient) {
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <p className="text-muted-foreground">Selecione um cliente no menu superior para gerenciar as Ordens de Serviço.</p>
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -433,269 +465,273 @@ export default function WorkOrdersPage() {
              {editingOrder ? `OS #${editingOrder.id} - Criada por ${getCreatorName(editingOrder.createdByUserId)} em: ${formatDateTime(editingOrder.creationDate)}` : 'Preencha os detalhes da ordem de serviço.'}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[65vh] -mx-6 px-6">
-            <form onSubmit={handleSaveOrder} id="order-form" className="space-y-6 py-4 px-1">
-              
-              <fieldset disabled={isFormDisabled} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="assetId">Ativo</Label>
-                  <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o ativo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título</Label>
-                  <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Ex: Manutenção Corretiva Urgente"/>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder="Detalhe o problema ou o serviço a ser realizado."/>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                              {orderStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="priority">Prioridade</Label>
-                       <Select name="priority" value={formData.priority} onValueChange={(value) => handleSelectChange('priority', value as OrderPriority)} required>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                              {orderPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                  <div className="space-y-2">
-                     <Label htmlFor="scheduledDate">Data de Agendamento</Label>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.scheduledDate && "text-muted-foreground")}>
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {formData.scheduledDate ? format(new Date(formData.scheduledDate), "PPP") : <span>Opcional</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar mode="single" selected={formData.scheduledDate ? new Date(formData.scheduledDate) : undefined} onSelect={(date) => handleDateChange('scheduledDate', date)} initialFocus />
-                        </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
+          {formData && (
+            <>
+            <ScrollArea className="max-h-[65vh] -mx-6 px-6">
+              <form onSubmit={handleSaveOrder} id="order-form" className="space-y-6 py-4 px-1">
                 
-                <Separator />
+                <fieldset disabled={isFormDisabled} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="assetId">Ativo</Label>
+                    <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o ativo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <h3 className="text-base font-medium">Atribuição e Execução</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Título</Label>
+                    <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Ex: Manutenção Corretiva Urgente"/>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder="Detalhe o problema ou o serviço a ser realizado."/>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="responsibleId">Técnico Responsável</Label>
-                        <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Atribuir a um técnico (opcional)" />
-                            </SelectTrigger>
+                        <Label htmlFor="status">Status</Label>
+                        <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
+                                {orderStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="squad">Equipe</Label>
-                        <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Ex: Equipe Alpha"/>
-                    </div>
-                </div>
-                
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4">
-                    <div className="space-y-1">
-                        <Label className="text-sm">Início da Execução</Label>
-                        <p className="text-sm text-muted-foreground">{formatDateTime(formData.startDate)}</p>
-                    </div>
-                     <div className="space-y-1">
-                        <Label className="text-sm">Fim da Execução</Label>
-                        <p className="text-sm text-muted-foreground">{formatDateTime(formData.endDate)}</p>
-                    </div>
-                </div>
-
-                {formData.checklist && (
-                  <>
-                    <Separator />
-                    <Accordion type="single" collapsible defaultValue='item-0' className="w-full">
-                       <h3 className="text-base font-medium mb-2">Checklist de Execução</h3>
-                        {formData.checklist.map((group, groupIndex) => (
-                           <AccordionItem value={`item-${groupIndex}`} key={group.id}>
-                             <AccordionTrigger>{group.title}</AccordionTrigger>
-                             <AccordionContent className="space-y-4 pt-4">
-                                {group.items.map((item, itemIndex) => (
-                                    <div key={item.id} className="grid grid-cols-1 gap-4 rounded-md border p-4">
-                                        <Label className="font-medium">{item.text}</Label>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">Status</Label>
-                                                <Select value={item.status} onValueChange={(value) => handleChecklistItemChange(groupIndex, itemIndex, 'status', value)}>
-                                                    <SelectTrigger id={`checklist-status-${groupIndex}-${itemIndex}`}>
-                                                        <SelectValue/>
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {checklistStatuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">Comentário</Label>
-                                                <Input 
-                                                    id={`checklist-comment-${groupIndex}-${itemIndex}`}
-                                                    value={item.comment || ''}
-                                                    onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'comment', e.target.value)}
-                                                    placeholder="Se 'NÃO OK', detalhe aqui..."
-                                                    required={item.status === 'NÃO OK'}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                             </AccordionContent>
-                           </AccordionItem>
-                        ))}
-                    </Accordion>
-                  </>
-                )}
-
-                <Separator />
-                
-                <h3 className="text-base font-medium">Encerramento do Serviço</h3>
-
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="rootCause">Causa da Falha (se aplicável)</Label>
-                        <Select name="rootCause" value={formData.rootCause || ''} onValueChange={(value) => handleSelectChange('rootCause', value as RootCause)}>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Selecione a causa raiz" />
-                            </SelectTrigger>
+                        <Label htmlFor="priority">Prioridade</Label>
+                        <Select name="priority" value={formData.priority} onValueChange={(value) => handleSelectChange('priority', value as OrderPriority)} required>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                {rootCauses.map(cause => <SelectItem key={cause.value} value={cause.value}>{cause.label}</SelectItem>)}
+                                {orderPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="recommendedAction">Ação Recomendada</Label>
-                        <Select name="recommendedAction" value={formData.recommendedAction || ''} onValueChange={(value) => handleSelectChange('recommendedAction', value as RecommendedAction)}>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Selecione a próxima ação" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {recommendedActions.map(action => <SelectItem key={action.value} value={action.value}>{action.label}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                    <div className="space-y-2">
+                      <Label htmlFor="scheduledDate">Data de Agendamento</Label>
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.scheduledDate && "text-muted-foreground")}>
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {formData.scheduledDate ? format(new Date(formData.scheduledDate), "PPP") : <span>Opcional</span>}
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                              <Calendar mode="single" selected={formData.scheduledDate ? new Date(formData.scheduledDate) : undefined} onSelect={(date) => handleDateChange('scheduledDate', date)} initialFocus />
+                          </PopoverContent>
+                      </Popover>
                     </div>
-                </div>
+                  </div>
+                  
+                  <Separator />
 
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-base font-medium">Peças Utilizadas</h3>
-                        <Button type="button" size="sm" variant="outline" onClick={handleAddPart}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Peça
-                        </Button>
-                    </div>
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[50%]">Peça</TableHead>
-                                    <TableHead>Qtd</TableHead>
-                                    <TableHead>Custo</TableHead>
-                                    <TableHead>Estoque</TableHead>
-                                    <TableHead className="text-right"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {(formData.partsUsed || []).map((part, index) => {
-                                  const stock = getProductStock(part.productId);
-                                  const insufficientStock = part.quantity > stock;
-                                  return (
-                                    <TableRow key={index}>
-                                        <TableCell>
-                                            <Select value={part.productId} onValueChange={(value) => handlePartChange(index, 'productId', value)}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecione uma peça" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Input type="number" value={part.quantity} onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value, 10) || 1)} min="1" className={cn(insufficientStock && "border-destructive")}/>
-                                        </TableCell>
-                                        <TableCell>
-                                            R$ {(getProductPrice(part.productId) * part.quantity).toFixed(2)}
-                                        </TableCell>
-                                        <TableCell className={cn(insufficientStock && "text-destructive")}>
-                                            {insufficientStock ? (
-                                                <div className="flex items-center gap-1">
-                                                    <AlertTriangle className="h-4 w-4" />
-                                                    {stock}
-                                                </div>
-                                            ) : stock }
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePart(index)}>
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                  )
-                                })}
-                                {(formData.partsUsed || []).length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center text-muted-foreground">Nenhuma peça adicionada.</TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                     <div className="flex justify-end font-medium">
-                        Custo Total das Peças: R$ {calculateTotalCost().toFixed(2)}
-                    </div>
-                </div>
+                  <h3 className="text-base font-medium">Atribuição e Execução</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="responsibleId">Técnico Responsável</Label>
+                          <Select name="responsibleId" value={formData.responsibleId || ''} onValueChange={(value) => handleSelectChange('responsibleId', value)}>
+                              <SelectTrigger>
+                              <SelectValue placeholder="Atribuir a um técnico (opcional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {clientUsers.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="squad">Equipe</Label>
+                          <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder="Ex: Equipe Alpha"/>
+                      </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4">
+                      <div className="space-y-1">
+                          <Label className="text-sm">Início da Execução</Label>
+                          <p className="text-sm text-muted-foreground">{formatDateTime(formData.startDate)}</p>
+                      </div>
+                      <div className="space-y-1">
+                          <Label className="text-sm">Fim da Execução</Label>
+                          <p className="text-sm text-muted-foreground">{formatDateTime(formData.endDate)}</p>
+                      </div>
+                  </div>
 
-                <Separator />
+                  {formData.checklist && (
+                    <>
+                      <Separator />
+                      <Accordion type="single" collapsible defaultValue='item-0' className="w-full">
+                        <h3 className="text-base font-medium mb-2">Checklist de Execução</h3>
+                          {formData.checklist.map((group, groupIndex) => (
+                            <AccordionItem value={`item-${groupIndex}`} key={group.id}>
+                              <AccordionTrigger>{group.title}</AccordionTrigger>
+                              <AccordionContent className="space-y-4 pt-4">
+                                  {group.items.map((item, itemIndex) => (
+                                      <div key={item.id} className="grid grid-cols-1 gap-4 rounded-md border p-4">
+                                          <Label className="font-medium">{item.text}</Label>
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                              <div className="space-y-2">
+                                                  <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">Status</Label>
+                                                  <Select value={item.status} onValueChange={(value) => handleChecklistItemChange(groupIndex, itemIndex, 'status', value)}>
+                                                      <SelectTrigger id={`checklist-status-${groupIndex}-${itemIndex}`}>
+                                                          <SelectValue/>
+                                                      </SelectTrigger>
+                                                      <SelectContent>
+                                                          {checklistStatuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+                                                      </SelectContent>
+                                                  </Select>
+                                              </div>
+                                              <div className="space-y-2">
+                                                  <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">Comentário</Label>
+                                                  <Input 
+                                                      id={`checklist-comment-${groupIndex}-${itemIndex}`}
+                                                      value={item.comment || ''}
+                                                      onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'comment', e.target.value)}
+                                                      placeholder="Se 'NÃO OK', detalhe aqui..."
+                                                      required={item.status === 'NÃO OK'}
+                                                  />
+                                              </div>
+                                          </div>
+                                      </div>
+                                  ))}
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                      </Accordion>
+                    </>
+                  )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="internalObservation">Observação Interna (visível apenas para a equipe)</Label>
-                  <Textarea id="internalObservation" name="internalObservation" value={formData.internalObservation || ''} onChange={handleInputChange} placeholder="Detalhes técnicos, histórico relevante, etc."/>
-                </div>
-              </fieldset>
-            </form>
-          </ScrollArea>
-          <DialogFooter className="flex-col-reverse gap-y-2 sm:flex-row sm:justify-between w-full">
-            {isFormDisabled ? (
-                <Button variant="secondary" onClick={handleReopenOrder}>
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Reabrir OS
-                </Button>
-            ) : (
-                <div /> // Placeholder to keep justify-between working
-            )}
-            <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={closeDialog}>
-                    {isFormDisabled ? 'Fechar' : 'Cancelar'}
-                </Button>
-                {!isFormDisabled && (
-                    <Button type="submit" form="order-form">Salvar</Button>
-                )}
-            </div>
-          </DialogFooter>
+                  <Separator />
+                  
+                  <h3 className="text-base font-medium">Encerramento do Serviço</h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="rootCause">Causa da Falha (se aplicável)</Label>
+                          <Select name="rootCause" value={formData.rootCause || ''} onValueChange={(value) => handleSelectChange('rootCause', value as RootCause)}>
+                              <SelectTrigger>
+                              <SelectValue placeholder="Selecione a causa raiz" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {rootCauses.map(cause => <SelectItem key={cause.value} value={cause.value}>{cause.label}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="recommendedAction">Ação Recomendada</Label>
+                          <Select name="recommendedAction" value={formData.recommendedAction || ''} onValueChange={(value) => handleSelectChange('recommendedAction', value as RecommendedAction)}>
+                              <SelectTrigger>
+                              <SelectValue placeholder="Selecione a próxima ação" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {recommendedActions.map(action => <SelectItem key={action.value} value={action.value}>{action.label}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
+
+                  <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                          <h3 className="text-base font-medium">Peças Utilizadas</h3>
+                          <Button type="button" size="sm" variant="outline" onClick={handleAddPart}>
+                              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Peça
+                          </Button>
+                      </div>
+                      <div className="rounded-md border">
+                          <Table>
+                              <TableHeader>
+                                  <TableRow>
+                                      <TableHead className="w-[50%]">Peça</TableHead>
+                                      <TableHead>Qtd</TableHead>
+                                      <TableHead>Custo</TableHead>
+                                      <TableHead>Estoque</TableHead>
+                                      <TableHead className="text-right"></TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {(formData.partsUsed || []).map((part, index) => {
+                                    const stock = getProductStock(part.productId);
+                                    const insufficientStock = part.quantity > stock;
+                                    return (
+                                      <TableRow key={index}>
+                                          <TableCell>
+                                              <Select value={part.productId} onValueChange={(value) => handlePartChange(index, 'productId', value)}>
+                                                  <SelectTrigger>
+                                                      <SelectValue placeholder="Selecione uma peça" />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                      {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                                  </SelectContent>
+                                              </Select>
+                                          </TableCell>
+                                          <TableCell>
+                                              <Input type="number" value={part.quantity} onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value, 10) || 1)} min="1" className={cn(insufficientStock && "border-destructive")}/>
+                                          </TableCell>
+                                          <TableCell>
+                                              R$ {(getProductPrice(part.productId) * part.quantity).toFixed(2)}
+                                          </TableCell>
+                                          <TableCell className={cn(insufficientStock && "text-destructive")}>
+                                              {insufficientStock ? (
+                                                  <div className="flex items-center gap-1">
+                                                      <AlertTriangle className="h-4 w-4" />
+                                                      {stock}
+                                                  </div>
+                                              ) : stock }
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                              <Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePart(index)}>
+                                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                              </Button>
+                                          </TableCell>
+                                      </TableRow>
+                                    )
+                                  })}
+                                  {(formData.partsUsed || []).length === 0 && (
+                                      <TableRow>
+                                          <TableCell colSpan={5} className="text-center text-muted-foreground">Nenhuma peça adicionada.</TableCell>
+                                      </TableRow>
+                                  )}
+                              </TableBody>
+                          </Table>
+                      </div>
+                      <div className="flex justify-end font-medium">
+                          Custo Total das Peças: R$ {calculateTotalCost().toFixed(2)}
+                      </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="internalObservation">Observação Interna (visível apenas para a equipe)</Label>
+                    <Textarea id="internalObservation" name="internalObservation" value={formData.internalObservation || ''} onChange={handleInputChange} placeholder="Detalhes técnicos, histórico relevante, etc."/>
+                  </div>
+                </fieldset>
+              </form>
+            </ScrollArea>
+            <DialogFooter className="flex-col-reverse gap-y-2 sm:flex-row sm:justify-between w-full">
+              {isFormDisabled ? (
+                  <Button variant="secondary" onClick={handleReopenOrder}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Reabrir OS
+                  </Button>
+              ) : (
+                  <div /> // Placeholder to keep justify-between working
+              )}
+              <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={closeDialog}>
+                      {isFormDisabled ? 'Fechar' : 'Cancelar'}
+                  </Button>
+                  {!isFormDisabled && (
+                      <Button type="submit" form="order-form">Salvar</Button>
+                  )}
+              </div>
+            </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
