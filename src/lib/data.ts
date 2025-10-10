@@ -3,6 +3,7 @@
 
 
 
+
 import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -49,7 +50,8 @@ export let accountsPayable: AccountsPayable[] = [
         paymentDate: new Date(2024, 6, 8).getTime(),
         costCenterId: 'cc-01',
         chartOfAccountId: 'coa-11',
-        isRecurring: false, recurrenceFrequency: 'MENSAL', recurrenceInstallments: 1
+        isRecurring: false, recurrenceFrequency: 'MENSAL', recurrenceInstallments: 1,
+        bankAccountId: 'ba-01',
     },
     {
         id: 'ap-02',
@@ -72,7 +74,8 @@ export let accountsPayable: AccountsPayable[] = [
         paymentDate: new Date(2024, 6, 5).getTime(),
         costCenterId: 'cc-04',
         chartOfAccountId: 'coa-14',
-        isRecurring: false, recurrenceFrequency: 'MENSAL', recurrenceInstallments: 1
+        isRecurring: false, recurrenceFrequency: 'MENSAL', recurrenceInstallments: 1,
+        bankAccountId: 'ba-01',
     },
      {
         id: 'ap-04',
@@ -96,7 +99,8 @@ export let accountsReceivable: AccountsReceivable[] = [
         value: 750.00,
         status: 'Paga',
         paymentDate: new Date(2024, 6, 5).getTime(),
-        chartOfAccountId: 'coa-3'
+        chartOfAccountId: 'coa-3',
+        bankAccountId: 'ba-01',
     },
     {
         id: 'ar-02',

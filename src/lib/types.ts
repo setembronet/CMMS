@@ -3,6 +3,7 @@
 
 
 
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -319,6 +320,7 @@ export type AccountsPayable = {
   isRecurring: boolean;
   recurrenceFrequency: RecurrenceFrequency;
   recurrenceInstallments: number;
+  bankAccountId?: string;
 };
 
 export type AccountsReceivableStatus = 'Pendente' | 'Paga' | 'Vencida';
@@ -333,6 +335,7 @@ export type AccountsReceivable = {
   status: AccountsReceivableStatus;
   chartOfAccountId: string;
   notes?: string;
+  bankAccountId?: string;
 };
 
 export type BankAccount = {

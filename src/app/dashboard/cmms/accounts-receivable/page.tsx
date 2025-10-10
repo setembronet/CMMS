@@ -29,8 +29,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon } from 'lucide-react';
-import { accountsReceivable as initialData, customerLocations, chartOfAccounts, setAccountsReceivable } from '@/lib/data';
-import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount } from '@/lib/types';
+import { accountsReceivable as initialData, customerLocations, chartOfAccounts, setAccountsReceivable, bankAccounts } from '@/lib/data';
+import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount, BankAccount } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { useClient } from '@/context/client-provider';
 import { cn } from '@/lib/utils';
@@ -50,6 +50,7 @@ const emptyAR: AccountsReceivable = {
   value: 0,
   status: 'Pendente',
   chartOfAccountId: '',
+  bankAccountId: '',
 };
 
 export default function AccountsReceivablePage() {
@@ -63,6 +64,7 @@ export default function AccountsReceivablePage() {
 
   const [clientLocations, setClientLocations] = React.useState<CustomerLocation[]>([]);
   const [revenueAccounts, setRevenueAccounts] = React.useState<ChartOfAccount[]>([]);
+  const [availableBankAccounts, setAvailableBankAccounts] = React.useState<BankAccount[]>([]);
 
   React.useEffect(() => {
     if (selectedClient) {
@@ -75,6 +77,7 @@ export default function AccountsReceivablePage() {
       setClientLocations([]);
     }
     setRevenueAccounts(chartOfAccounts.filter(acc => acc.type === 'RECEITA' && !acc.isGroup));
+    setAvailableBankAccounts(bankAccounts);
   }, [selectedClient]);
 
   const openDialog = (account: AccountsReceivable | null = null) => {
@@ -217,7 +220,7 @@ export default function AccountsReceivablePage() {
             </DialogHeader>
             {formData && (
             <form id="ar-form" onSubmit={handleSave}>
-              <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+              <ScrollArea className="max-h-[70vh] -mx-6 px-6">
                 <div className="space-y-4 py-4 px-1">
                   <div className="space-y-2">
                     <Label htmlFor="description">Descrição</Label>
@@ -262,6 +265,33 @@ export default function AccountsReceivablePage() {
                           </Select>
                       </div>
                   </div>
+                  
+                    {formData.status === 'Paga' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="paymentDate">Data do Recebimento</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal")}>
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {formData.paymentDate ? format(new Date(formData.paymentDate), "PPP", { locale: ptBR }) : 'Selecione a data'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" locale={ptBR} selected={formData.paymentDate ? new Date(formData.paymentDate) : undefined} onSelect={(d) => handleDateChange('paymentDate', d)} initialFocus /></PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="bankAccountId">Conta de Destino</Label>
+                                <Select name="bankAccountId" value={formData.bankAccountId} onValueChange={(v) => handleSelectChange('bankAccountId', v)}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
+                                    <SelectContent>
+                                        {availableBankAccounts.map(ba => <SelectItem key={ba.id} value={ba.id}>{ba.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+
 
                     <div className="space-y-2">
                         <Label htmlFor="chartOfAccountId">Conta Contábil</Label>
