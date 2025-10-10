@@ -2,6 +2,7 @@
 
 
 
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -85,7 +86,7 @@ export type User = {
   name: string;
   email: string;
   role: UserRole;
-  saasRole: SaaSUserole;
+  saasRole: SaaSUserRole;
   cmmsRole: CMMSRole['id'] | null;
   clientId: string | null;
   clientName?: string; 
@@ -320,4 +321,16 @@ export type AccountsPayable = {
   recurrenceInstallments: number;
 };
 
-    
+export type AccountsReceivableStatus = 'Pendente' | 'Paga' | 'Vencida';
+
+export type AccountsReceivable = {
+  id: string;
+  description: string;
+  customerLocationId: string;
+  dueDate: number; // timestamp
+  paymentDate?: number; // timestamp
+  value: number;
+  status: AccountsReceivableStatus;
+  chartOfAccountId: string;
+  notes?: string;
+};

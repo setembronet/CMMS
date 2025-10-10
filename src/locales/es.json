@@ -36,6 +36,7 @@
     "chartOfAccounts": "Plan de Cuentas",
     "costCenters": "Centros de Costo",
     "accountsPayable": "Cuentas por Pagar",
+    "accountsReceivable": "Cuentas por Cobrar",
     "backoffice": "Backoffice"
   },
   "common": {
@@ -631,4 +632,3 @@
     "poCreatedDescription": "La OC {poId} para el proveedor {supplierName} fue creada con éxito."
   }
 }
-

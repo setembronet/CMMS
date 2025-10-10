@@ -310,6 +310,14 @@ export function SidebarNav() {
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-receivable', true)}>
+                                    <Link href="/dashboard/cmms/accounts-receivable">
+                                        <Receipt />
+                                        <span>{t('sidebar.accountsReceivable')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
                         </SidebarMenuSub>
                     </CollapsibleContent>
                 </SidebarMenuItem>
@@ -361,5 +369,3 @@ export function SidebarNav() {
   );
 }
 
-
-    

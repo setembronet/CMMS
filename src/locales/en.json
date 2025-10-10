@@ -36,6 +36,7 @@
     "chartOfAccounts": "Chart of Accounts",
     "costCenters": "Cost Centers",
     "accountsPayable": "Accounts Payable",
+    "accountsReceivable": "Accounts Receivable",
     "backoffice": "Backoffice"
   },
   "common": {
@@ -631,4 +632,3 @@
     "poCreatedDescription": "PO {poId} for supplier {supplierName} has been created successfully."
   }
 }
-

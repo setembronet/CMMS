@@ -1,7 +1,8 @@
 
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable } from './types';
+
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -19,6 +20,7 @@ export let chartOfAccounts: ChartOfAccount[] = [
     { id: 'coa-2', code: '1.1.0.0', name: 'Receita de Serviços', type: 'RECEITA', parentCode: '1.0.0.0', isGroup: true },
     { id: 'coa-3', code: '1.1.1.0', name: 'Contratos de Manutenção', type: 'RECEITA', parentCode: '1.1.0.0', isGroup: false },
     { id: 'coa-4', code: '1.1.2.0', name: 'Serviços Avulsos', type: 'RECEITA', parentCode: '1.1.0.0', isGroup: false },
+    { id: 'coa-15', code: '1.2.0.0', name: 'Receitas Não-Operacionais', type: 'RECEITA', parentCode: '1.0.0.0', isGroup: false },
 
     // Custos
     { id: 'coa-5', code: '2.0.0.0', name: 'Custos Operacionais', type: 'CUSTO', isGroup: true },
@@ -46,6 +48,7 @@ export let accountsPayable: AccountsPayable[] = [
         paymentDate: new Date(2024, 6, 8).getTime(),
         costCenterId: 'cc-01',
         chartOfAccountId: 'coa-11',
+        isRecurring: false, recurrenceFrequency: 'MENSAL', recurrenceInstallments: 1
     },
     {
         id: 'ap-02',
@@ -56,6 +59,7 @@ export let accountsPayable: AccountsPayable[] = [
         status: 'Pendente',
         costCenterId: 'cc-01',
         chartOfAccountId: 'coa-12',
+        isRecurring: false, recurrenceFrequency: 'MENSAL', recurrenceInstallments: 1
     },
     {
         id: 'ap-03',
@@ -67,6 +71,7 @@ export let accountsPayable: AccountsPayable[] = [
         paymentDate: new Date(2024, 6, 5).getTime(),
         costCenterId: 'cc-04',
         chartOfAccountId: 'coa-14',
+        isRecurring: false, recurrenceFrequency: 'MENSAL', recurrenceInstallments: 1
     },
      {
         id: 'ap-04',
@@ -77,7 +82,39 @@ export let accountsPayable: AccountsPayable[] = [
         status: 'Vencida',
         costCenterId: 'cc-02',
         chartOfAccountId: '3.1.2.0', // Mocking another expense type
+        isRecurring: false, recurrenceFrequency: 'MENSAL', recurrenceInstallments: 1
     },
+];
+
+export let accountsReceivable: AccountsReceivable[] = [
+    {
+        id: 'ar-01',
+        description: 'Recebimento Contrato #contract-01 - Julho/2024',
+        customerLocationId: 'loc-01',
+        dueDate: new Date(2024, 6, 5).getTime(),
+        value: 750.00,
+        status: 'Paga',
+        paymentDate: new Date(2024, 6, 5).getTime(),
+        chartOfAccountId: 'coa-3'
+    },
+    {
+        id: 'ar-02',
+        description: 'Recebimento Contrato #contract-02 - Julho/2024',
+        customerLocationId: 'loc-02',
+        dueDate: new Date(2024, 6, 10).getTime(),
+        value: 1200.00,
+        status: 'Pendente',
+        chartOfAccountId: 'coa-3'
+    },
+    {
+        id: 'ar-03',
+        description: 'Venda de Sucata de Elevador',
+        customerLocationId: 'loc-01',
+        dueDate: new Date(2024, 5, 20).getTime(),
+        value: 500.00,
+        status: 'Vencida',
+        chartOfAccountId: 'coa-15'
+    }
 ];
 
 
@@ -488,6 +525,10 @@ export const setAccountsPayable = (newAPs: AccountsPayable[]) => {
   accountsPayable = newAPs;
 };
 
+export const setAccountsReceivable = (newARs: AccountsReceivable[]) => {
+  accountsReceivable = newARs;
+};
+
 export const setKpis = (newKpis: typeof kpis) => {
     kpis = newKpis;
 };
@@ -512,6 +553,7 @@ export const getBackupData = () => ({
   costCenters,
   chartOfAccounts,
   accountsPayable,
+  accountsReceivable,
 });
 
 // Function to restore all data
@@ -536,5 +578,6 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.costCenters)) costCenters = data.costCenters;
     if (Array.isArray(data.chartOfAccounts)) chartOfAccounts = data.chartOfAccounts;
     if (Array.isArray(data.accountsPayable)) setAccountsPayable(data.accountsPayable);
+    if (Array.isArray(data.accountsReceivable)) setAccountsReceivable(data.accountsReceivable);
   }
 };
