@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronRight } from 'lucide-react';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations, checklistTemplates } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -46,9 +46,10 @@ import { cn } from '@/lib/utils';
 import { format, addDays, addMonths, addWeeks, addQuarters, addYears } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineContent, TimelineTime } from '@/components/ui/timeline';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineTime } from '@/components/ui/timeline';
 
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
@@ -809,24 +810,31 @@ export default function WorkOrdersPage() {
 
               <ScrollArea className="border-l -ml-3 pl-3">
                   <div className="px-4 py-4 space-y-4">
-                      <h3 className="text-base font-medium">Linha do Tempo</h3>
-                      <Timeline>
-                          {generateTimelineEvents(formData).map((event, index) => (
-                              <TimelineItem key={index}>
-                                  <TimelineConnector />
-                                  <TimelineHeader>
-                                      <TimelineTime>{format(new Date(event.date), 'dd/MM/yy')}</TimelineTime>
-                                      <TimelineIcon>
-                                          <event.icon className={cn("h-4 w-4", event.color)} />
-                                      </TimelineIcon>
-                                      <TimelineTitle>{event.title}</TimelineTitle>
-                                  </TimelineHeader>
-                                  <TimelineContent>
-                                      <TimelineDescription>{event.description}</TimelineDescription>
-                                  </TimelineContent>
-                              </TimelineItem>
-                          ))}
-                      </Timeline>
+                      <Collapsible defaultOpen>
+                        <CollapsibleTrigger className="flex w-full items-center justify-between">
+                            <h3 className="text-base font-medium">Linha do Tempo</h3>
+                            <ChevronRight className="h-5 w-5 transition-transform data-[state=open]:rotate-90" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                            <Timeline className="mt-4">
+                                {generateTimelineEvents(formData).map((event, index) => (
+                                    <TimelineItem key={index}>
+                                        <TimelineConnector />
+                                        <TimelineHeader>
+                                            <TimelineTime>{format(new Date(event.date), 'dd/MM/yy')}</TimelineTime>
+                                            <TimelineIcon>
+                                                <event.icon className={cn("h-4 w-4", event.color)} />
+                                            </TimelineIcon>
+                                            <TimelineTitle>{event.title}</TimelineTitle>
+                                        </TimelineHeader>
+                                        <TimelineContent>
+                                            <TimelineDescription>{event.description}</TimelineDescription>
+                                        </TimelineContent>
+                                    </TimelineItem>
+                                ))}
+                            </Timeline>
+                        </CollapsibleContent>
+                      </Collapsible>
                   </div>
               </ScrollArea>
             </div>
@@ -855,3 +863,4 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
+
