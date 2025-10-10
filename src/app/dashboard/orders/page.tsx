@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations } from '@/lib/data';
+import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations, checklistTemplates } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -79,6 +79,7 @@ export default function WorkOrdersPage() {
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
   const [formData, setFormData] = React.useState<WorkOrder | null>(null);
   const [products, setLocalProducts] = React.useState<Product[]>(initialProducts);
+  const [availableChecklists, setAvailableChecklists] = React.useState<typeof checklistTemplates>([]);
 
   const emptyWorkOrder: WorkOrder = React.useMemo(() => ({
     id: '',
@@ -177,9 +178,21 @@ export default function WorkOrdersPage() {
     }
   }, [formData, clientUsers]);
 
+  React.useEffect(() => {
+    if (formData?.assetId) {
+        const asset = clientAssets.find(a => a.id === formData.assetId);
+        if (asset) {
+            setAvailableChecklists(checklistTemplates.filter(t => t.segmentId === asset.activeSegment));
+        } else {
+            setAvailableChecklists([]);
+        }
+    } else {
+        setAvailableChecklists([]);
+    }
+  }, [formData?.assetId, clientAssets]);
+
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
-  const getAssetSegmentId = (id: string) => allAssets.find(a => a.id === id)?.activeSegment;
   const getTechnicianName = (id?: string) => id ? allUsers.find(u => u.id === id)?.name : 'N/A';
   
   const getProduct = (id: string) => products.find(p => p.id === id);
@@ -198,11 +211,10 @@ export default function WorkOrdersPage() {
         orderData = JSON.parse(JSON.stringify(emptyWorkOrder));
     }
 
-    if (!orderData.checklist && orderData.assetId) {
-      const segmentId = getAssetSegmentId(orderData.assetId);
-      const segment = segments.find(s => s.id === segmentId);
-      if(segment?.checklistTemplate) {
-        orderData.checklist = JSON.parse(JSON.stringify(segment.checklistTemplate));
+    if (!orderData.checklist && orderData.checklistTemplateId) {
+      const template = checklistTemplates.find(t => t.id === orderData.checklistTemplateId);
+      if(template) {
+        orderData.checklist = JSON.parse(JSON.stringify(template.checklistData));
       }
     }
     
@@ -232,16 +244,19 @@ export default function WorkOrdersPage() {
         let newStartDate = prev.startDate;
         let newEndDate = prev.endDate;
         let newChecklist = prev.checklist;
+        let newChecklistTemplateId = prev.checklistTemplateId;
 
         if (name === 'assetId') {
-          const asset = allAssets.find(a => a.id === value);
-          const segmentId = asset?.activeSegment;
-          const segment = segments.find(s => s.id === segmentId);
-          if (segment?.checklistTemplate) {
-            newChecklist = JSON.parse(JSON.stringify(segment.checklistTemplate));
-          } else {
             newChecklist = undefined;
-          }
+            newChecklistTemplateId = undefined;
+        }
+
+        if (name === 'checklistTemplateId') {
+            const template = checklistTemplates.find(t => t.id === value);
+            if (template) {
+                newChecklist = JSON.parse(JSON.stringify(template.checklistData));
+                newChecklistTemplateId = value;
+            }
         }
 
         if (name === 'status') {
@@ -262,6 +277,7 @@ export default function WorkOrdersPage() {
             startDate: newStartDate,
             endDate: newEndDate,
             checklist: newChecklist,
+            checklistTemplateId: newChecklistTemplateId,
         };
     });
   };
@@ -546,17 +562,31 @@ export default function WorkOrdersPage() {
                 <form onSubmit={handleSaveOrder} id="order-form" className="space-y-6 py-4 px-1">
                   
                   <fieldset disabled={isFormDisabled} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="assetId">{t('workOrders.dialog.asset')}</Label>
-                      <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('workOrders.dialog.assetPlaceholder')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                        <Label htmlFor="assetId">{t('workOrders.dialog.asset')}</Label>
+                        <Select name="assetId" value={formData.assetId} onValueChange={(value) => handleSelectChange('assetId', value)} required>
+                            <SelectTrigger>
+                            <SelectValue placeholder={t('workOrders.dialog.assetPlaceholder')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                            {clientAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="checklistTemplateId">Modelo de Checklist</Label>
+                            <Select name="checklistTemplateId" value={formData.checklistTemplateId || ''} onValueChange={(value) => handleSelectChange('checklistTemplateId', value)} disabled={!formData.assetId}>
+                                <SelectTrigger>
+                                <SelectValue placeholder={availableChecklists.length > 0 ? "Selecione um modelo" : "Nenhum modelo para este segmento"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableChecklists.map(template => <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
+
 
                     <div className="space-y-2">
                       <Label htmlFor="title">{t('workOrders.dialog.title')}</Label>

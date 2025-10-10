@@ -29,7 +29,8 @@
     "suppliers": "Suppliers",
     "products": "Parts",
     "purchaseOrders": "Purchase Orders",
-    "purchaseSuggestion": "Purchase Suggestion"
+    "purchaseSuggestion": "Purchase Suggestion",
+    "checklistTemplates": "Checklist Templates"
   },
   "common": {
     "save": "Save",
