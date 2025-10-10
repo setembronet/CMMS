@@ -117,7 +117,7 @@ export let companies: Company[] = [
     id: 'client-04', 
     name: 'Tecno-Lift', 
     cnpj: '33.333.333/0001-33', 
-    email: 'vendas@tecnolift.com.br', DADOS
+    email: 'vendas@tecnolift.com.br',
     status: 'active', 
     planId: 'plan_free',
     activeAddons: [],
