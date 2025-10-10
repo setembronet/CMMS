@@ -184,7 +184,7 @@ export let workOrders: WorkOrder[] = [
 ];
 
 export let products: Product[] = [
-    { id: 'prod-01', name: 'Óleo Lubrificante XPTO', sku: 'LUB-001', manufacturer: 'Castrol', stock: 150, price: 50.00 },
+    { id: 'prod-01', name: 'Óleo Lubrificante XPTO', sku: 'LUB-001', manufacturer: 'Castrol', stock: 149, price: 50.00 },
     { id: 'prod-02', name: 'Correia Dentada 5M', sku: 'COR-005', manufacturer: 'Gates', stock: 80, price: 120.50 },
     { id: 'prod-03', name: 'Painel de Comando Digital', sku: 'PDC-100', manufacturer: 'Atlas Schindler', stock: 10, price: 2500.00 },
 ];

@@ -37,7 +37,6 @@ export type CustomerLocation = {
   };
   contacts?: Contact[];
   interactions?: Interaction[];
-  contracts?: Contract[];
 };
 
 
