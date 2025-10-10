@@ -234,9 +234,9 @@
       "viewHistory": "Ver Histórico de OS"
     },
     "dialog": {
-      "editTitle": "Editar Ativo",
+      "editTitle": "Dossiê do Ativo: {name}",
       "newTitle": "Novo Ativo",
-      "editDescription": "Atualize os detalhes do ativo.",
+      "editDescription": "Informações completas e histórico do ativo.",
       "newDescription": "Preencha os detalhes do novo ativo para {clientName}.",
       "finalClient": "Cliente Final",
       "finalClientPlaceholder": "Selecione o cliente final",
@@ -634,19 +634,22 @@
     }
   },
    "purchaseSuggestion": {
-    "title": "Sugestão de Compra",
+    "title": "Sugestão de Compra Inteligente",
+    "description": "Sugestões baseadas no consumo histórico para otimizar seu estoque e evitar falta de peças.",
     "allGoodTitle": "Tudo em ordem!",
     "allGoodDescription": "Seu estoque está saudável. Nenhuma peça precisa de reposição no momento.",
     "table": {
       "item": "Item",
       "supplier": "Fornecedor Padrão",
-      "stock": "Estoque Atual",
-      "minStock": "Estoque Mínimo",
+      "stockInfo": "Estoque (Atual/Mín)",
+      "consumption": "Consumo Médio",
+      "coverage": "Cobertura do Estoque",
       "suggestedQty": "Qtd. Sugerida"
     },
-    "createPO": "Criar OC",
+    "createPOForSupplier": "Criar OC para Fornecedor",
     "noSupplierTitle": "Fornecedor Não Definido",
     "noSupplierDescription": "A peça '{itemName}' não possui um fornecedor padrão. Edite o cadastro da peça para continuar.",
+    "noSupplierDescriptionBatch": "Um ou mais itens não possuem fornecedor padrão. A OC não pode ser criada.",
     "poCreatedTitle": "Ordem de Compra Criada!",
     "poCreatedDescription": "A OC {poId} para o fornecedor {supplierName} foi criada com sucesso."
   },
@@ -681,3 +684,5 @@
     "generationNoNewDescription": "Todas as faturas para o período atual já foram geradas."
   }
 }
+
+    

@@ -234,9 +234,9 @@
       "viewHistory": "Ver Historial de OS"
     },
     "dialog": {
-      "editTitle": "Editar Activo",
+      "editTitle": "Dossier del Activo: {name}",
       "newTitle": "Nuevo Activo",
-      "editDescription": "Actualice los detalles del activo.",
+      "editDescription": "Información completa e historial del activo.",
       "newDescription": "Rellene los detalles del nuevo activo para {clientName}.",
       "finalClient": "Cliente Final",
       "finalClientPlaceholder": "Seleccione el cliente final",
@@ -634,19 +634,21 @@
     }
   },
    "purchaseSuggestion": {
-    "title": "Sugerencia de Compra",
+    "title": "Sugerencia de Compra Inteligente",
+    "description": "Sugerencias basadas en el consumo histórico para optimizar su stock y evitar la falta de piezas.",
     "allGoodTitle": "¡Todo en orden!",
     "allGoodDescription": "Su stock está saludable. Ninguna pieza necesita reposición en este momento.",
     "table": {
       "item": "Ítem",
-      "supplier": "Proveedor Predeterminado",
-      "stock": "Stock Actual",
-      "minStock": "Stock Mínimo",
+      "stockInfo": "Stock (Actual/Mín)",
+      "consumption": "Consumo Promedio",
+      "coverage": "Cobertura del Stock",
       "suggestedQty": "Cant. Sugerida"
     },
-    "createPO": "Crear OC",
+    "createPOForSupplier": "Crear OC para Proveedor",
     "noSupplierTitle": "Proveedor No Definido",
     "noSupplierDescription": "La pieza '{itemName}' no tiene un proveedor predeterminado. Edite el registro de la pieza para continuar.",
+    "noSupplierDescriptionBatch": "Uno o más ítems no tienen proveedor predeterminado. La OC no puede ser creada.",
     "poCreatedTitle": "¡Orden de Compra Creada!",
     "poCreatedDescription": "La OC {poId} para el proveedor {supplierName} fue creada con éxito."
   },
@@ -681,3 +683,5 @@
     "generationNoNewDescription": "Todas las facturas para el período actual ya han sido generadas."
   }
 }
+
+    
