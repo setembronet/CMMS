@@ -334,3 +334,12 @@ export type AccountsReceivable = {
   chartOfAccountId: string;
   notes?: string;
 };
+
+export type BankAccount = {
+  id: string;
+  name: string; // "Conta Principal", "Caixa"
+  bank?: string; // "Bradesco", "Itaú"
+  agency?: string;
+  accountNumber?: string;
+  balance: number;
+};

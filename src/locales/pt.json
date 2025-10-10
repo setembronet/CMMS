@@ -37,7 +37,8 @@
     "costCenters": "Centros de Custo",
     "accountsPayable": "Contas a Pagar",
     "accountsReceivable": "Contas a Receber",
-    "backoffice": "Backoffice"
+    "backoffice": "Backoffice",
+    "bankAccounts": "Contas Bancárias"
   },
   "common": {
     "save": "Salvar",
@@ -648,5 +649,28 @@
     "noSupplierDescription": "A peça '{itemName}' não possui um fornecedor padrão. Edite o cadastro da peça para continuar.",
     "poCreatedTitle": "Ordem de Compra Criada!",
     "poCreatedDescription": "A OC {poId} para o fornecedor {supplierName} foi criada com sucesso."
+  },
+  "bankAccounts": {
+    "title": "Contas Bancárias",
+    "new": "Nova Conta",
+    "table": {
+      "name": "Nome da Conta",
+      "bank": "Banco",
+      "agency": "Agência",
+      "account": "Conta",
+      "balance": "Saldo Atual"
+    },
+    "dialog": {
+      "editTitle": "Editar Conta Bancária",
+      "newTitle": "Nova Conta Bancária",
+      "description": "Gerencie as contas bancárias da empresa.",
+      "name": "Apelido da Conta",
+      "namePlaceholder": "Ex: Conta Principal Bradesco",
+      "bank": "Nome do Banco",
+      "bankPlaceholder": "Ex: Bradesco, Caixa, etc.",
+      "agency": "Agência",
+      "account": "Número da Conta",
+      "balance": "Saldo Inicial (R$)"
+    }
   }
 }

@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import Link from 'next/link';
@@ -32,6 +33,7 @@ import {
   Library,
   Target,
   ArrowRightLeft,
+  Landmark,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -291,6 +293,14 @@ export function SidebarNav() {
                                     <Link href="/dashboard/cmms/finance">
                                         <DollarSign />
                                         <span>{t('cmms.finance.dashboardTitle')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/bank-accounts', true)}>
+                                    <Link href="/dashboard/cmms/bank-accounts">
+                                        <Landmark />
+                                        <span>{t('sidebar.bankAccounts')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>

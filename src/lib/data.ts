@@ -2,7 +2,8 @@
 
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable } from './types';
+
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -115,6 +116,11 @@ export let accountsReceivable: AccountsReceivable[] = [
         status: 'Vencida',
         chartOfAccountId: 'coa-15'
     }
+];
+
+export let bankAccounts: BankAccount[] = [
+    { id: 'ba-01', name: 'Conta Principal Bradesco', bank: 'Bradesco', agency: '1234', accountNumber: '56789-0', balance: 50000.00 },
+    { id: 'ba-02', name: 'Caixa Interno', balance: 1500.00 },
 ];
 
 
@@ -529,6 +535,10 @@ export const setAccountsReceivable = (newARs: AccountsReceivable[]) => {
   accountsReceivable = newARs;
 };
 
+export const setBankAccounts = (newBAs: BankAccount[]) => {
+    bankAccounts = newBAs;
+};
+
 export const setKpis = (newKpis: typeof kpis) => {
     kpis = newKpis;
 };
@@ -554,6 +564,7 @@ export const getBackupData = () => ({
   chartOfAccounts,
   accountsPayable,
   accountsReceivable,
+  bankAccounts,
 });
 
 // Function to restore all data
@@ -579,5 +590,6 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.chartOfAccounts)) chartOfAccounts = data.chartOfAccounts;
     if (Array.isArray(data.accountsPayable)) setAccountsPayable(data.accountsPayable);
     if (Array.isArray(data.accountsReceivable)) setAccountsReceivable(data.accountsReceivable);
+    if (Array.isArray(data.bankAccounts)) setBankAccounts(data.bankAccounts);
   }
 };

@@ -37,7 +37,8 @@
     "costCenters": "Cost Centers",
     "accountsPayable": "Accounts Payable",
     "accountsReceivable": "Accounts Receivable",
-    "backoffice": "Backoffice"
+    "backoffice": "Backoffice",
+    "bankAccounts": "Bank Accounts"
   },
   "common": {
     "save": "Save",
@@ -648,5 +649,28 @@
     "noSupplierDescription": "The part '{itemName}' does not have a default supplier. Edit the part's record to continue.",
     "poCreatedTitle": "Purchase Order Created!",
     "poCreatedDescription": "PO {poId} for supplier {supplierName} has been created successfully."
+  },
+  "bankAccounts": {
+    "title": "Bank Accounts",
+    "new": "New Account",
+    "table": {
+      "name": "Account Name",
+      "bank": "Bank",
+      "agency": "Agency",
+      "account": "Account",
+      "balance": "Current Balance"
+    },
+    "dialog": {
+      "editTitle": "Edit Bank Account",
+      "newTitle": "New Bank Account",
+      "description": "Manage the company's bank accounts.",
+      "name": "Account Nickname",
+      "namePlaceholder": "e.g., Main Bradesco Account",
+      "bank": "Bank Name",
+      "bankPlaceholder": "e.g., Bradesco, Caixa, etc.",
+      "agency": "Agency",
+      "account": "Account Number",
+      "balance": "Initial Balance ($)"
+    }
   }
 }
