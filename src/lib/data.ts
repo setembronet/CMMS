@@ -322,6 +322,7 @@ export let contracts: Contract[] = [
     customerLocationId: 'loc-01',
     startDate: new Date(2024, 0, 1).getTime(),
     endDate: new Date(2024, 11, 31).getTime(),
+    monthlyValue: 750,
     contractType: 'Integral',
     coveredAssetIds: ['asset-01'],
     plans: [
@@ -334,6 +335,7 @@ export let contracts: Contract[] = [
     customerLocationId: 'loc-02',
     startDate: new Date(2024, 0, 1).getTime(),
     endDate: new Date(2024, 7, 31).getTime(),
+    monthlyValue: 1200,
     contractType: 'Mão de Obra',
     coveredAssetIds: ['asset-02'],
     plans: []

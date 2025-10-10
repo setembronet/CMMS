@@ -229,6 +229,7 @@ export type Contract = {
   customerLocationId: string;
   startDate: number; // timestamp
   endDate: number; // timestamp
+  monthlyValue: number;
   contractType: ContractType;
   coveredAssetIds: string[];
   plans: MaintenancePlan[];
