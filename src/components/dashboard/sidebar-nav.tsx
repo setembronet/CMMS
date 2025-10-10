@@ -25,6 +25,7 @@ import {
   PackageSearch,
   Receipt,
   Truck,
+  ShoppingCart,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -74,7 +75,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isFinanceActive = pathname.startsWith('/dashboard/finance');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers'].some(p => pathname.startsWith(p));
+  const isCmmsActive = ['/dashboard/cmms', '/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders'].some(p => pathname.startsWith(p));
 
   return (
     <>
@@ -248,6 +249,14 @@ export function SidebarNav() {
                                     <Link href="/dashboard/suppliers">
                                         <Truck />
                                         <span>{t('sidebar.suppliers')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/purchase-orders', true)}>
+                                    <Link href="/dashboard/purchase-orders">
+                                        <ShoppingCart />
+                                        <span>{t('sidebar.purchaseOrders')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>

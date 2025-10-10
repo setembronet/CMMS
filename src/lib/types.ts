@@ -65,6 +65,7 @@ export type ContractType = 'Integral' | 'Mão de Obra';
 export type ChecklistItemStatus = 'OK' | 'NÃO OK' | 'N/A';
 export type RootCause = 'Desgaste Natural' | 'Falha Humana' | 'Falha Elétrica' | 'Vandalismo' | 'Outro';
 export type RecommendedAction = 'Criar OS de Follow-up' | 'Monitorar' | 'Nenhuma Ação Necessária';
+export type PurchaseOrderStatus = 'Pendente' | 'Aprovada' | 'Recebida' | 'Cancelada';
 
 
 // Roles for SaaS management (internal users)
@@ -250,4 +251,19 @@ export type Supplier = {
     zipCode: string;
   };
   contacts?: SupplierContact[];
+};
+
+export type PurchaseOrderItem = {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+export type PurchaseOrder = {
+  id: string;
+  supplierId: string;
+  status: PurchaseOrderStatus;
+  creationDate: number; // timestamp
+  items: PurchaseOrderItem[];
+  totalValue: number;
 };

@@ -27,7 +27,8 @@
     "contracts": "Contratos",
     "cmmsDashboard": "Dashboard CMMS",
     "suppliers": "Fornecedores",
-    "products": "Peças"
+    "products": "Peças",
+    "purchaseOrders": "Ordens de Compra"
   },
   "common": {
     "save": "Salvar",
@@ -560,10 +561,45 @@
       "rolePlaceholder": "Ex: Vendedor, Gerente...",
       "classification": "Classificação"
     },
-    "categories": {
+     "categories": {
       "peças": "Peças",
       "serviços": "Serviços",
       "materiais": "Materiais"
+    }
+  },
+  "purchaseOrders": {
+    "title": "Ordens de Compra",
+    "new": "Nova OC",
+    "table": {
+      "id": "ID da OC",
+      "supplier": "Fornecedor",
+      "creationDate": "Data de Criação",
+      "totalValue": "Valor Total",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Detalhes da Ordem de Compra",
+      "newTitle": "Nova Ordem de Compra",
+      "description": "Crie e gerencie suas ordens de compra.",
+      "supplier": "Fornecedor",
+      "supplierPlaceholder": "Selecione um fornecedor de peças",
+      "status": "Status",
+      "items": "Itens",
+      "addItem": "Adicionar Item",
+      "item": "Item",
+      "itemPlaceholder": "Selecione um item",
+      "quantity": "Qtd",
+      "unitPrice": "Preço Unit.",
+      "total": "Total",
+      "removeItem": "Remover Item",
+      "noItems": "Nenhum item adicionado.",
+      "totalOrderValue": "Valor Total da OC"
+    },
+    "statusLabels": {
+      "Pendente": "Pendente",
+      "Aprovada": "Aprovada",
+      "Recebida": "Recebida",
+      "Cancelada": "Cancelada"
     }
   }
 }

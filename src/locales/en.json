@@ -27,7 +27,8 @@
     "contracts": "Contracts",
     "cmmsDashboard": "CMMS Dashboard",
     "suppliers": "Suppliers",
-    "products": "Parts"
+    "products": "Parts",
+    "purchaseOrders": "Purchase Orders"
   },
   "common": {
     "save": "Save",
@@ -564,6 +565,41 @@
       "peças": "Parts",
       "serviços": "Services",
       "materiais": "Materials"
+    }
+  },
+  "purchaseOrders": {
+    "title": "Purchase Orders",
+    "new": "New PO",
+    "table": {
+      "id": "PO ID",
+      "supplier": "Supplier",
+      "creationDate": "Creation Date",
+      "totalValue": "Total Value",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Purchase Order Details",
+      "newTitle": "New Purchase Order",
+      "description": "Create and manage your purchase orders.",
+      "supplier": "Supplier",
+      "supplierPlaceholder": "Select a parts supplier",
+      "status": "Status",
+      "items": "Items",
+      "addItem": "Add Item",
+      "item": "Item",
+      "itemPlaceholder": "Select an item",
+      "quantity": "Qty",
+      "unitPrice": "Unit Price",
+      "total": "Total",
+      "removeItem": "Remove Item",
+      "noItems": "No items added.",
+      "totalOrderValue": "Total PO Value"
+    },
+    "statusLabels": {
+      "Pendente": "Pending",
+      "Aprovada": "Approved",
+      "Recebida": "Received",
+      "Cancelada": "Canceled"
     }
   }
 }

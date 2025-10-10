@@ -27,7 +27,8 @@
     "contracts": "Contratos",
     "cmmsDashboard": "Dashboard GMAO",
     "suppliers": "Proveedores",
-    "products": "Piezas"
+    "products": "Piezas",
+    "purchaseOrders": "Órdenes de Compra"
   },
   "common": {
     "save": "Guardar",
@@ -564,6 +565,41 @@
       "peças": "Piezas",
       "serviços": "Servicios",
       "materiais": "Materiales"
+    }
+  },
+  "purchaseOrders": {
+    "title": "Órdenes de Compra",
+    "new": "Nueva OC",
+    "table": {
+      "id": "ID de OC",
+      "supplier": "Proveedor",
+      "creationDate": "Fecha de Creación",
+      "totalValue": "Valor Total",
+      "status": "Estado"
+    },
+    "dialog": {
+      "editTitle": "Detalles de la Orden de Compra",
+      "newTitle": "Nueva Orden de Compra",
+      "description": "Cree y gestione sus órdenes de compra.",
+      "supplier": "Proveedor",
+      "supplierPlaceholder": "Seleccione un proveedor de piezas",
+      "status": "Estado",
+      "items": "Ítems",
+      "addItem": "Añadir Ítem",
+      "item": "Ítem",
+      "itemPlaceholder": "Seleccione un ítem",
+      "quantity": "Cant",
+      "unitPrice": "Precio Unit.",
+      "total": "Total",
+      "removeItem": "Eliminar Ítem",
+      "noItems": "No se han añadido ítems.",
+      "totalOrderValue": "Valor Total de la OC"
+    },
+    "statusLabels": {
+      "Pendente": "Pendiente",
+      "Aprovada": "Aprobada",
+      "Recebida": "Recibida",
+      "Cancelada": "Cancelada"
     }
   }
 }

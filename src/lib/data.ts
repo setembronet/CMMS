@@ -1,6 +1,6 @@
 
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, Checklist, Supplier, SupplierCategory } from './types';
+import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, Checklist, Supplier, SupplierCategory, PurchaseOrder } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
@@ -317,6 +317,8 @@ export let contracts: Contract[] = [
   }
 ];
 
+export let purchaseOrders: PurchaseOrder[] = [];
+
 export let kpis = {
     activeUsers: users.length,
     mockMrr: 1250, // This will be replaced by dynamic calculation
@@ -373,6 +375,10 @@ export const setSuppliers = (newSuppliers: Supplier[]) => {
   suppliers = newSuppliers;
 };
 
+export const setPurchaseOrders = (newPOs: PurchaseOrder[]) => {
+  purchaseOrders = newPOs;
+};
+
 export const setKpis = (newKpis: typeof kpis) => {
     kpis = newKpis;
 };
@@ -392,6 +398,7 @@ export const getBackupData = () => ({
   products,
   contracts,
   suppliers,
+  purchaseOrders,
 });
 
 // Function to restore all data
@@ -411,5 +418,6 @@ export const restoreData = (data: any) => {
     if (Array.isArray(data.products)) setProducts(data.products);
     if (Array.isArray(data.contracts)) setContracts(data.contracts);
     if (Array.isArray(data.suppliers)) setSuppliers(data.suppliers);
+    if (Array.isArray(data.purchaseOrders)) setPurchaseOrders(data.purchaseOrders);
   }
 };
