@@ -29,7 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, FileUp } from 'lucide-react';
-import { accountsPayable as initialData, costCenters, chartOfAccounts, setAccountsPayable, bankAccounts } from '@/lib/data';
+import { accountsPayable as initialData, costCenters, chartOfAccounts, setAccountsPayable, bankAccounts, setBankAccounts } from '@/lib/data';
 import type { AccountsPayable, AccountsPayableStatus, CostCenter, ChartOfAccount, BankAccount } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 const emptyAP: AccountsPayable = {
   id: '',
@@ -60,6 +61,7 @@ const emptyAP: AccountsPayable = {
 
 export default function AccountsPayablePage() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [accounts, setAccounts] = React.useState<AccountsPayable[]>(initialData);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<AccountsPayable | null>(null);
@@ -120,13 +122,14 @@ export default function AccountsPayablePage() {
     e.preventDefault();
     if (!formData) return;
 
+    let updatedAccountsPayable = [...accounts];
+    const originalAccount = editingAccount ? accounts.find(acc => acc.id === editingAccount.id) : null;
+    const wasPaid = originalAccount?.status === 'Paga';
+    const isNowPaid = formData.status === 'Paga';
+
     if (editingAccount) {
-        // Editing a single account
-        const updatedAccounts = accounts.map(acc => (acc.id === formData.id ? formData : acc));
-        setAccountsPayable(updatedAccounts);
-        setAccounts(updatedAccounts.sort((a,b) => b.dueDate - a.dueDate));
+        updatedAccountsPayable = accounts.map(acc => (acc.id === formData.id ? formData : acc));
     } else if (formData.isRecurring && formData.recurrenceInstallments > 1) {
-        // Creating new recurring accounts
         const newAccounts: AccountsPayable[] = [];
         const baseDescription = formData.description;
         const firstDueDate = new Date(formData.dueDate);
@@ -135,24 +138,54 @@ export default function AccountsPayablePage() {
             const newAccount: AccountsPayable = {
                 ...formData,
                 id: `ap-${Date.now()}-${i}`,
-                isRecurring: false, // Only the parent "idea" is recurring
+                isRecurring: false,
                 description: `${baseDescription} (Parcela ${i + 1}/${formData.recurrenceInstallments})`,
                 dueDate: addMonths(firstDueDate, i).getTime(),
+                status: 'Pendente', // Recurring payments start as pending
+                paymentDate: undefined,
+                bankAccountId: '',
             };
             newAccounts.push(newAccount);
         }
-        const updatedAccounts = [...newAccounts, ...accounts];
-        setAccountsPayable(updatedAccounts);
-        setAccounts(updatedAccounts.sort((a,b) => b.dueDate - a.dueDate));
+        updatedAccountsPayable = [...newAccounts, ...accounts];
     } else {
-        // Creating a single new account
-        const updatedAccounts = [formData, ...accounts];
-        setAccountsPayable(updatedAccounts);
-        setAccounts(updatedAccounts.sort((a,b) => b.dueDate - a.dueDate));
+        updatedAccountsPayable = [formData, ...accounts];
     }
+    
+    // --- Bank Balance Logic ---
+    let updatedBankAccounts = [...bankAccounts];
+    let balanceUpdated = false;
 
+    if (isNowPaid && !wasPaid && formData.bankAccountId && formData.value > 0) {
+        const bankAccountIndex = updatedBankAccounts.findIndex(ba => ba.id === formData.bankAccountId);
+        if (bankAccountIndex !== -1) {
+            updatedBankAccounts[bankAccountIndex].balance -= formData.value;
+            balanceUpdated = true;
+        }
+    } else if (!isNowPaid && wasPaid && originalAccount && originalAccount.bankAccountId && originalAccount.value > 0) {
+        // Revert balance if status is changed from 'Paga'
+        const bankAccountIndex = updatedBankAccounts.findIndex(ba => ba.id === originalAccount.bankAccountId);
+        if (bankAccountIndex !== -1) {
+            updatedBankAccounts[bankAccountIndex].balance += originalAccount.value;
+            balanceUpdated = true;
+        }
+    }
+    
+    if (balanceUpdated) {
+        setBankAccounts(updatedBankAccounts);
+        setAvailableBankAccounts(updatedBankAccounts); // Update local state for the select dropdown
+         toast({
+            title: "Saldo Bancário Atualizado",
+            description: `O saldo da conta foi ajustado em R$ ${formData.value.toFixed(2)}.`,
+        });
+    }
+    // --- End Bank Balance Logic ---
+    
+    setAccountsPayable(updatedAccountsPayable);
+    setAccounts(updatedAccountsPayable.sort((a,b) => b.dueDate - a.dueDate));
     closeDialog();
   };
+
 
   const getCostCenterName = (id: string) => costCenters.find(c => c.id === id)?.name || 'N/A';
   const getChartOfAccountName = (id: string) => chartOfAccounts.find(c => c.id === id)?.name || 'N/A';
@@ -311,7 +344,7 @@ export default function AccountsPayablePage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="bankAccountId">Conta de Pagamento</Label>
-                                <Select name="bankAccountId" value={formData.bankAccountId} onValueChange={(v) => handleSelectChange('bankAccountId', v)}>
+                                <Select name="bankAccountId" value={formData.bankAccountId} onValueChange={(v) => handleSelectChange('bankAccountId', v)} required>
                                     <SelectTrigger><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
                                     <SelectContent>
                                         {availableBankAccounts.map(ba => <SelectItem key={ba.id} value={ba.id}>{ba.name}</SelectItem>)}

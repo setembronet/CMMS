@@ -29,7 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon } from 'lucide-react';
-import { accountsReceivable as initialData, customerLocations, chartOfAccounts, setAccountsReceivable, bankAccounts } from '@/lib/data';
+import { accountsReceivable as initialData, customerLocations, chartOfAccounts, setAccountsReceivable, bankAccounts, setBankAccounts } from '@/lib/data';
 import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount, BankAccount } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { useClient } from '@/context/client-provider';
@@ -41,6 +41,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+
 
 const emptyAR: AccountsReceivable = {
   id: '',
@@ -55,6 +57,7 @@ const emptyAR: AccountsReceivable = {
 
 export default function AccountsReceivablePage() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const { selectedClient } = useClient();
 
   const [accounts, setAccounts] = React.useState<AccountsReceivable[]>([]);
@@ -118,18 +121,52 @@ export default function AccountsReceivablePage() {
     e.preventDefault();
     if (!formData) return;
 
-    let updatedAccounts;
+    let updatedAccountsReceivable;
+    const originalAccount = editingAccount ? accounts.find(acc => acc.id === editingAccount.id) : null;
+    const wasPaid = originalAccount?.status === 'Paga';
+    const isNowPaid = formData.status === 'Paga';
+
     if (editingAccount) {
-      updatedAccounts = initialData.map(acc => (acc.id === formData.id ? formData : acc));
+      updatedAccountsReceivable = initialData.map(acc => (acc.id === formData.id ? formData : acc));
     } else {
-      updatedAccounts = [formData, ...initialData];
+      updatedAccountsReceivable = [formData, ...initialData];
     }
-    setAccountsReceivable(updatedAccounts);
+
+    // --- Bank Balance Logic ---
+    let updatedBankAccounts = [...bankAccounts];
+    let balanceUpdated = false;
+
+    if (isNowPaid && !wasPaid && formData.bankAccountId && formData.value > 0) {
+        const bankAccountIndex = updatedBankAccounts.findIndex(ba => ba.id === formData.bankAccountId);
+        if (bankAccountIndex !== -1) {
+            updatedBankAccounts[bankAccountIndex].balance += formData.value;
+            balanceUpdated = true;
+        }
+    } else if (!isNowPaid && wasPaid && originalAccount && originalAccount.bankAccountId && originalAccount.value > 0) {
+        // Revert balance if status is changed from 'Paga'
+        const bankAccountIndex = updatedBankAccounts.findIndex(ba => ba.id === originalAccount.bankAccountId);
+        if (bankAccountIndex !== -1) {
+            updatedBankAccounts[bankAccountIndex].balance -= originalAccount.value;
+            balanceUpdated = true;
+        }
+    }
+
+    if (balanceUpdated) {
+        setBankAccounts(updatedBankAccounts);
+        setAvailableBankAccounts(updatedBankAccounts);
+         toast({
+            title: "Saldo Bancário Atualizado",
+            description: `O saldo da conta foi ajustado em R$ ${formData.value.toFixed(2)}.`,
+        });
+    }
+    // --- End Bank Balance Logic ---
+
+    setAccountsReceivable(updatedAccountsReceivable);
     
     if (selectedClient) {
         const locations = customerLocations.filter(loc => loc.clientId === selectedClient.id);
         const locationIds = locations.map(l => l.id);
-        setAccounts(updatedAccounts.filter(ar => locationIds.includes(ar.customerLocationId)).sort((a, b) => b.dueDate - a.dueDate));
+        setAccounts(updatedAccountsReceivable.filter(ar => locationIds.includes(ar.customerLocationId)).sort((a, b) => b.dueDate - a.dueDate));
     }
 
     closeDialog();
@@ -282,7 +319,7 @@ export default function AccountsReceivablePage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="bankAccountId">Conta de Destino</Label>
-                                <Select name="bankAccountId" value={formData.bankAccountId} onValueChange={(v) => handleSelectChange('bankAccountId', v)}>
+                                <Select name="bankAccountId" value={formData.bankAccountId} onValueChange={(v) => handleSelectChange('bankAccountId', v)} required>
                                     <SelectTrigger><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
                                     <SelectContent>
                                         {availableBankAccounts.map(ba => <SelectItem key={ba.id} value={ba.id}>{ba.name}</SelectItem>)}
@@ -320,3 +357,5 @@ export default function AccountsReceivablePage() {
     </div>
   );
 }
+
+    
