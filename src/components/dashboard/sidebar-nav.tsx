@@ -71,8 +71,6 @@ export function SidebarNav() {
     { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ClipboardList },
     { href: '/dashboard/assets', label: t('sidebar.assets'), icon: Wrench },
   ];
-  const isTechnicianPortalActive = technicianNavItems.some(item => isActive(item.href, item.href === '/dashboard'));
-
 
   const settingsLinks = [
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
@@ -353,40 +351,6 @@ export function SidebarNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
-           
-           {/* Technician Portal Menu */}
-            <Collapsible asChild defaultOpen={isTechnicianPortalActive}>
-                <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                         <SidebarMenuButton
-                            isActive={isTechnicianPortalActive}
-                            className="justify-between"
-                            tooltip={{ children: "Portal do Técnico" }}
-                         >
-                            <div className="flex items-center gap-2">
-                                <UserSquare />
-                                <span>Portal do Técnico</span>
-                            </div>
-                            <ChevronDown className={cn("transition-transform duration-200", isTechnicianPortalActive && "rotate-180")} />
-                        </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                            {technicianNavItems.map(item => (
-                                <SidebarMenuSubItem key={item.href}>
-                                    <SidebarMenuSubButton asChild isActive={isActive(item.href, item.href === '/dashboard')}>
-                                        <Link href={item.href}>
-                                            <item.icon />
-                                            <span>{item.label}</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                            ))}
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </SidebarMenuItem>
-           </Collapsible>
-
         </SidebarMenu>
         <SidebarMenu className="mt-auto">
           <Collapsible asChild defaultOpen={isSettingsActive}>
