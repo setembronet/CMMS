@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -63,6 +64,7 @@ export function SidebarNav() {
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
+  const isCmmsBackofficeActive = pathname.startsWith('/dashboard/cmms');
   
   const technicianNavItems = [
     { href: '/dashboard', label: t('sidebar.dashboard'), icon: Home },
@@ -295,57 +297,70 @@ export function SidebarNav() {
                                 </SidebarMenuSubButton>
                              </SidebarMenuSubItem>
                         </SidebarMenuSub>
-                        <SidebarMenuSub>
-                            <div className="text-xs font-medium text-sidebar-foreground/70 px-4 py-2">{t('sidebar.backoffice')} (CMMS)</div>
-                             <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/finance', true)}>
-                                    <Link href="/dashboard/cmms/finance">
-                                        <DollarSign />
-                                        <span>{t('cmms.finance.dashboardTitle')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                             <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/bank-accounts', true)}>
-                                    <Link href="/dashboard/cmms/bank-accounts">
-                                        <Landmark />
-                                        <span>{t('sidebar.bankAccounts')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                             <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/chart-of-accounts', true)}>
-                                    <Link href="/dashboard/cmms/chart-of-accounts">
-                                        <Library />
-                                        <span>{t('sidebar.chartOfAccounts')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                              <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/cost-centers', true)}>
-                                    <Link href="/dashboard/cmms/cost-centers">
-                                        <Target />
-                                        <span>{t('sidebar.costCenters')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                             <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-payable', true)}>
-                                    <Link href="/dashboard/cmms/accounts-payable">
-                                        <ArrowRightLeft />
-                                        <span>{t('sidebar.accountsPayable')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                             <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-receivable', true)}>
-                                    <Link href="/dashboard/cmms/accounts-receivable">
-                                        <Receipt />
-                                        <span>{t('sidebar.accountsReceivable')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                        </SidebarMenuSub>
+                        
+                        <Collapsible asChild defaultOpen={isCmmsBackofficeActive}>
+                            <SidebarMenuSubItem>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 px-4 py-2 cursor-pointer hover:text-sidebar-foreground">
+                                        <span>{t('sidebar.backoffice')} (CMMS)</span>
+                                        <ChevronDown className={cn("transition-transform duration-200", isCmmsBackofficeActive && "rotate-180")} />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <SidebarMenuSub>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/finance', true)}>
+                                                <Link href="/dashboard/cmms/finance">
+                                                    <DollarSign />
+                                                    <span>{t('cmms.finance.dashboardTitle')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/bank-accounts', true)}>
+                                                <Link href="/dashboard/cmms/bank-accounts">
+                                                    <Landmark />
+                                                    <span>{t('sidebar.bankAccounts')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/chart-of-accounts', true)}>
+                                                <Link href="/dashboard/cmms/chart-of-accounts">
+                                                    <Library />
+                                                    <span>{t('sidebar.chartOfAccounts')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/cost-centers', true)}>
+                                                <Link href="/dashboard/cmms/cost-centers">
+                                                    <Target />
+                                                    <span>{t('sidebar.costCenters')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-payable', true)}>
+                                                <Link href="/dashboard/cmms/accounts-payable">
+                                                    <ArrowRightLeft />
+                                                    <span>{t('sidebar.accountsPayable')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-receivable', true)}>
+                                                <Link href="/dashboard/cmms/accounts-receivable">
+                                                    <Receipt />
+                                                    <span>{t('sidebar.accountsReceivable')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    </SidebarMenuSub>
+                                </CollapsibleContent>
+                            </SidebarMenuSubItem>
+                        </Collapsible>
+
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
@@ -395,3 +410,4 @@ export function SidebarNav() {
     </>
   );
 }
+
