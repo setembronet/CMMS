@@ -23,6 +23,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const currentUser = useMemo(() => users.find(u => u.id === MOCKED_CURRENT_USER_ID) || null, []);
 
   useEffect(() => {
+    setIsMounted(true);
     // On mount, try to get the stored client ID or default based on user profile
     const storedClientId = localStorage.getItem('selectedClientId');
     let initialClientId = storedClientId;
@@ -38,7 +39,6 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
     if (initialClientId) {
       setSelectedClientIdState(initialClientId);
     }
-    setIsMounted(true);
   }, [currentUser]);
 
   const setSelectedClientId = (clientId: string) => {

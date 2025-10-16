@@ -19,19 +19,25 @@ interface I18nContextType {
 export const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
-  const [locale, setLocale] = useState<Locale>('pt');
+  const [locale, setLocaleState] = useState<Locale>('pt');
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     const browserLang = navigator.language.split('-')[0] as Locale;
-    const initialLocale = ['pt', 'en', 'es'].includes(browserLang) ? browserLang : 'pt';
-    handleSetLocale(initialLocale);
+    const storedLocale = localStorage.getItem('locale') as Locale | null;
+    const initialLocale = storedLocale || (['pt', 'en', 'es'].includes(browserLang) ? browserLang : 'pt');
+    
+    if (translations[initialLocale]) {
+      setLocaleState(initialLocale);
+      document.documentElement.lang = initialLocale;
+    }
     setIsMounted(true);
   }, []);
 
-  const handleSetLocale = (newLocale: Locale) => {
+  const setLocale = (newLocale: Locale) => {
     if (translations[newLocale]) {
-      setLocale(newLocale);
+      setLocaleState(newLocale);
+      localStorage.setItem('locale', newLocale);
       document.documentElement.lang = newLocale;
     }
   };
@@ -55,7 +61,7 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale: handleSetLocale, t }}>
+    <I18nContext.Provider value={{ locale, setLocale, t }}>
       {children}
     </I18nContext.Provider>
   );
