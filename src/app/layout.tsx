@@ -2,9 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { I18nProvider } from '@/context/i18n-provider';
-import { ClientProvider } from '@/context/client-provider';
+import { Providers } from '@/app/providers';
 
 
 export const metadata: Metadata = {
@@ -25,14 +23,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased", "font-body")}>
-          <FirebaseClientProvider>
-            <I18nProvider>
-              <ClientProvider>
-                  {children}
-                <Toaster />
-              </ClientProvider>
-            </I18nProvider>
-          </FirebaseClientProvider>
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );
