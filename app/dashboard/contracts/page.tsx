@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -23,21 +23,21 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Badge } from '../../components/ui/badge';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
-import { Calendar } from '../../components/ui/calendar';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
+} from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Trash2, FileText } from 'lucide-react';
 import { 
     contracts as initialContracts, 
@@ -48,15 +48,15 @@ import {
     workOrders as allWorkOrders,
     products as allProducts,
     users as allUsers
-} from '../../lib/data';
-import type { Contract, MaintenancePlan, ContractType, MaintenanceFrequency, CustomerLocation, Asset, ContractStatus, WorkOrder, Product, User } from '../../lib/types';
-import { ScrollArea } from '../../components/ui/scroll-area';
-import { Separator } from '../../components/ui/separator';
-import { cn } from '../../lib/utils';
+} from '@/lib/data';
+import type { Contract, MaintenancePlan, ContractType, MaintenanceFrequency, CustomerLocation, Asset, ContractStatus, WorkOrder, Product, User } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import { format, differenceInMilliseconds, addDays } from 'date-fns';
 import { ptBR, enUS, es } from 'date-fns/locale';
-import { useClient } from '../../context/client-provider';
-import { useI18n } from '../../hooks/use-i18n';
+import { useClient } from '@/context/client-provider';
+import { useI18n } from '@/hooks/use-i18n';
 
 const emptyPlan: Omit<MaintenancePlan, 'id' | 'lastGenerated'> = {
   assetId: '',

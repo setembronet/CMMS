@@ -9,40 +9,40 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
+} from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { users as initialUsers } from '../../lib/data';
-import type { User, SaaSUserRole } from '../../lib/types';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { users as initialUsers } from '@/lib/data';
+import type { User, SaaSUserRole } from '@/lib/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
-import { ScrollArea } from '../../components/ui/scroll-area';
-import { Progress } from '../../components/ui/progress';
-import { cn } from '../../lib/utils';
-import { useI18n } from '../../hooks/use-i18n';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
 
 const saasRoles: SaaSUserRole[] = ['ADMIN', 'FINANCEIRO', 'SUPORTE'];
 

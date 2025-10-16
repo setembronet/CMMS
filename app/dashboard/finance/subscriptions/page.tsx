@@ -9,11 +9,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../../components/ui/table';
-import { Badge } from '../../../components/ui/badge';
-import { companies, plans, addons } from '../../../lib/data';
-import type { Company } from '../../../lib/types';
-import { useI18n } from '../../../hooks/use-i18n';
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { companies, plans, addons } from '@/lib/data';
+import type { Company } from '@/lib/types';
+import { useI18n } from '@/hooks/use-i18n';
 
 export default function SubscriptionsPage() {
   const { t } = useI18n();

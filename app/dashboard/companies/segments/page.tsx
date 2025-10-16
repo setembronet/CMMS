@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../../components/ui/table';
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -23,23 +23,23 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../../../components/ui/dialog';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2 } from 'lucide-react';
-import { Badge } from '../../../components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import {
   segments as initialSegments,
   cmmsRoles as initialCmmsRoles,
   setSegments as setGlobalSegments,
-} from '../../../lib/data';
-import type { CompanySegment, CMMSRole, CustomField, CustomFieldType } from '../../../lib/types';
-import { Checkbox } from '../../../components/ui/checkbox';
-import { Separator } from '../../../components/ui/separator';
-import { ScrollArea } from '../../../components/ui/scroll-area';
-import { useI18n } from '../../../hooks/use-i18n';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+} from '@/lib/data';
+import type { CompanySegment, CMMSRole, CustomField, CustomFieldType } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useI18n } from '@/hooks/use-i18n';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const emptySegment: CompanySegment = {
   id: '',

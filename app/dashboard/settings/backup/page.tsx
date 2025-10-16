@@ -2,13 +2,13 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Separator } from "../../components/ui/separator";
-import { useToast } from '../../hooks/use-toast';
-import { getBackupData, restoreData } from '../../lib/data';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from '@/hooks/use-toast';
+import { getBackupData, restoreData } from '@/lib/data';
 import { Download, Upload, AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
@@ -20,8 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '../../components/ui/alert-dialog';
-import { useI18n } from '../../hooks/use-i18n';
+} from '@/components/ui/alert-dialog';
+import { useI18n } from '@/hooks/use-i18n';
 
 export default function BackupPage() {
   const { t } = useI18n();

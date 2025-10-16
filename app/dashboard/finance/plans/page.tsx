@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../../components/ui/table';
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -23,17 +23,17 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../../../components/ui/dialog';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { Switch } from '../../../components/ui/switch';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { plans as initialPlans } from '../../../lib/data';
-import type { Plan } from '../../../lib/types';
-import { ScrollArea } from '../../../components/ui/scroll-area';
-import { Separator } from '../../../components/ui/separator';
-import { useI18n } from '../../../hooks/use-i18n';
+import { plans as initialPlans } from '@/lib/data';
+import type { Plan } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { useI18n } from '@/hooks/use-i18n';
 
 const emptyPlan: Plan = {
   id: '',
