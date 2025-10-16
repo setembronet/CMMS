@@ -10,12 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from '../../../components/ui/table';
-import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { companies, plans, addons } from '../../../lib/data';
 import type { Company } from '../../../lib/types';
 import { useI18n } from '../../../hooks/use-i18n';
-import { DollarSign } from 'lucide-react';
 
 export default function SubscriptionsPage() {
   const { t } = useI18n();

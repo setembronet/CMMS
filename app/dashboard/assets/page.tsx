@@ -11,13 +11,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
+} from '../components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
+} from '../components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -25,32 +25,32 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Badge } from '../../components/ui/badge';
+} from '../components/ui/dialog';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Badge } from '../components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+} from '../components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { PlusCircle, MoreHorizontal, History, Trash2, Camera, QrCode, HardHat, Package, Check, AlertTriangle, FilePlus } from 'lucide-react';
-import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations, workOrders, plans, products, users } from '../../lib/data';
-import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField } from '../../lib/types';
-import { ScrollArea } from '../../components/ui/scroll-area';
-import { Textarea } from '../../components/ui/textarea';
-import { cn } from '../../lib/utils';
-import { Separator } from '../../components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
-import { useClient } from '../../context/client-provider';
-import { useI18n } from '../../hooks/use-i18n';
+import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations, workOrders, plans, products, users } from '../lib/data';
+import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField } from '../lib/types';
+import { ScrollArea } from '../components/ui/scroll-area';
+import { Textarea } from '../components/ui/textarea';
+import { cn } from '../lib/utils';
+import { Separator } from '../components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { useClient } from '../context/client-provider';
+import { useI18n } from '../hooks/use-i18n';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '../../components/ui/timeline';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '../components/ui/timeline';
 
 type AssetStatus = 'Operacional' | 'Em Manutenção';
 
@@ -604,5 +604,3 @@ export default function AssetsPage() {
     </TooltipProvider>
   );
 }
-
-    
