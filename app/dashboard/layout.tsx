@@ -7,8 +7,8 @@ import {
   SidebarProvider,
   SidebarInset,
 } from '../components/ui/sidebar';
-import { Header } from './header';
-import { SidebarNav } from './sidebar-nav';
+import { Header } from '../components/dashboard/header';
+import { SidebarNav } from '../components/dashboard/sidebar-nav';
 import { I18nProvider } from '../context/i18n-provider';
 import { ClientProvider, useClient } from '../context/client-provider';
 

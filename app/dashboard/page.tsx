@@ -1,3 +1,4 @@
+
 'use client';
 import * as React from 'react';
 import {
@@ -6,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription
-} from '@/components/ui/card';
+} from '../components/ui/card';
 import {
     Table,
     TableBody,
@@ -14,15 +15,15 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import { Wrench, AlertTriangle, Users, Package, CalendarCheck, CheckCircle, Play } from 'lucide-react';
-import { workOrders, assets, users, customerLocations } from '@/lib/data';
-import { useI18n } from '@/hooks/use-i18n';
-import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/types';
+import { workOrders, assets, users, customerLocations } from '../lib/data';
+import { useI18n } from '../hooks/use-i18n';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '../lib/types';
 import { format, startOfWeek, endOfWeek, isToday } from 'date-fns';
-import { useClient } from '@/context/client-provider';
+import { useClient } from '../context/client-provider';
 import { useRouter } from 'next/navigation';
 
 function ManagerDashboard() {
@@ -292,3 +293,5 @@ export default function DashboardPage() {
 
   return isTechnician ? <TechnicianDashboard /> : <ManagerDashboard />;
 }
+
+    
