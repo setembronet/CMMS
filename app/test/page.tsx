@@ -1,4 +1,4 @@
-import { Logo } from '@/components/logo';
+import { Logo } from '../components/logo';
 
 export default function TestPage() {
   return (
@@ -14,7 +14,7 @@ export default function TestPage() {
             <span className="font-semibold">Roteamento Correto:</span> Você está vendo esta página porque o Next.js encontrou o arquivo em <code className="bg-muted px-1 py-0.5 rounded-sm">app/test/page.tsx</code> e o mapeou para a URL <code className="bg-muted px-1 py-0.5 rounded-sm">/test</code>.
           </li>
           <li>
-            <span className="font-semibold">Aliases de Importação Corretos:</span> O logo acima está visível porque a importação <code className="bg-muted px-1 py-0.5 rounded-sm">@/components/logo</code> foi resolvida corretamente.
+            <span className="font-semibold">Importações Relativas Corretas:</span> O logo acima está visível porque a importação <code className="bg-muted px-1 py-0.5 rounded-sm">../components/logo</code> foi resolvida corretamente.
           </li>
         </ol>
         <p className="pt-4 text-green-600 font-bold">A estrutura base do seu projeto está funcionando como esperado.</p>
