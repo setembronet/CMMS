@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/ui/table';
+} from '../../components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
+} from '../../components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -23,24 +23,24 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../components/ui/dialog';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
+} from '../../components/ui/dialog';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit, MessageSquarePlus, Clock, Receipt } from 'lucide-react';
-import { ScrollArea } from '../components/ui/scroll-area';
-import { companies, customerLocations as initialLocations, setCustomerLocations, assets, workOrders, users, products } from '../lib/data';
-import type { CustomerLocation, Contact, WorkOrder, ContractStatus, Interaction, InteractionType } from '../lib/types';
-import { Separator } from '../components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Textarea } from '../components/ui/textarea';
-import { cn } from '../lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { ScrollArea } from '../../components/ui/scroll-area';
+import { companies, customerLocations as initialLocations, setCustomerLocations, assets, workOrders, users, products } from '../../lib/data';
+import type { CustomerLocation, Contact, WorkOrder, ContractStatus, Interaction, InteractionType } from '../../lib/types';
+import { Separator } from '../../components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Textarea } from '../../components/ui/textarea';
+import { cn } from '../../lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useClient } from '../context/client-provider';
-import { useI18n } from '../hooks/use-i18n';
+import { useClient } from '../../context/client-provider';
+import { useI18n } from '../../hooks/use-i18n';
 
 const CURRENT_USER_ID = 'user-04'; // Mock logged-in user
 

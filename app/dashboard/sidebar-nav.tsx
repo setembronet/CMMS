@@ -66,12 +66,6 @@ export function SidebarNav() {
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
   const isCmmsBackofficeActive = pathname.startsWith('/dashboard/cmms');
   
-  const technicianNavItems = [
-    { href: '/dashboard', label: t('sidebar.dashboard'), icon: Home },
-    { href: '/dashboard/orders', label: t('sidebar.workOrders'), icon: ClipboardList },
-    { href: '/dashboard/assets', label: t('sidebar.assets'), icon: Wrench },
-  ];
-
   const settingsLinks = [
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
       { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
