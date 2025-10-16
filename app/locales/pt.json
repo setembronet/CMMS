@@ -1,0 +1,686 @@
+{
+  "header": {
+    "changeLanguage": "Mudar idioma",
+    "selectClient": "Selecione um cliente"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "companies": "Empresas",
+    "users": "Usuários",
+    "assets": "Ativos",
+    "clients": "Clientes",
+    "workOrders": "Ordens de Serviço",
+    "finance": "Financeiro SaaS",
+    "financeDashboard": "Dashboard Financeiro",
+    "plans": "Planos",
+    "addons": "Add-ons",
+    "settings": "Configurações",
+    "general": "Geral",
+    "saasUsers": "Usuários do SaaS",
+    "roles": "Funções",
+    "backupRestore": "Backup e Restore",
+    "logout": "Sair",
+    "overview": "Visão Geral",
+    "segments": "Segmentos",
+    "cmms": "CMMS",
+    "contracts": "Contratos",
+    "cmmsDashboard": "Dashboard CMMS",
+    "suppliers": "Fornecedores",
+    "products": "Peças",
+    "purchaseOrders": "Ordens de Compra",
+    "purchaseSuggestion": "Sugestão de Compra",
+    "checklistTemplates": "Modelos de Checklist",
+    "subscriptions": "Assinaturas",
+    "chartOfAccounts": "Plano de Contas",
+    "costCenters": "Centros de Custo",
+    "accountsPayable": "Contas a Pagar",
+    "accountsReceivable": "Contas a Receber",
+    "backoffice": "Backoffice",
+    "bankAccounts": "Contas Bancárias",
+    "schedule": "Escala de Técnicos"
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "name": "Nome",
+    "email": "Email",
+    "phone": "Telefone",
+    "status": "Status",
+    "actions": "Ações",
+    "openMenu": "Abrir menu",
+    "saveChanges": "Salvar Alterações",
+    "address": "Endereço",
+    "selectPlaceholder": "Selecione uma opção",
+    "value": "Valor",
+    "new": "Novo",
+    "observation": "Observação",
+    "optional": "Opcional",
+    "required": "obrigatório",
+    "search": "Buscar",
+    "description": "Descrição",
+    "date": "Data"
+  },
+  "address": {
+    "zipCode": "CEP",
+    "street": "Rua",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Bairro",
+    "city": "Cidade",
+    "state": "Estado"
+  },
+  "companies": {
+    "title": "Empresas",
+    "overviewTitle": "Visão Geral das Empresas",
+    "newCompany": "Nova Empresa",
+    "toggleStatus": "Ativar/Desativar empresa",
+    "editCompany": "Editar Empresa",
+    "editDescription": "Atualize os detalhes da empresa.",
+    "newDescription": "Preencha os detalhes da nova empresa.",
+    "name": "Nome da Empresa",
+    "cnpj": "CNPJ",
+    "operationalConfig": "Configuração Operacional",
+    "subscriptionPlan": "Plano de Assinatura",
+    "actingSegments": "Segmentos de Atuação",
+    "contractedAddons": "Add-ons Contratados"
+  },
+  "login": {
+    "title": "Acesso ao Painel",
+    "description": "Insira suas credenciais para acessar.",
+    "forgotPassword": "Esqueceu sua senha?",
+    "button": "Entrar"
+  },
+  "userNav": {
+    "loggedInAs": "Logado como",
+    "settings": "Configurações",
+    "logout": "Sair"
+  },
+  "settings": {
+    "profileTitle": "Perfil",
+    "profileDescription": "Atualize suas informações pessoais.",
+    "appearanceTitle": "Aparência",
+    "appearanceDescription": "Personalize a aparência do aplicativo.",
+    "themeLabel": "Tema",
+    "themeDescription": "Selecione seu esquema de cores preferido.",
+    "passwordTitle": "Senha",
+    "passwordDescription": "Altere sua senha. É recomendável usar uma senha forte.",
+    "currentPassword": "Senha Atual",
+    "newPassword": "Nova Senha",
+    "confirmPassword": "Confirme a Nova Senha",
+    "updatePassword": "Atualizar Senha"
+  },
+  "backup": {
+    "title": "Backup e Restore",
+    "doBackupTitle": "Fazer Backup",
+    "doBackupDescription": "Crie um backup completo de todos os dados da aplicação. Guarde este arquivo em um local seguro.",
+    "doBackupButton": "Fazer Backup Agora",
+    "restoreBackupTitle": "Restaurar Backup",
+    "restoreWarning": "Atenção: A restauração substituirá TODOS os dados atuais. Esta ação não pode ser desfeita.",
+    "backupFileLabel": "Arquivo de Backup (.json)",
+    "restoreDataButton": "Restaurar Dados",
+    "confirmTitle": "Você tem certeza absoluta?",
+    "confirmDescription": "Esta ação é irreversível e substituirá todos os dados existentes na aplicação pelos dados do arquivo de backup. Você confirma que deseja prosseguir?",
+    "confirmAction": "Sim, restaurar backup",
+    "backupSuccessTitle": "Backup Realizado com Sucesso!",
+    "backupSuccessDescription": "O arquivo de backup foi baixado para o seu computador.",
+    "backupErrorLog": "Falha ao criar backup:",
+    "backupErrorTitle": "Erro no Backup",
+    "backupErrorDescription": "Não foi possível gerar o arquivo de backup.",
+    "invalidFileTitle": "Arquivo Inválido",
+    "invalidFileDescription": "Por favor, selecione um arquivo .json válido.",
+    "fileReadError": "Falha ao ler o arquivo.",
+    "restoreSuccessTitle": "Restauração Concluída!",
+    "restoreSuccessDescription": "Os dados foram restaurados com sucesso. Atualize a página para ver as mudanças.",
+    "restoreErrorLog": "Falha ao restaurar:",
+    "restoreErrorTitle": "Erro na Restauração",
+    "restoreErrorDescription": "O arquivo de backup está corrompido ou em formato inválido."
+  },
+  "cmmsDashboard": {
+    "title": "Dashboard Operacional",
+    "selectClientPrompt": "Selecione um cliente no menu superior para visualizar o dashboard operacional.",
+    "openWorkOrders": "Ordens de Serviço Abertas",
+    "totalOpen": "Total de OS em aberto ou em andamento",
+    "urgentAlerts": "Alertas Urgentes",
+    "urgentPriority": "OS com prioridade urgente",
+    "assetsInMaintenance": "Ativos em Manutenção",
+    "currentlyInIntervention": "Equipamentos em intervenção",
+    "activeTechnicians": "Técnicos Ativos",
+    "availableTeam": "Equipe disponível para atendimento",
+    "recentActivity": "Atividade Recente",
+    "latestWorkOrders": "Últimas ordens de serviço criadas para sua empresa."
+  },
+  "workOrders": {
+    "title": "Ordens de Serviço",
+    "new": "Nova Ordem de Serviço",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar as Ordens de Serviço.",
+    "table": {
+      "title": "Título da OS",
+      "asset": "Ativo",
+      "scheduledDate": "Agendamento",
+      "technician": "Técnico",
+      "priority": "Prioridade",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Detalhes da Ordem de Serviço",
+      "newTitle": "Nova Ordem de Serviço",
+      "description": "OS #{id} - Criada por {user} em: {date}",
+      "newDescription": "Preencha os detalhes da ordem de serviço.",
+      "asset": "Ativo",
+      "assetPlaceholder": "Selecione o ativo",
+      "title": "Título",
+      "titlePlaceholder": "Ex: Manutenção Corretiva Urgente",
+      "descriptionLabel": "Descrição",
+      "descriptionPlaceholder": "Detalhe o problema ou o serviço a ser realizado.",
+      "status": "Status",
+      "priority": "Prioridade",
+      "scheduledDate": "Data de Agendamento",
+      "optionalDate": "Opcional",
+      "assignmentSection": "Atribuição e Execução",
+      "responsibleTechnician": "Técnico Responsável",
+      "responsibleTechnicianPlaceholder": "Atribuir a um técnico (opcional)",
+      "squad": "Equipe",
+      "squadPlaceholder": "Ex: Equipe Alpha",
+      "executionStart": "Início da Execução",
+      "executionEnd": "Fim da Execução",
+      "checklistSection": "Checklist de Execução",
+      "checklistStatus": "Status",
+      "checklistComment": "Comentário",
+      "checklistCommentPlaceholder": "Se 'NÃO OK', detalhe aqui...",
+      "closingSection": "Encerramento do Serviço",
+      "failureCause": "Causa da Falha (se aplicável)",
+      "failureCausePlaceholder": "Selecione a causa raiz",
+      "recommendedAction": "Ação Recomendada",
+      "recommendedActionPlaceholder": "Selecione a próxima ação",
+      "partsSection": "Peças Utilizadas",
+      "addPart": "Adicionar Peça",
+      "part": "Peça",
+      "partPlaceholder": "Selecione uma peça",
+      "quantity": "Qtd",
+      "cost": "Custo",
+      "stock": "Estoque",
+      "noParts": "Nenhuma peça adicionada.",
+      "partsCost": "Custo Peças",
+      "laborCost": "Custo Mão de Obra",
+      "totalCost": "Custo Total da OS",
+      "internalObservation": "Observação Interna (visível apenas para a equipe)",
+      "internalObservationPlaceholder": "Detalhes técnicos, histórico relevante, etc.",
+      "reopen": "Reabrir OS",
+      "close": "Fechar"
+    }
+  },
+  "assets": {
+    "title": "Gestão de Ativos",
+    "new": "Novo Ativo",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar os ativos.",
+    "limitReached": "Limite de {limit} ativos do plano {planName} atingido.",
+    "table": {
+      "name": "Nome do Ativo",
+      "finalClient": "Cliente Final",
+      "status": "Status",
+      "serialNumber": "Nº de Série",
+      "woHistory": "Histórico de OS"
+    },
+    "status": {
+      "operational": "Operacional",
+      "maintenance": "Em Manutenção"
+    },
+    "history": {
+      "count": "{count} OS",
+      "none": "Nenhuma"
+    },
+    "actions": {
+      "viewHistory": "Ver Histórico de OS"
+    },
+    "dialog": {
+      "editTitle": "Dossiê do Ativo: {name}",
+      "newTitle": "Novo Ativo",
+      "editDescription": "Informações completas e histórico do ativo.",
+      "newDescription": "Preencha os detalhes do novo ativo para {clientName}.",
+      "finalClient": "Cliente Final",
+      "finalClientPlaceholder": "Selecione o cliente final",
+      "segment": "Segmento do Ativo",
+      "segmentPlaceholder": "Selecione o segmento",
+      "noSegment": "O cliente não possui segmentos ativos",
+      "assetName": "Nome do Ativo",
+      "assetNamePlaceholder": "Ex: Elevador Social Bloco B",
+      "brand": "Marca",
+      "brandPlaceholder": "Ex: Atlas Schindler",
+      "model": "Modelo",
+      "modelPlaceholder": "Ex: 5500 MRL",
+      "serialNumber": "Número de Série",
+      "segmentSpecificData": "Dados Específicos do Segmento",
+      "fieldLabel": "Rótulo do Campo",
+      "observationPlaceholder": "Detalhes adicionais, histórico, etc.",
+      "save": "Salvar Ativo"
+    }
+  },
+  "finance": {
+    "mrr": "MRR (Receita Recorrente Mensal)",
+    "mrrDescription": "+5.2% vs mês anterior (simulado)",
+    "overdue": "Inadimplência",
+    "overdueDescription": "{count} faturas vencidas",
+    "activeClients": "Clientes Ativos",
+    "activeClientsDescription": "Total de clientes com assinaturas ativas",
+    "mrrEvolution": "Evolução do MRR",
+    "mrrEvolutionDescription": "Receita recorrente mensal nos últimos 6 meses (simulado).",
+    "revenueByModule": "Receita por Módulo",
+    "revenueByModuleDescription": "Distribuição da receita entre os módulos e planos.",
+    "overdueInvoices": "Faturas em Atraso",
+    "overdueInvoicesDescription": "Faturas que passaram da data de vencimento e continuam pendentes.",
+    "invoiceId": "ID da Fatura",
+    "dueDate": "Vencimento",
+    "modules": {
+      "planosbase": "Planos Base",
+      "móduloia": "Módulo IA",
+      "móduloiot": "Módulo IoT"
+    }
+  },
+  "cmms": {
+    "finance": {
+        "dashboardTitle": "Dashboard Financeiro CMMS",
+        "receivableTitle": "Pendente a Receber",
+        "receivableDescription": "Total de receitas aguardando pagamento",
+        "payableTitle": "Pendente a Pagar",
+        "payableDescription": "Total de despesas aguardando pagamento",
+        "balanceTitle": "Balanço Projetado",
+        "balanceDescription": "Diferença entre pendente a receber e a pagar",
+        "cashflowTitle": "Fluxo de Caixa (Últimos 6 Meses)",
+        "cashflowDescription": "Visão consolidada de entradas e saídas realizadas.",
+        "upcomingTitle": "Próximos Lançamentos",
+        "upcomingDescription": "Visão geral das próximas 5 contas a pagar/receber.",
+        "noUpcoming": "Nenhum lançamento futuro."
+    }
+  },
+  "months": {
+    "jan": "Jan",
+    "fev": "Fev",
+    "mar": "Mar",
+    "abr": "Abr",
+    "mai": "Mai",
+    "jun": "Jun"
+  },
+  "clients": {
+    "title": "Clientes Finais de {clientName}",
+    "new": "Novo Cliente",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar os clientes finais.",
+    "table": {
+      "finalClient": "Cliente Final",
+      "assets": "Ativos",
+      "openWos": "OS Abertas",
+      "contractStatus": "Status Contrato",
+      "partsCost": "Custo Peças (90d)",
+      "criticality": "Criticidade",
+      "addons": "Add-ons"
+    },
+    "status": {
+      "current": "Vigente",
+      "expiring": "Próximo a Vencer",
+      "expired": "Vencido"
+    },
+    "criticalityMessage": "Alta Taxa Corretiva",
+    "criticalityTooltip": "{ratio}% das OS são corretivas.",
+    "addonIaTooltip": "Módulo IA Ativo",
+    "actions": {
+      "generateInvoice": "Gerar Fatura"
+    },
+    "dialog": {
+      "editTitle": "Editar Cliente Final",
+      "newTitle": "Novo Cliente Final",
+      "editDescription": "Atualize os detalhes do cliente e seus contatos.",
+      "newDescription": "Cadastre um novo cliente final para {clientName}.",
+      "registrationData": "Dados Cadastrais",
+      "namePlaceholder": "Ex: Condomínio Edifício Central",
+      "contractStatus": "Status do Contrato",
+      "contractStatusPlaceholder": "Selecione o status",
+      "contactsSection": "Contatos",
+      "addContact": "Adicionar Contato",
+      "removeContact": "Remover Contato",
+      "fullName": "Nome Completo",
+      "role": "Função",
+      "rolePlaceholder": "Ex: Síndico, Zelador...",
+      "internalObservation": "Observação (Uso Interno)",
+      "interactionsSection": "Histórico de Interações (CRM)",
+      "addInteraction": "Registrar Interação",
+      "removeInteraction": "Remover Interação",
+      "interactionDate": "{date} por {user}",
+      "interactionType": "Tipo",
+      "interactionDescription": "Descrição",
+      "interactionDescriptionPlaceholder": "Descreva a interação..."
+    },
+    "invoiceDialog": {
+      "title": "Gerar Fatura para {clientName}",
+      "description": "Esta é uma simulação de fatura baseada nas peças usadas em Ordens de Serviço recentes.",
+      "woTitle": "{title} (OS: {id})",
+      "date": "Data",
+      "unknownPart": "Peça desconhecida",
+      "noPartsToBill": "Nenhuma ordem de serviço com peças para faturar.",
+      "totalToBill": "Total a Faturar",
+      "close": "Fechar",
+      "sendInvoice": "Enviar Fatura (Simulado)"
+    }
+  },
+  "roles": {
+    "title": "Funções",
+    "new": "Nova Função",
+    "table": {
+      "name": "Nome da Função",
+      "id": "ID"
+    },
+    "dialog": {
+      "editTitle": "Editar Função",
+      "newTitle": "Nova Função",
+      "editDescription": "Atualize os detalhes da função.",
+      "newDescription": "Crie uma nova função de usuário para o CMMS.",
+      "name": "Nome da Função",
+      "namePlaceholder": "Ex: Síndico Residente",
+      "id": "ID da Função",
+      "idPlaceholder": "Gerado automaticamente"
+    }
+  },
+  "segments": {
+    "title": "Segmentos",
+    "new": "Novo Segmento",
+    "table": {
+      "name": "Nome do Segmento",
+      "applicableRoles": "Funções Aplicáveis",
+      "customFields": "Campos Personalizados"
+    },
+    "dialog": {
+      "editTitle": "Editar Segmento",
+      "newTitle": "Novo Segmento",
+      "editDescription": "Atualize os detalhes do segmento.",
+      "newDescription": "Defina um novo segmento de atuação para o CMMS.",
+      "name": "Nome do Segmento",
+      "namePlaceholder": "Ex: Ar Condicionado Central",
+      "applicableRoles": "Funções Aplicáveis",
+      "applicableRolesDescription": "Selecione as funções de contato para este segmento.",
+      "customFields": "Campos Personalizados",
+      "customFieldsDescription": "Adicione campos específicos para ativos deste segmento.",
+      "addField": "Adicionar Campo",
+      "fieldLabel": "Rótulo do Campo",
+      "fieldLabelPlaceholder": "Ex: Potência (BTUs)",
+      "fieldType": "Tipo",
+      "fieldVariable": "Nome da Variável (automático)"
+    }
+  },
+  "plans": {
+    "title": "Gerenciamento de Planos",
+    "new": "Novo Plano",
+    "table": {
+      "name": "Nome do Plano",
+      "monthlyValue": "Valor Mensal",
+      "assetLimit": "Limite de Ativos",
+      "technicianLimit": "Limite de Técnicos"
+    },
+    "dialog": {
+      "editTitle": "Editar Plano",
+      "newTitle": "Novo Plano",
+      "editDescription": "Atualize os detalhes do plano.",
+      "newDescription": "Preencha os detalhes do novo plano.",
+      "name": "Nome do Plano",
+      "monthlyValue": "Valor Mensal (R$)",
+      "assetLimit": "Limite de Ativos",
+      "technicianLimit": "Limite de Técnicos",
+      "limitPlaceholder": "-1 para ilimitado",
+      "permissions": "Permissões do Plano",
+      "multiModule": "Acesso Multi-Módulo",
+      "multiModuleDescription": "Permite acesso a diferentes módulos de ativos.",
+      "bigQuery": "Acesso Básico ao BigQuery",
+      "bigQueryDescription": "Permite consultas básicas no BigQuery.",
+      "iaAddon": "Acesso ao Add-on de IA",
+      "iaAddonDescription": "Habilita as funcionalidades do módulo de IA.",
+      "iotAddon": "Acesso ao Add-on de IoT",
+      "iotAddonDescription": "Habilita as funcionalidades do módulo de IoT."
+    },
+    "unlimited": "Ilimitado"
+  },
+  "addons": {
+    "title": "Gerenciamento de Add-ons",
+    "new": "Novo Add-on",
+    "table": {
+      "name": "Nome do Add-on",
+      "monthlyValue": "Valor Mensal"
+    },
+    "dialog": {
+      "editTitle": "Editar Add-on",
+      "newTitle": "Novo Add-on",
+      "editDescription": "Atualize os detalhes do add-on.",
+      "newDescription": "Preencha os detalhes do novo add-on.",
+      "name": "Nome do Add-on",
+      "monthlyValue": "Valor Mensal (R$)"
+    }
+  },
+  "contracts": {
+    "title": "Gestão de Contratos",
+    "new": "Novo Contrato",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar os contratos.",
+    "table": {
+      "title": "Título do Contrato",
+      "finalClient": "Cliente Final",
+      "validity": "Vigência",
+      "coveredAssets": "Ativos Cobertos",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Editar Contrato",
+      "newTitle": "Novo Contrato",
+      "description": "Gerencie os detalhes do contrato, ativos cobertos e planos de manutenção preventiva.",
+      "generalData": "Dados Gerais do Contrato",
+      "finalClient": "Cliente Final",
+      "finalClientPlaceholder": "Selecione o cliente",
+      "title": "Título do Contrato",
+      "titlePlaceholder": "Ex: Contrato de Manutenção 2024",
+      "startDate": "Data de Início",
+      "endDate": "Data de Fim",
+      "selectDate": "Selecione a data",
+      "coverageType": "Tipo de Cobertura",
+      "coverageTypeIntegral": "Integral (Peças inclusas)",
+      "coverageTypeLabor": "Apenas Mão de Obra",
+      "coveredAssets": "Ativos Cobertos pelo Contrato",
+      "assetsPlaceholder": "Selecione um cliente final para ver os ativos.",
+      "maintenancePlans": "Planos de Manutenção Preventiva",
+      "addPlan": "Adicionar Plano",
+      "removePlan": "Remover Plano",
+      "serviceDescription": "Descrição do Serviço",
+      "serviceDescriptionPlaceholder": "Ex: Inspeção e lubrificação geral",
+      "frequency": "Frequência",
+      "asset": "Ativo",
+      "assetPlaceholder": "Selecione o ativo para este plano",
+      "noPlans": "Nenhum plano de manutenção preventiva adicionado.",
+      "save": "Salvar Contrato"
+    }
+  },
+  "saasUsers": {
+    "title": "Usuários do SaaS",
+    "new": "Novo Usuário",
+    "table": {
+      "user": "Usuário",
+      "role": "Função"
+    },
+    "dialog": {
+      "editTitle": "Editar Usuário",
+      "newTitle": "Novo Usuário",
+      "avatarUrl": "URL do Avatar",
+      "name": "Nome",
+      "email": "Email",
+      "password": "Senha",
+      "passwordPlaceholder": "Deixe em branco para não alterar",
+      "passwordStrength": "Força da Senha",
+      "strength": {
+        "weak": "Fraca",
+        "medium": "Média",
+        "strong": "Forte"
+      },
+      "strengthHint": "Use 8+ caracteres com letras, números e símbolos.",
+      "confirmPassword": "Confirmar Senha",
+      "passwordMismatch": "As senhas não coincidem.",
+      "role": "Função SaaS",
+      "rolePlaceholder": "Selecione a função"
+    }
+  },
+  "users": {
+    "title": "Usuários de {clientName}",
+    "new": "Novo Usuário",
+    "selectClientPrompt": "Selecione um cliente no menu superior para gerenciar os usuários.",
+    "limitReached": "Limite de {limit} técnico(s) do plano {planName} atingido.",
+    "limitInfo": "Você ainda pode criar usuários com outras funções.",
+    "table": {
+      "user": "Usuário",
+      "role": "Função",
+      "squad": "Equipe"
+    },
+    "dialog": {
+      "editTitle": "Editar Usuário",
+      "newTitle": "Novo Usuário para {clientName}",
+      "company": "Empresa",
+      "role": "Função CMMS",
+      "rolePlaceholder": "Selecione uma função",
+      "noRoles": "Nenhuma função aplicável",
+      "technicianLimitReached": "O limite de técnicos para este plano foi atingido.",
+      "squad": "Equipe",
+      "squadPlaceholder": "Opcional para técnicos",
+      "costPerHour": "Custo por Hora (R$)"
+    }
+  },
+  "products": {
+    "title": "Cadastro de Peças",
+    "new": "Nova Peça",
+    "notManaged": "Não gerenciado",
+    "table": {
+      "name": "Nome da Peça",
+      "sku": "SKU",
+      "supplier": "Fornecedor",
+      "stock": "Estoque",
+      "stockMin": "Estoque Mín.",
+      "price": "Preço (R$)"
+    },
+    "dialog": {
+      "editTitle": "Editar Peça",
+      "newTitle": "Nova Peça",
+      "editDescription": "Atualize os detalhes da peça.",
+      "newDescription": "Preencha os detalhes da nova peça.",
+      "name": "Nome da Peça",
+      "sku": "SKU (Código)",
+      "manageStock": "Gerenciar Estoque",
+      "manageStockDescription": "Ative para controlar o estoque e o estoque mínimo.",
+      "stock": "Estoque Atual",
+      "stockMin": "Estoque Mínimo",
+      "manufacturer": "Fabricante",
+      "price": "Preço (R$)",
+      "supplier": "Fornecedor Padrão",
+      "supplierPlaceholder": "Selecione um fornecedor"
+    }
+  },
+  "suppliers": {
+    "title": "Fornecedores",
+    "new": "Novo Fornecedor",
+    "table": {
+      "name": "Nome do Fornecedor",
+      "contact": "Contato Principal",
+      "categories": "Categorias"
+    },
+    "dialog": {
+      "editTitle": "Editar Fornecedor",
+      "newTitle": "Novo Fornecedor",
+      "editDescription": "Atualize os detalhes do fornecedor.",
+      "newDescription": "Preencha os detalhes do novo fornecedor.",
+      "registrationData": "Dados Cadastrais",
+      "name": "Razão Social",
+      "rolePlaceholder": "Ex: Vendedor, Gerente...",
+      "classification": "Classificação"
+    },
+     "categories": {
+      "peças": "Peças",
+      "serviços": "Serviços",
+      "materiais": "Materiais"
+    }
+  },
+  "purchaseOrders": {
+    "title": "Ordens de Compra",
+    "new": "Nova OC",
+    "table": {
+      "id": "ID da OC",
+      "supplier": "Fornecedor",
+      "creationDate": "Data de Criação",
+      "totalValue": "Valor Total",
+      "status": "Status"
+    },
+    "dialog": {
+      "editTitle": "Detalhes da Ordem de Compra",
+      "newTitle": "Nova Ordem de Compra",
+      "description": "Crie e gerencie suas ordens de compra.",
+      "supplier": "Fornecedor",
+      "supplierPlaceholder": "Selecione um fornecedor de peças",
+      "status": "Status",
+      "items": "Itens",
+      "addItem": "Adicionar Item",
+      "item": "Item",
+      "itemPlaceholder": "Selecione um item",
+      "quantity": "Qtd",
+      "unitPrice": "Preço Unit.",
+      "total": "Total",
+      "removeItem": "Remover Item",
+      "noItems": "Nenhum item adicionado.",
+      "totalOrderValue": "Valor Total da OC",
+      "launchAP": "Lançar Fatura"
+    },
+    "statusLabels": {
+      "Pendente": "Pendente",
+      "Aprovada": "Aprovada",
+      "Recebida": "Recebida",
+      "Cancelada": "Cancelada"
+    }
+  },
+   "purchaseSuggestion": {
+    "title": "Sugestão de Compra Inteligente",
+    "description": "Sugestões baseadas no consumo histórico para otimizar seu estoque e evitar falta de peças.",
+    "allGoodTitle": "Tudo em ordem!",
+    "allGoodDescription": "Seu estoque está saudável. Nenhuma peça precisa de reposição no momento.",
+    "table": {
+      "item": "Item",
+      "supplier": "Fornecedor Padrão",
+      "stockInfo": "Estoque (Atual/Mín)",
+      "consumption": "Consumo Médio",
+      "coverage": "Cobertura do Estoque",
+      "suggestedQty": "Qtd. Sugerida"
+    },
+    "createPOForSupplier": "Criar OC para Fornecedor",
+    "noSupplierTitle": "Fornecedor Não Definido",
+    "noSupplierDescription": "A peça '{itemName}' não possui um fornecedor padrão. Edite o cadastro da peça para continuar.",
+    "noSupplierDescriptionBatch": "Um ou mais itens não possuem fornecedor padrão. A OC não pode ser criada.",
+    "poCreatedTitle": "Ordem de Compra Criada!",
+    "poCreatedDescription": "A OC {poId} para o fornecedor {supplierName} foi criada com sucesso."
+  },
+  "bankAccounts": {
+    "title": "Contas Bancárias",
+    "new": "Nova Conta",
+    "table": {
+      "name": "Nome da Conta",
+      "bank": "Banco",
+      "agency": "Agência",
+      "account": "Conta",
+      "balance": "Saldo Atual"
+    },
+    "dialog": {
+      "editTitle": "Editar Conta Bancária",
+      "newTitle": "Nova Conta Bancária",
+      "description": "Gerencie as contas bancárias da empresa.",
+      "name": "Apelido da Conta",
+      "namePlaceholder": "Ex: Conta Principal Bradesco",
+      "bank": "Nome do Banco",
+      "bankPlaceholder": "Ex: Bradesco, Caixa, etc.",
+      "agency": "Agência",
+      "account": "Número da Conta",
+      "balance": "Saldo Inicial (R$)"
+    }
+  },
+  "receivables": {
+    "generateInvoicesButton": "Gerar Faturas Mensais",
+    "generationSuccessTitle": "Faturas Geradas!",
+    "generationSuccessDescription": "{count} novas faturas foram criadas a partir dos contratos ativos.",
+    "generationNoNewTitle": "Nenhuma Nova Fatura",
+    "generationNoNewDescription": "Todas as faturas para o período atual já foram geradas."
+  }
+}

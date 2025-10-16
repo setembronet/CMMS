@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -5,11 +6,11 @@ import {
   Sidebar,
   SidebarProvider,
   SidebarInset,
-} from '@/components/ui/sidebar';
-import { Header } from '@/components/dashboard/header';
-import { SidebarNav } from '@/components/dashboard/sidebar-nav';
-import { I18nProvider } from '@/context/i18n-provider';
-import { ClientProvider, useClient } from '@/context/client-provider';
+} from '../components/ui/sidebar';
+import { Header } from '../components/dashboard/header';
+import { SidebarNav } from '../components/dashboard/sidebar-nav';
+import { I18nProvider } from '../context/i18n-provider';
+import { ClientProvider, useClient } from '../context/client-provider';
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { currentUser } = useClient();
