@@ -1,8 +1,8 @@
 'use client';
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import pt from '@/locales/pt.json';
-import en from '@/locales/en.json';
-import es from '@/locales/es.json';
+import pt from '../locales/pt.json';
+import en from '../locales/en.json';
+import es from '../locales/es.json';
 
 type Locale = 'pt' | 'en' | 'es';
 
@@ -19,10 +19,10 @@ interface I18nContextType {
 export const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
-  const [locale, setLocaleState] = useState<Locale>('pt'); // Default to 'pt' on server
+  const [locale, setLocaleState] = useState<Locale>('pt'); // Default to 'pt' on server and initial client render
 
   useEffect(() => {
-    // This effect runs only on the client side
+    // This effect runs only on the client side after hydration
     const storedLocale = localStorage.getItem('locale') as Locale | null;
     if (storedLocale && translations[storedLocale]) {
       setLocaleState(storedLocale);

@@ -3,33 +3,32 @@
 import * as React from 'react';
 import { Moon, Sun } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from './ui/button';
+import { Skeleton } from './ui/skeleton';
 
 export function ThemeToggle() {
-  const [isMounted, setIsMounted] = React.useState(false);
-  const [theme, setTheme] = React.useState<'dark' | 'light'>('light');
+  const [theme, setTheme] = React.useState<'light' | 'dark'>('light');
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setIsMounted(true);
-    const storedTheme = localStorage.getItem('theme') as 'dark' | 'light' | null;
+    setMounted(true);
+    const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const initialTheme = storedTheme || systemTheme;
-    setTheme(initialTheme);
+    setTheme(storedTheme || systemTheme);
   }, []);
   
   React.useEffect(() => {
-    if(isMounted) {
+    if(mounted) {
       document.documentElement.classList.toggle('dark', theme === 'dark');
       localStorage.setItem('theme', theme);
     }
-  }, [theme, isMounted]);
+  }, [theme, mounted]);
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  if (!isMounted) {
+  if (!mounted) {
     return <Skeleton className="h-10 w-10" />;
   }
 
