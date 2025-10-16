@@ -1,7 +1,7 @@
 
 'use client';
 import { SidebarTrigger } from '../ui/sidebar';
-import { UserNav } from './user-nav';
+import { UserNav } from '../dashboard/user-nav';
 import { ThemeToggle } from '../theme-toggle';
 import {
     DropdownMenu,
@@ -23,9 +23,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-      <div className="md:hidden">
-        <SidebarTrigger />
-      </div>
+      {!isTechnician && (
+        <div className="md:hidden">
+          <SidebarTrigger />
+        </div>
+      )}
 
       {!isTechnician && (
         <DropdownMenu>
