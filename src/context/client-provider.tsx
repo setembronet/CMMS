@@ -1,4 +1,3 @@
-
 'use client';
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { companies, users } from '@/lib/data';
@@ -18,28 +17,29 @@ export const ClientContext = createContext<ClientContextType | undefined>(undefi
 
 export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const [selectedClientId, setSelectedClientIdState] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Find the current user based on the mocked ID
   const currentUser = useMemo(() => users.find(u => u.id === MOCKED_CURRENT_USER_ID) || null, []);
 
   useEffect(() => {
-    // On mount, try to get the stored client ID or default based on user profile
+    // This effect runs only on the client side
     const storedClientId = localStorage.getItem('selectedClientId');
-    let initialClientId = storedClientId;
+    if (storedClientId) {
+      setSelectedClientIdState(storedClientId);
+      return;
+    }
     
-    if (!initialClientId) {
-      if (currentUser?.clientId) {
-        initialClientId = currentUser.clientId;
-      } else if (companies.length > 0) {
-        initialClientId = companies[0].id;
-      }
+    let initialClientId: string | null = null;
+    if (currentUser?.clientId) {
+      initialClientId = currentUser.clientId;
+    } else if (companies.length > 0) {
+      initialClientId = companies[0].id;
     }
 
     if (initialClientId) {
       setSelectedClientIdState(initialClientId);
+      localStorage.setItem('selectedClientId', initialClientId);
     }
-    setIsMounted(true);
   }, [currentUser]);
 
   const setSelectedClientId = (clientId: string) => {
@@ -60,10 +60,6 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
     selectedClient,
     currentUser,
   };
-
-  if (!isMounted) {
-    return null; // Or a loading spinner
-  }
 
   return (
     <ClientContext.Provider value={value}>

@@ -1,7 +1,8 @@
+
 'use client';
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { companies, users } from '../lib/data';
-import type { Company, User } from '../lib/types';
+import { companies, users } from '@/lib/data';
+import type { Company, User } from '@/lib/types';
 
 // Mocked current user ID. In a real app, this would come from an auth context.
 const MOCKED_CURRENT_USER_ID = 'user-01'; // Corrected to 'user-01' (Admin Master)
@@ -17,27 +18,27 @@ export const ClientContext = createContext<ClientContextType | undefined>(undefi
 
 export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const [selectedClientId, setSelectedClientIdState] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Find the current user based on the mocked ID
   const currentUser = useMemo(() => users.find(u => u.id === MOCKED_CURRENT_USER_ID) || null, []);
 
   useEffect(() => {
-    setIsMounted(true);
-    // On mount, try to get the stored client ID or default based on user profile
+    // This effect runs only on the client side after hydration
     const storedClientId = localStorage.getItem('selectedClientId');
-    let initialClientId = storedClientId;
-    
-    if (!initialClientId) {
+    if (storedClientId) {
+      setSelectedClientIdState(storedClientId);
+    } else {
+      let initialClientId: string | null = null;
       if (currentUser?.clientId) {
         initialClientId = currentUser.clientId;
       } else if (companies.length > 0) {
         initialClientId = companies[0].id;
       }
-    }
 
-    if (initialClientId) {
-      setSelectedClientIdState(initialClientId);
+      if (initialClientId) {
+        setSelectedClientIdState(initialClientId);
+        localStorage.setItem('selectedClientId', initialClientId);
+      }
     }
   }, [currentUser]);
 
@@ -59,10 +60,6 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
     selectedClient,
     currentUser,
   };
-
-  if (!isMounted) {
-    return null; // Or a loading spinner
-  }
 
   return (
     <ClientContext.Provider value={value}>

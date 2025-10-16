@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -8,28 +9,27 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function ThemeToggle() {
   const [isMounted, setIsMounted] = React.useState(false);
-  const [theme, setTheme] = React.useState<'dark' | 'light'>('light');
+  const [theme, setTheme] = React.useState<'dark' | 'light' | null>(null);
 
   React.useEffect(() => {
     setIsMounted(true);
     const storedTheme = localStorage.getItem('theme') as 'dark' | 'light' | null;
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const initialTheme = storedTheme || systemTheme;
-    setTheme(initialTheme);
+    setTheme(storedTheme || systemTheme);
   }, []);
-  
+
   React.useEffect(() => {
-    if(isMounted) {
+    if (theme) {
       document.documentElement.classList.toggle('dark', theme === 'dark');
       localStorage.setItem('theme', theme);
     }
-  }, [theme, isMounted]);
+  }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
-  if (!isMounted) {
+  if (!isMounted || !theme) {
     return <Skeleton className="h-10 w-10" />;
   }
 

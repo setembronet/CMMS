@@ -1,8 +1,9 @@
+
 'use client';
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import pt from '../locales/pt.json';
-import en from '../locales/en.json';
-import es from '../locales/es.json';
+import pt from '@/locales/pt.json';
+import en from '@/locales/en.json';
+import es from '@/locales/es.json';
 
 type Locale = 'pt' | 'en' | 'es';
 
@@ -19,19 +20,22 @@ interface I18nContextType {
 export const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
-  const [locale, setLocaleState] = useState<Locale>('pt');
-  const [isMounted, setIsMounted] = useState(false);
+  const [locale, setLocaleState] = useState<Locale>('pt'); // Default to 'pt' on server and initial client render
 
   useEffect(() => {
-    const browserLang = navigator.language.split('-')[0] as Locale;
+    // This effect runs only on the client side after hydration
     const storedLocale = localStorage.getItem('locale') as Locale | null;
-    const initialLocale = storedLocale || (['pt', 'en', 'es'].includes(browserLang) ? browserLang : 'pt');
-    
-    if (translations[initialLocale]) {
-      setLocaleState(initialLocale);
-      document.documentElement.lang = initialLocale;
+    if (storedLocale && translations[storedLocale]) {
+      setLocaleState(storedLocale);
+      document.documentElement.lang = storedLocale;
+    } else {
+      const browserLang = navigator.language.split('-')[0] as Locale;
+      const initialLocale = ['pt', 'en', 'es'].includes(browserLang) ? browserLang : 'pt';
+      if (translations[initialLocale]) {
+        setLocaleState(initialLocale);
+        document.documentElement.lang = initialLocale;
+      }
     }
-    setIsMounted(true);
   }, []);
 
   const setLocale = (newLocale: Locale) => {
@@ -56,10 +60,6 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
     return typeof result === 'string' ? result : key;
   }, [locale]);
   
-  if (!isMounted) {
-    return null;
-  }
-
   return (
     <I18nContext.Provider value={{ locale, setLocale, t }}>
       {children}
