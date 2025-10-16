@@ -9,8 +9,7 @@ import {
 } from '../components/ui/sidebar';
 import { Header } from '../components/dashboard/header';
 import { SidebarNav } from '../components/dashboard/sidebar-nav';
-import { I18nProvider } from '../context/i18n-provider';
-import { ClientProvider, useClient } from '../context/client-provider';
+import { useClient } from '../context/client-provider';
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { currentUser } = useClient();
@@ -18,6 +17,18 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   if (!currentUser) {
     // Or a loading spinner, or some other placeholder
     return null;
+  }
+  
+  const isTechnician = currentUser?.cmmsRole === 'TECNICO';
+
+  if (isTechnician) {
+      return (
+         <div className="flex flex-col h-screen">
+            <Header />
+            <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
+            {/* Simple footer navigation for technicians can be added here */}
+         </div>
+      )
   }
   
   return (
@@ -40,10 +51,6 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <I18nProvider>
-      <ClientProvider>
-        <DashboardLayoutContent>{children}</DashboardLayoutContent>
-      </ClientProvider>
-    </I18nProvider>
+     <DashboardLayoutContent>{children}</DashboardLayoutContent>
   );
 }
