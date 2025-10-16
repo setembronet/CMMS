@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription
-} from '../../components/ui/card';
+} from '../../../components/ui/card';
 import {
     Table,
     TableBody,
@@ -14,10 +14,10 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '../../components/ui/table';
-import { Badge } from '../../components/ui/badge';
+} from '../../../components/ui/table';
+import { Badge } from '../../../components/ui/badge';
 import { DollarSign, AlertCircle, Users } from 'lucide-react';
-import { kpis, companies, customerLocations, plans, addons } from '../../lib/data';
+import { kpis, companies, customerLocations, plans, addons } from '../../../lib/data';
 import { 
     ResponsiveContainer,
     LineChart,
@@ -31,7 +31,7 @@ import {
     Cell,
     PieChart,
 } from 'recharts';
-import { useI18n } from '../../hooks/use-i18n';
+import { useI18n } from '../../../hooks/use-i18n';
 
 // --- Dynamic Data Calculation ---
 const activeClients = companies.filter(c => c.status === 'active');

@@ -293,5 +293,3 @@ export default function DashboardPage() {
 
   return isTechnician ? <TechnicianDashboard /> : <ManagerDashboard />;
 }
-
-    

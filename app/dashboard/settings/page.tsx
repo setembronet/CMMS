@@ -1,11 +1,11 @@
 
 'use client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { ThemeToggle } from "../../components/theme-toggle";
-import { useI18n } from "../../hooks/use-i18n";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { ThemeToggle } from "../../../components/theme-toggle";
+import { useI18n } from "../../../hooks/use-i18n";
 
 export default function SettingsPage() {
   const { t } = useI18n();

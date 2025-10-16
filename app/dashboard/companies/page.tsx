@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
+} from '../../../components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
+} from '../../../components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -23,20 +23,20 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Switch } from '../../components/ui/switch';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from '../../../components/ui/dialog';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Switch } from '../../../components/ui/switch';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { companies as initialCompanies, segments as initialSegments, plans, addons } from '../../lib/data';
-import type { Company, CompanySegment, Plan, Addon } from '../../lib/types';
-import { Separator } from '../../components/ui/separator';
-import { ScrollArea } from '../../components/ui/scroll-area';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { useI18n } from '../../hooks/use-i18n';
+import { companies as initialCompanies, segments as initialSegments, plans, addons } from '../../../lib/data';
+import type { Company, CompanySegment, Plan, Addon } from '../../../lib/types';
+import { Separator } from '../../../components/ui/separator';
+import { ScrollArea } from '../../../components/ui/scroll-area';
+import { Checkbox } from '../../../components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { useI18n } from '../../../hooks/use-i18n';
 
 const emptyCompany: Company = {
   id: '',

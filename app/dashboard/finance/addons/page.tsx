@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
+} from '../../../components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
+} from '../../../components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -23,14 +23,14 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from '../../../components/ui/dialog';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { addons as initialAddons } from '../../lib/data';
-import type { Addon } from '../../lib/types';
-import { useI18n } from '../../hooks/use-i18n';
+import { addons as initialAddons } from '../../../lib/data';
+import type { Addon } from '../../../lib/types';
+import { useI18n } from '../../../hooks/use-i18n';
 
 const emptyAddon: Addon = {
   id: '',
