@@ -1,19 +1,19 @@
 
 'use client';
-import { SidebarTrigger } from '../ui/sidebar';
-import { UserNav } from '../dashboard/user-nav';
-import { ThemeToggle } from '../theme-toggle';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { UserNav } from '@/components/dashboard/user-nav';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { Button } from '../ui/button';
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { Languages, ChevronsUpDown } from 'lucide-react';
-import { useI18n } from '../../hooks/use-i18n';
-import { useClient } from '../../context/client-provider';
-import { companies } from '../../lib/data';
+import { useI18n } from '@/hooks/use-i18n';
+import { useClient } from '@/context/client-provider';
+import { companies } from '@/lib/data';
 
 export function Header() {
   const { setLocale, t } = useI18n();

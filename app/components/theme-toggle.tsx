@@ -4,8 +4,8 @@
 import * as React from 'react';
 import { Moon, Sun } from 'lucide-react';
 
-import { Button } from './ui/button';
-import { Skeleton } from './ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function ThemeToggle() {
   const [isMounted, setIsMounted] = React.useState(false);

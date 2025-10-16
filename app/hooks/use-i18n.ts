@@ -1,6 +1,6 @@
 'use client';
 import { useContext } from 'react';
-import { I18nContext } from '../context/i18n-provider';
+import { I18nContext } from '@/context/i18n-provider';
 
 export const useI18n = () => {
   const context = useContext(I18nContext);

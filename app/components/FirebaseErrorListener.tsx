@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useToast } from '../hooks/use-toast';
-import { errorEmitter } from '../firebase/error-emitter';
-import type { FirestorePermissionError } from '../firebase/errors';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import type { FirestorePermissionError } from '@/firebase/errors';
 
 export function FirebaseErrorListener() {
   const { toast } = useToast();

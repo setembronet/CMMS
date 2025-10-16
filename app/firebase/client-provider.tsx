@@ -1,7 +1,7 @@
 'use client';
-import { FirebaseProvider, initializeFirebase } from '.';
+import { FirebaseProvider, initializeFirebase } from '@/firebase';
 import React, { ReactNode } from 'react';
-import { FirebaseErrorListener } from '../components/FirebaseErrorListener';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 let app: ReturnType<typeof initializeFirebase>;
 

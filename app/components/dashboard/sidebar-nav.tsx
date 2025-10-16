@@ -42,12 +42,12 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from '../ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
-import { Logo } from '../logo';
-import { cn } from '../../lib/utils';
+} from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Logo } from '@/components/logo';
+import { cn } from '@/lib/utils';
 import React from 'react';
-import { useI18n } from '../../hooks/use-i18n';
+import { useI18n } from '@/hooks/use-i18n';
 
 export function SidebarNav() {
   const pathname = usePathname();
