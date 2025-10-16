@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
-import { Button } from '../../components/ui/button';
-import { chartOfAccounts as initialData } from '../../lib/data';
-import type { ChartOfAccount } from '../../lib/types';
-import { useI18n } from '../../hooks/use-i18n';
-import { Badge } from '../../components/ui/badge';
-import { cn } from '../../lib/utils';
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { chartOfAccounts as initialData } from '@/lib/data';
+import type { ChartOfAccount } from '@/lib/types';
+import { useI18n } from '@/hooks/use-i18n';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { PlusCircle } from 'lucide-react';
 
 
@@ -81,3 +81,5 @@ export default function ChartOfAccountsPage() {
     </div>
   );
 }
+
+    

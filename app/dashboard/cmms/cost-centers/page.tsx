@@ -9,11 +9,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
-import { Button } from '../../components/ui/button';
-import { costCenters as initialData } from '../../lib/data';
-import type { CostCenter } from '../../lib/types';
-import { useI18n } from '../../hooks/use-i18n';
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { costCenters as initialData } from '@/lib/data';
+import type { CostCenter } from '@/lib/types';
+import { useI18n } from '@/hooks/use-i18n';
 import { PlusCircle } from 'lucide-react';
 
 export default function CostCentersPage() {
@@ -53,3 +53,5 @@ export default function CostCentersPage() {
     </div>
   );
 }
+
+    

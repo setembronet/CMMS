@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription
-} from '../../components/ui/card';
+} from '@/components/ui/card';
 import {
     Table,
     TableBody,
@@ -16,8 +16,8 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '../../components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DollarSign, ArrowUpCircle, ArrowDownCircle, Banknote } from 'lucide-react';
 import { 
     accountsPayable as allAccountsPayable, 
@@ -26,8 +26,8 @@ import {
     contracts as allContracts,
     costCenters,
     chartOfAccounts
-} from '../../lib/data';
-import type { AccountsPayable, AccountsReceivable } from '../../lib/types';
+} from '@/lib/data';
+import type { AccountsPayable, AccountsReceivable } from '@/lib/types';
 import { 
     ResponsiveContainer,
     BarChart,
@@ -41,10 +41,10 @@ import {
     Pie,
     Cell
 } from 'recharts';
-import { useClient } from '../../context/client-provider';
-import { useI18n } from '../../hooks/use-i18n';
+import { useClient } from '@/context/client-provider';
+import { useI18n } from '@/hooks/use-i18n';
 import { format, getMonth, getYear } from 'date-fns';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -330,3 +330,5 @@ export default function CmmsFinanceDashboardPage() {
     </div>
   );
 }
+
+    

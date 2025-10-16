@@ -1,7 +1,7 @@
 
 'use client';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { UserNav } from './user-nav';
+import { UserNav } from '@/components/dashboard/user-nav';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
     DropdownMenu,
@@ -71,3 +71,5 @@ export function Header() {
     </header>
   );
 }
+
+    

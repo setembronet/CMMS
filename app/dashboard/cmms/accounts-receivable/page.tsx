@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -23,11 +23,11 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
 import { 
     accountsReceivable as initialData, 
@@ -37,19 +37,19 @@ import {
     bankAccounts, 
     setBankAccounts,
     generateReceivablesFromContracts
-} from '../../lib/data';
-import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount, BankAccount } from '../../lib/types';
-import { useI18n } from '../../hooks/use-i18n';
-import { useClient } from '../../context/client-provider';
-import { cn } from '../../lib/utils';
+} from '@/lib/data';
+import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount, BankAccount } from '@/lib/types';
+import { useI18n } from '@/hooks/use-i18n';
+import { useClient } from '@/context/client-provider';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ScrollArea } from '../../components/ui/scroll-area';
-import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
-import { Calendar } from '../../components/ui/calendar';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/ui/select';
-import { Textarea } from '../../components/ui/textarea';
-import { useToast } from '../../hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 
 const emptyAR: AccountsReceivable = {

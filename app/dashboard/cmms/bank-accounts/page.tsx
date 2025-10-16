@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardFooter,
   CardTitle,
-} from '../../components/ui/card';
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -25,18 +25,18 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PlusCircle, Landmark, ArrowUpCircle, ArrowDownCircle, FileText } from 'lucide-react';
-import { bankAccounts as initialData, setBankAccounts, accountsPayable, accountsReceivable } from '../../lib/data';
-import type { BankAccount, AccountsPayable, AccountsReceivable } from '../../lib/types';
-import { useI18n } from '../../hooks/use-i18n';
+import { bankAccounts as initialData, setBankAccounts, accountsPayable, accountsReceivable } from '@/lib/data';
+import type { BankAccount, AccountsPayable, AccountsReceivable } from '@/lib/types';
+import { useI18n } from '@/hooks/use-i18n';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ScrollArea } from '../../components/ui/scroll-area';
-import { cn } from '../../lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 type StatementEntry = {
     date: number;

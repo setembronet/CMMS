@@ -26,3 +26,5 @@ firestore = getFirestore(app);
 export const initializeFirebase = () => {
   return { app, auth, firestore };
 };
+
+    
