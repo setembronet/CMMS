@@ -1,8 +1,7 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'TenantCare CMMS',
@@ -21,11 +20,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className={cn("font-body antialiased", "min-h-screen bg-background font-sans")}>
-          <FirebaseClientProvider>
-            {children}
-          </FirebaseClientProvider>
-          <Toaster />
+      <body className={cn("min-h-screen bg-background font-sans antialiased", "font-body")}>
+        {children}
+        <Toaster />
       </body>
     </html>
   );
