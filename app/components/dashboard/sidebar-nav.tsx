@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Building2,
   Settings,
@@ -48,10 +48,23 @@ import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { useI18n } from '@/hooks/use-i18n';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
   const isActive = (href: string, isSubItem: boolean = false) => {
     if (isSubItem) {
@@ -293,7 +306,7 @@ export function SidebarNav() {
                         </SidebarMenuSub>
                         
                         <Collapsible asChild defaultOpen={isCmmsBackofficeActive}>
-                            <SidebarMenuSubItem>
+                            <SidebarMenuItem>
                                 <CollapsibleTrigger asChild>
                                     <div className="flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 px-4 py-2 cursor-pointer hover:text-sidebar-foreground">
                                         <span>{t('sidebar.backoffice')} (CMMS)</span>
@@ -352,7 +365,7 @@ export function SidebarNav() {
                                         </SidebarMenuSubItem>
                                     </SidebarMenuSub>
                                 </CollapsibleContent>
-                            </SidebarMenuSubItem>
+                            </SidebarMenuItem>
                         </Collapsible>
 
                     </CollapsibleContent>
@@ -392,11 +405,9 @@ export function SidebarNav() {
                 </SidebarMenuItem>
            </Collapsible>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
-                    <Link href="/">
-                        <LogOut />
-                        <span>{t('sidebar.logout')}</span>
-                    </Link>
+                <SidebarMenuButton onClick={handleLogout} tooltip={{ children: t('sidebar.logout') }}>
+                    <LogOut />
+                    <span>{t('sidebar.logout')}</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>

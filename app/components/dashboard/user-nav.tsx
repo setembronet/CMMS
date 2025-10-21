@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +17,23 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useI18n } from '@/hooks/use-i18n';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 export function UserNav() {
   const { t } = useI18n();
+  const auth = useAuth();
+  const router = useRouter();
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -55,8 +69,8 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-            <Link href="/">{t('userNav.logout')}</Link>
+        <DropdownMenuItem onClick={handleLogout}>
+            {t('userNav.logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

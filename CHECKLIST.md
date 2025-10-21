@@ -32,9 +32,9 @@ Atualmente, nossas regras são abertas para qualquer usuário autenticado. Preci
 
 Substituir o login mockado por um sistema de autenticação real.
 
--   [ ] **Implementar Firebase Auth**: Modificar a página de login (`/`) para usar o `signInWithEmailAndPassword` do Firebase Auth.
--   [ ] **Provedor de Usuário Dinâmico**: Ajustar o `ClientProvider` para obter o usuário logado a partir do `useAuth` do Firebase, em vez do `MOCKED_CURRENT_USER_ID`.
--   [ ] **Página de Logout**: Garantir que o botão "Sair" chame a função `signOut` do Firebase Auth.
+-   [x] **Implementar Firebase Auth**: Modificar a página de login (`/`) para usar o `signInWithEmailAndPassword` do Firebase Auth.
+-   [x] **Provedor de Usuário Dinâmico**: Ajustar o `ClientProvider` para obter o usuário logado a partir do `useAuth` do Firebase, em vez do `MOCKED_CURRENT_USER_ID`.
+-   [x] **Página de Logout**: Garantir que o botão "Sair" chame a função `signOut` do Firebase Auth.
 
 ## Fase 4: Script de Seed (Povoamento do Banco)
 
@@ -44,4 +44,4 @@ Para facilitar os testes, criaremos um script para popular o Firestore com os da
 
 ---
 
-Com este checklist, temos um caminho claro para a finalização do nosso protótipo funcional. Nosso **próximo passo** será a **Fase 3: Autenticação de Usuários**.
+Com este checklist, temos um caminho claro para a finalização do nosso protótipo funcional. Nosso **próximo passo** será a **Fase 4: Script de Seed**.
