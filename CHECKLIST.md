@@ -8,8 +8,8 @@ O objetivo desta fase é substituir todos os dados mockados em `src/lib/data.ts`
 
 -   [x] **Empresas**: Concluído.
 -   [x] **Segmentos**: Concluído.
--   [x] **Funções (CMMS Roles)**: Migrar a página de Funções (`/settings/roles`) para ler e escrever na coleção `cmmsRoles`.
--   [ ] **Clientes Finais (Locations)**: Migrar a página de Clientes (`/clients`) para usar a coleção `customerLocations`.
+-   [x] **Funções (CMMS Roles)**: Concluído.
+-   [x] **Clientes Finais (Locations)**: Concluído.
 -   [ ] **Usuários (CMMS)**: Migrar a página de Usuários (`/users`) para usar a coleção `users`, garantindo a filtragem por cliente selecionado.
 -   [ ] **Ativos**: Migrar a página de Ativos (`/assets`) para usar a coleção `assets`.
 -   [ ] **Contratos**: Migrar a página de Contratos (`/contracts`) para usar a coleção `contracts`.

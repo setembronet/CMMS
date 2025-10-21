@@ -30,7 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit, MessageSquarePlus, Clock, Receipt } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { companies, customerLocations as initialLocations, setCustomerLocations, assets, workOrders, users, products } from '@/lib/data';
+import { assets, workOrders, users, products } from '@/lib/data';
 import type { CustomerLocation, Contact, WorkOrder, ContractStatus, Interaction, InteractionType } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,6 +41,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const CURRENT_USER_ID = 'user-04'; // Mock logged-in user
 
@@ -65,7 +68,10 @@ const emptyContact: Contact = {
 export default function ClientsPage() {
   const { selectedClient } = useClient();
   const { t } = useI18n();
+  const { toast } = useToast();
+  const firestore = useFirestore();
 
+  const { data: allLocations, loading } = useCollection<CustomerLocation>('customerLocations');
   const [locations, setLocations] = React.useState<CustomerLocation[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
@@ -93,12 +99,11 @@ export default function ClientsPage() {
   
   React.useEffect(() => {
     if (selectedClient) {
-      const currentLocations = initialLocations.filter(l => l.clientId === selectedClient.id)
-      setLocations(currentLocations);
+      setLocations(allLocations.filter(l => l.clientId === selectedClient.id));
     } else {
       setLocations([]);
     }
-  }, [selectedClient]);
+  }, [selectedClient, allLocations]);
 
   const openDialog = (location: CustomerLocation | null = null) => {
     setEditingLocation(location);
@@ -235,25 +240,35 @@ export default function ClientsPage() {
     }
   };
   
-  const handleSaveLocation = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveLocation = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData) return;
-    let updatedLocations;
+    if (!formData || !firestore) return;
     
-    if (editingLocation) {
-      updatedLocations = initialLocations.map(l => (l.id === editingLocation.id ? formData : l));
-    } else {
-      const newLocation: CustomerLocation = {
-        ...formData,
-        clientId: selectedClient?.id || '',
-        id: `loc-0${initialLocations.length + 1}`,
-      };
-      updatedLocations = [newLocation, ...initialLocations];
+    try {
+        if (editingLocation) {
+            const { id, ...locationData } = formData;
+            await updateDocument(firestore, 'customerLocations', id, locationData);
+             toast({
+                title: "Cliente Final Atualizado!",
+                description: `O cliente "${formData.name}" foi atualizado com sucesso.`,
+            });
+        } else {
+            const { id, ...locationData } = formData;
+            await addDocument(firestore, 'customerLocations', locationData);
+            toast({
+                title: "Cliente Final Criado!",
+                description: `O cliente "${formData.name}" foi criado com sucesso.`,
+            });
+        }
+        closeDialog();
+    } catch (error) {
+        console.error("Erro ao salvar cliente final:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar os dados do cliente final. Tente novamente."
+        });
     }
-    
-    setCustomerLocations(updatedLocations);
-    setLocations(updatedLocations.filter(l => l.clientId === selectedClient?.id));
-    closeDialog();
   };
 
   // --- KPI Calculation Functions ---
@@ -351,7 +366,11 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {locations.map(location => {
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-24 text-center">Carregando clientes...</TableCell>
+                </TableRow>
+              ) : locations.map(location => {
                 const assetCount = getAssetCount(location.id);
                 const openWOs = getOpenWorkOrders(location.id);
                 const correctiveRatio = getCorrectiveRatio(location.id);
