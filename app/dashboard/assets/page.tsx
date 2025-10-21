@@ -51,12 +51,14 @@ import { useI18n } from '@/hooks/use-i18n';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
+import { useToast } from '@/hooks/use-toast';
 
 type AssetStatus = 'Operacional' | 'Em Manutenção';
 
 export default function AssetsPage() {
   const { selectedClient } = useClient();
   const { t } = useI18n();
+  const { toast } = useToast();
 
   const [assets, setAssets] = React.useState<Asset[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -232,6 +234,10 @@ export default function AssetsPage() {
       }
       setAssets([newAsset, ...assets]);
     }
+    toast({
+      title: "Ativo Salvo!",
+      description: `O ativo "${newAsset.name}" foi salvo com sucesso.`,
+    });
     closeDialog();
   };
 
@@ -333,7 +339,7 @@ export default function AssetsPage() {
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{`Limite de ${assetLimit} ativos do plano ${clientPlan?.name} atingido.`}</p>
+                <p>{t('assets.limitReached', { limit: assetLimit, planName: clientPlan?.name })}</p>
               </TooltipContent>
             </Tooltip>
           ) : (

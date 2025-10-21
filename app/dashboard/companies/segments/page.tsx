@@ -40,6 +40,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useI18n } from '@/hooks/use-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 const emptySegment: CompanySegment = {
   id: '',
@@ -57,6 +58,7 @@ const customFieldTypes: { value: CustomFieldType, label: string }[] = [
 
 export default function SegmentsPage() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [segments, setSegments] = React.useState<CompanySegment[]>(initialSegments);
   const [cmmsRoles] = React.useState<CMMSRole[]>(initialCmmsRoles);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -149,6 +151,10 @@ export default function SegmentsPage() {
     }
     setSegments(updatedSegments);
     setGlobalSegments(updatedSegments);
+    toast({
+      title: "Segmento Salvo!",
+      description: `O segmento "${newSegment.name}" foi salvo com sucesso.`,
+    });
     closeDialog();
   };
 

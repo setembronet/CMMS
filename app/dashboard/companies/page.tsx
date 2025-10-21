@@ -37,6 +37,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useI18n } from '@/hooks/use-i18n';
+import { useToast } from '@/hooks/use-toast';
 
 const emptyCompany: Company = {
   id: '',
@@ -61,6 +62,7 @@ const emptyCompany: Company = {
 
 export default function CompaniesPage() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
@@ -163,6 +165,10 @@ export default function CompaniesPage() {
     } else {
       setCompanies([newCompany, ...companies]);
     }
+    toast({
+      title: "Empresa Salva!",
+      description: `A empresa "${newCompany.name}" foi salva com sucesso.`,
+    });
     closeDialog();
   };
 
