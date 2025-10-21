@@ -29,15 +29,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PlusCircle, MoreHorizontal, AlertTriangle } from 'lucide-react';
-import { products as initialProducts, setProducts, suppliers } from '@/lib/data';
+import { suppliers } from '@/lib/data';
 import type { Product, Supplier } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
-const emptyProduct: Product = {
-  id: '',
+const emptyProduct: Omit<Product, 'id'> = {
   name: '',
   sku: '',
   manufacturer: '',
@@ -50,21 +52,28 @@ const emptyProduct: Product = {
 
 export default function ProductsPage() {
   const { t } = useI18n();
-  const [products, setLocalProducts] = React.useState<Product[]>(initialProducts);
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const { data: products, loading } = useCollection<Product>('products');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
-  const [formData, setFormData] = React.useState<Product>(emptyProduct);
+  const [formData, setFormData] = React.useState<Omit<Product, 'id'>>(emptyProduct);
   
   const [partsSuppliers, setPartsSuppliers] = React.useState<Supplier[]>([]);
 
   React.useEffect(() => {
-    setLocalProducts(initialProducts);
     setPartsSuppliers(suppliers.filter(s => s.categories.includes('PEÇAS')));
   }, []);
 
   const openDialog = (product: Product | null = null) => {
     setEditingProduct(product);
-    setFormData(product ? { ...product } : emptyProduct);
+    if (product) {
+        const { id, ...productData } = product;
+        setFormData(productData);
+    } else {
+        setFormData(emptyProduct);
+    }
     setIsDialogOpen(true);
   };
 
@@ -82,31 +91,41 @@ export default function ProductsPage() {
     }));
   };
 
-  const handleSwitchChange = (name: keyof Product, checked: boolean) => {
+  const handleSwitchChange = (name: keyof Omit<Product, 'id'>, checked: boolean) => {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
   
-  const handleSelectChange = (name: keyof Product, value: string) => {
+  const handleSelectChange = (name: keyof Omit<Product, 'id'>, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveProduct = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!firestore) return;
 
-    let updatedProducts;
-    if (editingProduct) {
-      updatedProducts = products.map(p => (p.id === editingProduct.id ? formData : p));
-    } else {
-      const newProduct: Product = {
-        ...formData,
-        id: `prod-${Date.now()}`,
-      };
-      updatedProducts = [newProduct, ...products];
+    try {
+        if (editingProduct) {
+            await updateDocument(firestore, 'products', editingProduct.id, formData);
+            toast({
+                title: "Peça Atualizada!",
+                description: `A peça "${formData.name}" foi atualizada com sucesso.`,
+            });
+        } else {
+            await addDocument(firestore, 'products', formData);
+            toast({
+                title: "Peça Criada!",
+                description: `A peça "${formData.name}" foi criada com sucesso.`,
+            });
+        }
+        closeDialog();
+    } catch (error) {
+        console.error("Erro ao salvar peça:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar os dados da peça. Tente novamente."
+        });
     }
-    
-    setProducts(updatedProducts);
-    setLocalProducts(updatedProducts);
-    closeDialog();
   };
   
   const getSupplierName = (supplierId?: string) => {
@@ -136,7 +155,13 @@ export default function ProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map(product => {
+            {loading ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                        Carregando peças...
+                    </TableCell>
+                </TableRow>
+            ) : products.map(product => {
                 const isLowStock = product.manageStock && product.stock <= product.stockMin;
                 return (
                   <TableRow key={product.id}>
@@ -251,5 +276,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
-  
