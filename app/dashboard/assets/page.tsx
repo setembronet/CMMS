@@ -333,7 +333,7 @@ export default function AssetsPage() {
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t('assets.limitReached', { limit: assetLimit, planName: clientPlan?.name })}</p>
+                <p>{`Limite de ${assetLimit} ativos do plano ${clientPlan?.name} atingido.`}</p>
               </TooltipContent>
             </Tooltip>
           ) : (
