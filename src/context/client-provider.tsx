@@ -1,7 +1,8 @@
 
 'use client';
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { companies, users } from '@/lib/data';
+import { users } from '@/lib/data';
+import { useCollection } from '@/firebase/firestore';
 import type { Company, User } from '@/lib/types';
 
 // Mocked current user ID. In a real app, this would come from an auth context.
@@ -18,6 +19,7 @@ interface ClientContextType {
 export const ClientContext = createContext<ClientContextType | undefined>(undefined);
 
 export const ClientProvider = ({ children }: { children: ReactNode }) => {
+  const { data: companies, loading: companiesLoading } = useCollection<Company>('companies');
   const [selectedClientId, setSelectedClientIdState] = useState<string | null>(null);
 
   // Find the current user based on the mocked ID
@@ -25,8 +27,10 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // This effect runs only on the client side after hydration
+    if (companiesLoading) return;
+
     const storedClientId = localStorage.getItem('selectedClientId');
-    if (storedClientId) {
+    if (storedClientId && companies.some(c => c.id === storedClientId)) {
       setSelectedClientIdState(storedClientId);
     } else {
       let initialClientId: string | null = null;
@@ -41,7 +45,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('selectedClientId', initialClientId);
       }
     }
-  }, [currentUser]);
+  }, [currentUser, companies, companiesLoading]);
 
   const setSelectedClientId = (clientId: string) => {
     // Technicians should not change client context
@@ -53,7 +57,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const selectedClient = useMemo(() => {
     if (!selectedClientId) return null;
     return companies.find(c => c.id === selectedClientId) || null;
-  }, [selectedClientId]);
+  }, [selectedClientId, companies]);
 
   const value = {
     selectedClientId,
