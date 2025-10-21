@@ -96,6 +96,7 @@ export default function WorkOrdersPage() {
     internalObservation: '',
     squad: '',
     partsUsed: [],
+    mediaObrigatoria: false,
   }), [selectedClient]);
 
   const generatePreventiveWorkOrders = React.useCallback((existingWorkOrders: WorkOrder[], clientId: string): WorkOrder[] => {
@@ -237,7 +238,7 @@ export default function WorkOrdersPage() {
     setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
-  const handleSelectChange = (name: keyof WorkOrder, value: string) => {
+  const handleSelectChange = (name: keyof WorkOrder, value: string | boolean) => {
     if (!formData) return;
     const oldStatus = formData.status;
     const newStatus = name === 'status' ? value as OrderStatus : oldStatus;
@@ -248,6 +249,7 @@ export default function WorkOrdersPage() {
         let newEndDate = prev.endDate;
         let newChecklist = prev.checklist;
         let newChecklistTemplateId = prev.checklistTemplateId;
+        let mediaObrigatoria = prev.mediaObrigatoria;
 
         if (name === 'assetId') {
             newChecklist = undefined;
@@ -258,7 +260,9 @@ export default function WorkOrdersPage() {
             const template = checklistTemplates.find(t => t.id === value);
             if (template) {
                 newChecklist = JSON.parse(JSON.stringify(template.checklistData));
-                newChecklistTemplateId = value;
+                newChecklistTemplateId = value as string;
+                // Automatically set mediaObrigatoria based on checklist content (example logic)
+                mediaObrigatoria = newChecklist.some(group => group.title.toLowerCase().includes('reparo'));
             }
         }
 
@@ -281,6 +285,7 @@ export default function WorkOrdersPage() {
             endDate: newEndDate,
             checklist: newChecklist,
             checklistTemplateId: newChecklistTemplateId,
+            mediaObrigatoria,
         };
     });
   };
@@ -293,7 +298,10 @@ export default function WorkOrdersPage() {
   const handleAddPart = () => {
     if (!formData) return;
     const newPart: WorkOrderPart = { productId: '', quantity: 1 };
-    setFormData(prev => prev ? ({ ...prev, partsUsed: [...(prev.partsUsed || []), newPart] }) : null);
+    setFormData(prev => {
+        if (!prev) return null;
+        return { ...prev, partsUsed: [...(prev.partsUsed || []), newPart], mediaObrigatoria: true };
+    });
   };
 
   const handlePartChange = (index: number, field: keyof WorkOrderPart, value: string | number) => {
@@ -306,7 +314,13 @@ export default function WorkOrdersPage() {
 
   const handleRemovePart = (index: number) => {
     if (!formData) return;
-    setFormData(prev => prev ? ({ ...prev, partsUsed: (prev.partsUsed || []).filter((_, i) => i !== index) }) : null);
+    setFormData(prev => {
+        if (!prev) return null;
+        const newParts = (prev.partsUsed || []).filter((_, i) => i !== index);
+        // If no more parts, media might not be mandatory anymore (depends on other logic)
+        const mediaStillRequired = newParts.length > 0 || (prev.checklist && prev.checklist.some(g => g.title.toLowerCase().includes('reparo')));
+        return { ...prev, partsUsed: newParts, mediaObrigatoria: mediaStillRequired };
+    });
   };
 
   const handleChecklistItemChange = (groupIndex: number, itemIndex: number, field: keyof ChecklistItem, value: string) => {
@@ -558,7 +572,7 @@ export default function WorkOrdersPage() {
                     </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
+                  <Badge variant={getStatusBadgeVariant(order.status)}>{order.status.replace(/_/g, ' ')}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -687,6 +701,17 @@ export default function WorkOrdersPage() {
                             <Label htmlFor="squad">{t('workOrders.dialog.squad')}</Label>
                             <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.squadPlaceholder')}/>
                         </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <Input
+                            type="checkbox"
+                            id="mediaObrigatoria"
+                            checked={formData.mediaObrigatoria || false}
+                            onChange={(e) => handleSelectChange('mediaObrigatoria', e.target.checked)}
+                            className="h-4 w-4"
+                        />
+                        <Label htmlFor="mediaObrigatoria">Exigir fotos de Antes/Depois para conclusão?</Label>
                     </div>
 
                     {formData.checklist && (

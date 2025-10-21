@@ -201,6 +201,11 @@ export type WorkOrder = {
   checklist?: Checklist;
   rootCause?: RootCause;
   recommendedAction?: RecommendedAction;
+  mediaObrigatoria?: boolean;
+  fotosAntesDepois?: {
+    antes?: string;
+    depois?: string;
+  }
 };
 
 export type Product = {

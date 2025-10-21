@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setWorkOrders as setGlobalWorkOrders, checklistTemplates, rootCauses, recommendedActions } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Checklist, ChecklistItem, ChecklistItemStatus, WorkOrderPart, Product, RootCause, RecommendedAction } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, CheckSquare, Info, ListChecks, Wrench, ShieldAlert, BadgeInfo, Trash2, PlusCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Play, Pause, CheckSquare, Info, ListChecks, Wrench, ShieldAlert, BadgeInfo, Trash2, PlusCircle, AlertTriangle, Camera } from 'lucide-react';
 import { useI18n } from '@/hooks/use-i18n';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const checklistStatuses: ChecklistItemStatus[] = ['OK', 'NÃO OK', 'N/A'];
 
@@ -84,13 +85,18 @@ export default function WorkOrderDetailPage() {
     setWorkOrder(prev => prev ? ({ ...prev, partsUsed: (prev.partsUsed || []).filter((_, i) => i !== index) }) : null);
   };
 
-  const handleFieldChange = (field: keyof WorkOrder, value: string) => {
+  const handleFieldChange = (field: keyof WorkOrder, value: any) => {
     if (!workOrder) return;
     setWorkOrder(prev => prev ? { ...prev, [field]: value } : null);
   }
 
   const handleStatusChange = (newStatus: OrderStatus) => {
     if (!workOrder) return;
+    
+    if (newStatus === 'CONCLUIDO' && isCompletionBlocked) {
+        return; // Block completion if conditions are not met
+    }
+
     const updatedOrder = { ...workOrder, status: newStatus };
     if (newStatus === 'EM ANDAMENTO' && !workOrder.startDate) {
       updatedOrder.startDate = new Date().getTime();
@@ -124,9 +130,6 @@ export default function WorkOrderDetailPage() {
       case 'EM ANDAMENTO': return 'bg-blue-500 text-white';
       case 'CONCLUIDO': return 'bg-green-500 text-white';
       case 'CANCELADO': return 'bg-red-500 text-white';
-      case 'EM_ESPERA_PECAS': return 'bg-amber-500 text-white';
-      case 'AGUARDANDO_APROVACAO': return 'bg-cyan-500 text-white';
-      case 'PENDENTE_RETORNO': return 'bg-purple-500 text-white';
       default: return 'bg-gray-200';
     }
   };
@@ -143,6 +146,8 @@ export default function WorkOrderDetailPage() {
   }
   
   const isConcluded = workOrder.status === 'CONCLUIDO' || workOrder.status === 'CANCELADO';
+  const isCompletionBlocked = workOrder.mediaObrigatoria && 
+                              (!workOrder.fotosAntesDepois?.antes || !workOrder.fotosAntesDepois?.depois);
 
 
   return (
@@ -158,7 +163,7 @@ export default function WorkOrderDetailPage() {
         </div>
         <div className="flex items-center gap-2">
             <Badge className={cn("hidden sm:flex", getPriorityBadgeClass(workOrder.priority))}>{workOrder.priority}</Badge>
-            <Badge className={getStatusBadgeClass(workOrder.status)}>{workOrder.status.replace(/_/g, ' ')}</Badge>
+            <Badge className={getStatusBadgeClass(workOrder.status)}>{workOrder.status}</Badge>
         </div>
       </header>
 
@@ -194,6 +199,43 @@ export default function WorkOrderDetailPage() {
                 </div>
             </CardContent>
         </Card>
+
+        {workOrder.mediaObrigatoria && (
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                         <CardTitle className="flex items-center gap-2 text-lg"><Camera /> Anexo de Mídia Obrigatório</CardTitle>
+                         <Badge variant="destructive">Requerido</Badge>
+                    </div>
+                    <CardDescription>Para concluir esta OS, é obrigatório anexar as fotos de "Antes" e "Depois" do serviço.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="foto-antes">Foto "Antes"</Label>
+                        <Input 
+                            id="foto-antes" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleFieldChange('fotosAntesDepois', {...workOrder.fotosAntesDepois, antes: e.target.value})}
+                            disabled={isConcluded}
+                        />
+                         {workOrder.fotosAntesDepois?.antes && <p className="text-xs text-muted-foreground">Arquivo selecionado.</p>}
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="foto-depois">Foto "Depois"</Label>
+                        <Input 
+                            id="foto-depois" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleFieldChange('fotosAntesDepois', {...workOrder.fotosAntesDepois, depois: e.target.value})}
+                             disabled={isConcluded}
+                        />
+                        {workOrder.fotosAntesDepois?.depois && <p className="text-xs text-muted-foreground">Arquivo selecionado.</p>}
+                    </div>
+                </CardContent>
+            </Card>
+        )}
+
 
         {workOrder.checklist && (
             <Card>
@@ -332,7 +374,16 @@ export default function WorkOrderDetailPage() {
 
       {/* Footer Actions */}
       {!isConcluded && (
-        <footer className="p-4 border-t bg-background sticky bottom-0 z-10">
+        <footer className="p-4 border-t bg-background sticky bottom-0 z-10 space-y-2">
+            {isCompletionBlocked && workOrder.status === 'EM ANDAMENTO' && (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Finalização Bloqueada</AlertTitle>
+                    <AlertDescription>
+                        É necessário anexar as fotos de "Antes" e "Depois" para concluir esta Ordem de Serviço.
+                    </AlertDescription>
+                </Alert>
+            )}
             {workOrder.status === 'ABERTO' && (
                 <Button className="w-full" size="lg" onClick={() => handleStatusChange('EM ANDAMENTO')}>
                     <Play className="mr-2 h-4 w-4" />
@@ -345,7 +396,7 @@ export default function WorkOrderDetailPage() {
                         <Pause className="mr-2 h-4 w-4" />
                         Pausar
                     </Button>
-                    <Button className="w-full" onClick={() => handleStatusChange('CONCLUIDO')}>
+                    <Button className="w-full" onClick={() => handleStatusChange('CONCLUIDO')} disabled={isCompletionBlocked}>
                         <CheckSquare className="mr-2 h-4 w-4" />
                         Finalizar Serviço
                     </Button>
