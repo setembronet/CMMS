@@ -3,104 +3,50 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helper Functions ---
+    // --- Funções de Apoio ---
     function isAdmin() {
       return request.auth.token.admin == true;
     }
 
-    function isSignedIn() {
-      return request.auth != null;
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+    function isManager() {
+      return getUserData().cmmsRole == 'GESTOR';
     }
 
-    function isUser(userId) {
-        return isSignedIn() && request.auth.uid == userId;
+    function isTechnician() {
+      return getUserData().cmmsRole == 'TECNICO';
     }
 
-    // --- Role Checks ---
-    function isGestor() {
-        return isSignedIn() && getUserData(request.auth.uid).cmmsRole == 'GESTOR';
-    }
-
-    function getRequestingUserData() {
-        return getUserData(request.auth.uid);
+    function isOwner(resource) {
+        return getUserData().clientId == resource.data.clientId;
     }
     
-    // --- Default Deny ---
+    // Nega acesso a todas as coleções por padrão
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // --- Global Admin Access ---
-    match /{document=**} {
-      allow read, write: if isAdmin();
+    // Acesso total para Admins
+    match /{path=**} {
+        allow read, write: if isAdmin();
     }
     
-    // --- Collections Rules ---
-    
-    // Gestor can read/write data linked to their own clientId
-    match /companies/{companyId} {
-      allow get: if isGestor() && companyId == getRequestingUserData().clientId;
-      allow list: if isGestor(); // Allow listing for client switcher
+    // Regras para Gestores
+    match /{path=**} {
+      allow read, write: if isManager() && isOwner(resource);
     }
     
-    match /users/{userId} {
-      // Users can read their own data.
-      // Gestores can manage users of their own company.
-      allow get: if isUser(userId);
-      allow list, write: if isGestor() && getRequestingUserData().clientId == getUserData(userId).clientId;
-    }
-    
-    match /customerLocations/{locationId} {
-        allow read, write: if isGestor() && resource.data.clientId == getRequestingUserData().clientId;
-    }
-
+    // Regras para Técnicos
     match /assets/{assetId} {
-       allow read, write: if isGestor() && resource.data.clientId == getRequestingUserData().clientId;
+      allow read: if isTechnician() && isOwner(resource);
     }
-    
-     match /contracts/{contractId} {
-       allow read, write: if isGestor(); // Needs refinement, but ok for now
-    }
-    
+
     match /workOrders/{orderId} {
-        allow read, write: if isGestor() && resource.data.clientId == getRequestingUserData().clientId;
+      allow read: if isTechnician() && isOwner(resource);
+      allow update: if isTechnician() && request.auth.uid == resource.data.responsibleId;
     }
-
-    match /products/{productId} {
-        allow read, write: if isGestor();
-    }
-    
-    match /suppliers/{supplierId} {
-        allow read, write: if isGestor();
-    }
-
-    match /purchaseOrders/{poId} {
-        allow read, write: if isGestor();
-    }
-    
-    match /schedules/{scheduleId} {
-        allow read: if isGestor();
-        allow write: if isGestor();
-    }
-    
-    // Backoffice collections
-    match /accountsPayable/{apId} { allow read, write: if isGestor(); }
-    match /accountsReceivable/{arId} { allow read, write: if isGestor(); }
-    match /bankAccounts/{baId} { allow read, write: if isGestor(); }
-    match /chartOfAccounts/{coaId} { allow read: if isGestor(); }
-    match /costCenters/{ccId} { allow read: if isGestor(); }
-
-
-    // Config collections - allow reads for gestor
-    match /cmmsRoles/{roleId} { allow read: if isGestor(); }
-    match /segments/{segmentId} { allow read: if isGestor(); }
-    match /checklistTemplates/{templateId} { allow read: if isGestor(); }
-    match /plans/{planId} { allow read: if isGestor(); }
-    match /addons/{addonId} { allow read: if isGestor(); }
-
   }
 }
