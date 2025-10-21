@@ -40,10 +40,6 @@ import {
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Trash2, FileText } from 'lucide-react';
 import { 
-    contracts as initialContracts, 
-    setContracts, 
-    customerLocations as allLocations, 
-    assets as allAssets, 
     maintenanceFrequencies,
     workOrders as allWorkOrders,
     products as allProducts,
@@ -57,6 +53,9 @@ import { format, differenceInMilliseconds, addDays } from 'date-fns';
 import { ptBR, enUS, es } from 'date-fns/locale';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const emptyPlan: Omit<MaintenancePlan, 'id' | 'lastGenerated'> = {
   assetId: '',
@@ -67,6 +66,12 @@ const emptyPlan: Omit<MaintenancePlan, 'id' | 'lastGenerated'> = {
 export default function ContractsPage() {
   const { selectedClient } = useClient();
   const { t, locale } = useI18n();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const { data: allContracts, loading: contractsLoading } = useCollection<Contract>('contracts');
+  const { data: allLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
+  const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
 
   const [contracts, setLocalContracts] = React.useState<Contract[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -84,8 +89,7 @@ export default function ContractsPage() {
     }
   }, [locale]);
 
-  const emptyContract: Contract = React.useMemo(() => ({
-    id: '',
+  const emptyContract: Omit<Contract, 'id'> = React.useMemo(() => ({
     title: '',
     customerLocationId: '',
     startDate: new Date().getTime(),
@@ -98,32 +102,32 @@ export default function ContractsPage() {
 
 
   React.useEffect(() => {
-    if (selectedClient) {
+    if (selectedClient && !contractsLoading && !locationsLoading) {
       const clientLocations = allLocations.filter(l => l.clientId === selectedClient.id);
       setAvailableLocations(clientLocations);
       const clientLocationIds = clientLocations.map(l => l.id);
-      setLocalContracts(initialContracts.filter(c => clientLocationIds.includes(c.customerLocationId)));
+      setLocalContracts(allContracts.filter(c => clientLocationIds.includes(c.customerLocationId)));
     } else {
       setLocalContracts([]);
       setAvailableLocations([]);
     }
-  }, [selectedClient]);
+  }, [selectedClient, allContracts, allLocations, contractsLoading, locationsLoading]);
   
   React.useEffect(() => {
-    if (formData?.customerLocationId) {
+    if (formData?.customerLocationId && !assetsLoading) {
         setAvailableAssets(allAssets.filter(a => a.customerLocationId === formData.customerLocationId));
     } else {
         setAvailableAssets([]);
     }
-  }, [formData]);
+  }, [formData, allAssets, assetsLoading]);
 
   const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
 
   const openDialog = (contract: Contract | null = null) => {
     setEditingContract(contract);
-    const contractData = contract ? JSON.parse(JSON.stringify(contract)) : JSON.parse(JSON.stringify(emptyContract));
-    setFormData(contractData);
+    const contractData = contract ? JSON.parse(JSON.stringify(contract)) : { ...emptyContract };
+    setFormData(contractData as Contract);
     setIsDialogOpen(true);
   };
 
@@ -190,25 +194,35 @@ export default function ContractsPage() {
   };
 
 
-  const handleSaveContract = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveContract = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData || !selectedClient) return;
-    const newContract: Contract = {
-      ...formData,
-      id: editingContract?.id || `contract-${Date.now()}`,
-    };
-
-    let updatedContracts;
-    if (editingContract) {
-      updatedContracts = initialContracts.map(c => (c.id === newContract.id ? newContract : c));
-    } else {
-      updatedContracts = [newContract, ...initialContracts];
-    }
+    if (!formData || !firestore) return;
     
-    setContracts(updatedContracts);
-    const clientLocationIds = availableLocations.map(l => l.id);
-    setLocalContracts(updatedContracts.filter(c => clientLocationIds.includes(c.customerLocationId)));
-    closeDialog();
+    const { id, ...contractData } = formData;
+
+    try {
+        if (editingContract) {
+            await updateDocument(firestore, 'contracts', editingContract.id, contractData);
+            toast({
+                title: "Contrato Atualizado!",
+                description: `O contrato "${contractData.title}" foi salvo com sucesso.`,
+            });
+        } else {
+            await addDocument(firestore, 'contracts', contractData);
+            toast({
+                title: "Contrato Criado!",
+                description: `O contrato "${contractData.title}" foi criado com sucesso.`,
+            });
+        }
+        closeDialog();
+    } catch (error) {
+        console.error("Erro ao salvar contrato:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar o contrato. Tente novamente."
+        });
+    }
   };
   
   const getStatus = (contract: Contract): ContractStatus => {
@@ -304,7 +318,11 @@ export default function ContractsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {contracts.map(contract => {
+             {contractsLoading ? (
+                <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">Carregando contratos...</TableCell>
+                </TableRow>
+            ) : contracts.map(contract => {
                 const status = getStatus(contract);
                 const revenue90d = contract.monthlyValue * 3;
                 const costs90d = calculateContractCosts(contract);
@@ -422,7 +440,7 @@ export default function ContractsPage() {
                       <div>
                           <h3 className="text-lg font-medium">{t('contracts.dialog.coveredAssets')}</h3>
                           <div className="rounded-lg border p-4 mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
-                              {availableAssets.length > 0 ? availableAssets.map(asset => (
+                              {assetsLoading ? <p>Carregando...</p> : availableAssets.length > 0 ? availableAssets.map(asset => (
                                   <div key={asset.id} className="flex items-center gap-2">
                                       <Checkbox 
                                           id={`asset-${asset.id}`}

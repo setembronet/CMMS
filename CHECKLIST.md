@@ -12,7 +12,7 @@ O objetivo desta fase é substituir todos os dados mockados em `src/lib/data.ts`
 -   [x] **Clientes Finais (Locations)**: Concluído.
 -   [x] **Usuários (CMMS)**: Concluído.
 -   [x] **Ativos**: Concluído.
--   [ ] **Contratos**: Migrar a página de Contratos (`/contracts`) para usar a coleção `contracts`.
+-   [x] **Contratos**: Concluído.
 -   [ ] **Peças (Products)**: Migrar a página de Peças (`/products`) para usar a coleção `products`.
 -   [ ] **Fornecedores**: Migrar a página de Fornecedores (`/suppliers`) para usar a coleção `suppliers`.
 -   [ ] **Ordens de Serviço**: Migrar a página de Ordens de Serviço (`/orders`) para usar a coleção `workOrders`. Esta é a etapa mais complexa devido às interdependências.
@@ -44,4 +44,4 @@ Para facilitar os testes, criaremos um script para popular o Firestore com os da
 
 ---
 
-Com este checklist, temos um caminho claro para a finalização do nosso protótipo funcional. Nosso **próximo passo** será a **Fase 1: Migrar a página de Contratos**.
+Com este checklist, temos um caminho claro para a finalização do nosso protótipo funcional. Nosso **próximo passo** será a **Fase 1: Migrar a página de Peças (Products)**.
