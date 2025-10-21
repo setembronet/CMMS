@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import SignatureCanvas from 'react-signature-canvas';
 import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setWorkOrders as setGlobalWorkOrders, checklistTemplates, rootCauses, recommendedActions } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Checklist, ChecklistItem, ChecklistItemStatus, WorkOrderPart, Product, RootCause, RecommendedAction } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, CheckSquare, Info, ListChecks, Wrench, ShieldAlert, BadgeInfo, Trash2, PlusCircle, AlertTriangle, Camera } from 'lucide-react';
+import { ArrowLeft, Play, Pause, CheckSquare, Info, ListChecks, Wrench, ShieldAlert, BadgeInfo, Trash2, PlusCircle, AlertTriangle, Camera, Edit } from 'lucide-react';
 import { useI18n } from '@/hooks/use-i18n';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,6 +35,9 @@ export default function WorkOrderDetailPage() {
   const [asset, setAsset] = React.useState<Asset | null>(null);
   const [creator, setCreator] = React.useState<User | null>(null);
   const [technician, setTechnician] = React.useState<User | null>(null);
+  
+  const techSigCanvas = React.useRef<SignatureCanvas>(null);
+  const clientSigCanvas = React.useRef<SignatureCanvas>(null);
 
   React.useEffect(() => {
     const order = initialWorkOrders.find(wo => wo.id === orderId);
@@ -113,6 +117,26 @@ export default function WorkOrderDetailPage() {
     // In a real app, you'd show a toast or confirmation
     router.push('/dashboard/orders');
   };
+  
+  const handleSaveSignature = (type: 'tecnico' | 'cliente') => {
+      const canvas = type === 'tecnico' ? techSigCanvas.current : clientSigCanvas.current;
+      if (!canvas || !workOrder) return;
+
+      const signature = canvas.toDataURL(); // In a real app, upload this to Firebase Storage
+      const urlField = type === 'tecnico' ? 'assinaturaTecnicoUrl' : 'assinaturaClienteUrl';
+      const dateField = type === 'tecnico' ? 'dataAssinaturaTecnico' : 'dataAssinaturaCliente';
+      
+      setWorkOrder({
+          ...workOrder,
+          [urlField]: signature,
+          [dateField]: new Date().getTime(),
+      });
+  };
+
+  const clearSignature = (type: 'tecnico' | 'cliente') => {
+      const canvas = type === 'tecnico' ? techSigCanvas.current : clientSigCanvas.current;
+      if (canvas) canvas.clear();
+  };
 
   const getPriorityBadgeClass = (priority: WorkOrder['priority']) => {
     switch (priority) {
@@ -130,6 +154,9 @@ export default function WorkOrderDetailPage() {
       case 'EM ANDAMENTO': return 'bg-blue-500 text-white';
       case 'CONCLUIDO': return 'bg-green-500 text-white';
       case 'CANCELADO': return 'bg-red-500 text-white';
+      case 'EM_ESPERA_PECAS': return 'bg-amber-500 text-white';
+      case 'AGUARDANDO_APROVACAO': return 'bg-cyan-500 text-white';
+      case 'PENDENTE_RETORNO': return 'bg-purple-500 text-white';
       default: return 'bg-gray-200';
     }
   };
@@ -163,7 +190,7 @@ export default function WorkOrderDetailPage() {
         </div>
         <div className="flex items-center gap-2">
             <Badge className={cn("hidden sm:flex", getPriorityBadgeClass(workOrder.priority))}>{workOrder.priority}</Badge>
-            <Badge className={getStatusBadgeClass(workOrder.status)}>{workOrder.status}</Badge>
+            <Badge className={getStatusBadgeClass(workOrder.status)}>{workOrder.status.replace(/_/g, ' ')}</Badge>
         </div>
       </header>
 
@@ -369,6 +396,47 @@ export default function WorkOrderDetailPage() {
                 </div>
             </CardContent>
         </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg"><Edit /> Assinaturas</CardTitle>
+                <CardDescription>Coleta de assinaturas para validação do serviço.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label>Assinatura do Técnico: {technician?.name}</Label>
+                    {workOrder.assinaturaTecnicoUrl ? (
+                        <img src={workOrder.assinaturaTecnicoUrl} alt="Assinatura do Técnico" className="border rounded-md bg-white"/>
+                    ) : (
+                        <>
+                         <div className="border rounded-md bg-white">
+                           <SignatureCanvas ref={techSigCanvas} canvasProps={{ className: 'w-full h-40' }} />
+                         </div>
+                         <div className="flex gap-2">
+                           <Button size="sm" onClick={() => handleSaveSignature('tecnico')} disabled={isConcluded}>Salvar Assinatura</Button>
+                           <Button size="sm" variant="outline" onClick={() => clearSignature('tecnico')}>Limpar</Button>
+                         </div>
+                        </>
+                    )}
+                </div>
+                 <div className="space-y-2">
+                    <Label>Assinatura do Cliente/Responsável</Label>
+                     {workOrder.assinaturaClienteUrl ? (
+                        <img src={workOrder.assinaturaClienteUrl} alt="Assinatura do Cliente" className="border rounded-md bg-white"/>
+                    ) : (
+                        <>
+                         <div className="border rounded-md bg-white">
+                           <SignatureCanvas ref={clientSigCanvas} canvasProps={{ className: 'w-full h-40' }} />
+                         </div>
+                         <div className="flex gap-2">
+                           <Button size="sm" onClick={() => handleSaveSignature('cliente')} disabled={isConcluded}>Salvar Assinatura</Button>
+                           <Button size="sm" variant="outline" onClick={() => clearSignature('cliente')}>Limpar</Button>
+                         </div>
+                        </>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
 
       </main>
 
@@ -396,7 +464,7 @@ export default function WorkOrderDetailPage() {
                         <Pause className="mr-2 h-4 w-4" />
                         Pausar
                     </Button>
-                    <Button className="w-full" onClick={() => handleStatusChange('CONCLUIDO')} disabled={isCompletionBlocked}>
+                    <Button className="w-full" onClick={() => handleStatusChange('CONCLUIDO')} disabled={isCompletionBlocked || !workOrder.assinaturaTecnicoUrl || !workOrder.assinaturaClienteUrl}>
                         <CheckSquare className="mr-2 h-4 w-4" />
                         Finalizar Serviço
                     </Button>

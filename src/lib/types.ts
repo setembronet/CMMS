@@ -205,7 +205,11 @@ export type WorkOrder = {
   fotosAntesDepois?: {
     antes?: string;
     depois?: string;
-  }
+  };
+  assinaturaTecnicoUrl?: string;
+  assinaturaClienteUrl?: string;
+  dataAssinaturaTecnico?: number;
+  dataAssinaturaCliente?: number;
 };
 
 export type Product = {
