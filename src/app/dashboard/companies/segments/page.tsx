@@ -29,16 +29,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { segments as initialSegments, cmmsRoles as initialCmmsRoles, setSegments as setGlobalSegments } from '@/lib/data';
+import { cmmsRoles as allRoles } from '@/lib/data';
 import type { CompanySegment, CMMSRole, CustomField, CustomFieldType } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useI18n } from '@/hooks/use-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
-const emptySegment: CompanySegment = {
-  id: '',
+const emptySegment: Omit<CompanySegment, 'id'> = {
   name: '',
   customFields: [],
   applicableRoles: [],
@@ -53,22 +55,28 @@ const customFieldTypes: { value: CustomFieldType, label: string }[] = [
 
 export default function SegmentsPage() {
   const { t } = useI18n();
-  const [segments, setSegments] = React.useState<CompanySegment[]>(initialSegments);
-  const [cmmsRoles] = React.useState<CMMSRole[]>(initialCmmsRoles);
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  
+  const { data: segments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
+  const { data: cmmsRoles, loading: rolesLoading } = useCollection<CMMSRole>('cmmsRoles');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingSegment, setEditingSegment] = React.useState<CompanySegment | null>(null);
-  const [formData, setFormData] = React.useState<CompanySegment>(emptySegment);
+  const [formData, setFormData] = React.useState<Omit<CompanySegment, 'id'>>(emptySegment);
 
   const openDialog = (segment: CompanySegment | null = null) => {
     setEditingSegment(segment);
-    const initialData = segment 
-        ? JSON.parse(JSON.stringify(segment)) 
-        : JSON.parse(JSON.stringify(emptySegment));
-
-    initialData.customFields = initialData.customFields || [];
-    initialData.applicableRoles = initialData.applicableRoles || [];
-    
-    setFormData(initialData);
+    if (segment) {
+      const { id, ...segmentData } = segment;
+      setFormData({
+          ...segmentData,
+          customFields: segmentData.customFields || [],
+          applicableRoles: segmentData.applicableRoles || [],
+      });
+    } else {
+      setFormData(emptySegment);
+    }
     setIsDialogOpen(true);
   };
 
@@ -128,24 +136,37 @@ export default function SegmentsPage() {
   };
 
 
-  const handleSaveSegment = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveSegment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newSegment: CompanySegment = {
-      ...formData,
-      id: editingSegment?.id || formData.name.toUpperCase().replace(/\s/g, '_'),
-      customFields: formData.customFields || [],
-      applicableRoles: formData.applicableRoles || [],
-    };
+    if (!firestore) return;
 
-    let updatedSegments;
-    if (editingSegment) {
-      updatedSegments = segments.map(s => (s.id === newSegment.id ? newSegment : s));
-    } else {
-      updatedSegments = [newSegment, ...segments];
+    try {
+        if (editingSegment) {
+            await updateDocument(firestore, 'segments', editingSegment.id, formData);
+             toast({
+                title: "Segmento Atualizado!",
+                description: `O segmento "${formData.name}" foi atualizado.`,
+            });
+        } else {
+            const newSegmentData = {
+                ...formData,
+                id: formData.name.toUpperCase().replace(/\s/g, '_'),
+            }
+            await addDocument(firestore, 'segments', newSegmentData);
+             toast({
+                title: "Segmento Criado!",
+                description: `O segmento "${formData.name}" foi criado com sucesso.`,
+            });
+        }
+        closeDialog();
+    } catch (error) {
+         console.error("Erro ao salvar segmento:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar o segmento."
+        });
     }
-    setSegments(updatedSegments);
-    setGlobalSegments(updatedSegments);
-    closeDialog();
   };
 
 
@@ -169,7 +190,9 @@ export default function SegmentsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {segments.map(segment => (
+            {segmentsLoading ? (
+                <TableRow><TableCell colSpan={4} className="h-24 text-center">Carregando segmentos...</TableCell></TableRow>
+            ) : segments.map(segment => (
               <TableRow key={segment.id}>
                 <TableCell className="font-medium">{segment.name}</TableCell>
                 <TableCell>
@@ -222,7 +245,7 @@ export default function SegmentsPage() {
                       <p className="text-sm text-muted-foreground">{t('segments.dialog.applicableRolesDescription')}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
-                      {cmmsRoles.map(role => (
+                      {rolesLoading ? <p>Carregando funções...</p> : cmmsRoles.map(role => (
                         <div key={role.id} className="flex items-center gap-2">
                             <Checkbox 
                               id={`role-${role.id}`}
