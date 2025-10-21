@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -10,24 +9,41 @@ import {
 import { Header } from '@/components/dashboard/header';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { useClient } from '@/context/client-provider';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+
+const CLIENT_ROLES = ['SINDICO', 'ZELADOR', 'PORTEIRO', 'GERENTE_PREDIAL'];
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { currentUser } = useClient();
+  const { currentUser, authLoading } = useClient();
+  const router = useRouter();
+  
+  React.useEffect(() => {
+      if (!authLoading && currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
+          router.replace('/dashboard/client-portal');
+      }
+  }, [currentUser, authLoading, router]);
 
-  if (!currentUser) {
-    // Or a loading spinner, or some other placeholder
+  if (authLoading || !currentUser) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <p>Loading user...</p>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
   
   const isTechnician = currentUser?.cmmsRole === 'TECNICO';
+  const isClient = CLIENT_ROLES.includes(currentUser?.cmmsRole || '');
+
+  if (isClient) {
+      // The client portal page will handle its own layout, so we just render the children.
+      // This avoids layout shifts during redirection.
+      return <>{children}</>;
+  }
 
   if (isTechnician) {
       return (
