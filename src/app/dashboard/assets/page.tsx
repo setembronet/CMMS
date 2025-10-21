@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, MoreHorizontal, History, Trash2, Camera, QrCode, HardHat, Package, Check, AlertTriangle, FilePlus } from 'lucide-react';
-import { assets as initialAssets, companies, segments as allSegments, customerLocations as allLocations, workOrders, plans, products, users } from '@/lib/data';
+import { workOrders, plans, products, users } from '@/lib/data';
 import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,12 +51,21 @@ import { useI18n } from '@/hooks/use-i18n';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
+import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
 type AssetStatus = 'Operacional' | 'Em Manutenção';
 
 export default function AssetsPage() {
   const { selectedClient } = useClient();
   const { t } = useI18n();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: allSegments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
+  const { data: allLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
 
   const [assets, setAssets] = React.useState<Asset[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -70,8 +79,7 @@ export default function AssetsPage() {
   const assetLimit = clientPlan?.assetLimit ?? 0;
   const hasReachedAssetLimit = assetLimit !== -1 && assets.length >= assetLimit;
 
-  const emptyAsset: Asset = React.useMemo(() => ({
-    id: '',
+  const emptyAsset: Omit<Asset, 'id'> = React.useMemo(() => ({
     name: '',
     clientId: selectedClient?.id || '',
     customerLocationId: '',
@@ -88,8 +96,8 @@ export default function AssetsPage() {
 
 
   React.useEffect(() => {
-    if (selectedClient) {
-      setAssets(initialAssets.filter(a => a.clientId === selectedClient.id));
+    if (selectedClient && !assetsLoading && !segmentsLoading && !locationsLoading) {
+      setAssets(allAssets.filter(a => a.clientId === selectedClient.id));
       
       const companySegments = allSegments.filter(s => selectedClient.activeSegments.includes(s.id));
       setAvailableSegments(companySegments);
@@ -101,7 +109,7 @@ export default function AssetsPage() {
       setAvailableSegments([]);
       setAvailableLocations([]);
     }
-  }, [selectedClient]);
+  }, [selectedClient, allAssets, allSegments, allLocations, assetsLoading, segmentsLoading, locationsLoading]);
   
   React.useEffect(() => {
     if (formData && formData.activeSegment) {
@@ -110,7 +118,7 @@ export default function AssetsPage() {
     } else {
         setCustomFields([]);
     }
-  }, [formData]);
+  }, [formData, allSegments]);
 
   React.useEffect(() => {
      if (formData && availableSegments.length === 1 && formData.activeSegment !== availableSegments[0].id) {
@@ -120,7 +128,6 @@ export default function AssetsPage() {
 
 
   const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
-  const getSegmentName = (id: string) => allSegments.find(s => s.id === id)?.name || 'N/A';
 
   const getAssetStatus = (assetId: string): AssetStatus => {
     const hasOpenWorkOrder = workOrders.some(
@@ -156,7 +163,7 @@ export default function AssetsPage() {
         assetData.activeSegment = availableSegments[0].id;
     }
     
-    setFormData(assetData);
+    setFormData(assetData as Asset);
     setIsDialogOpen(true);
   };
 
@@ -211,28 +218,48 @@ export default function AssetsPage() {
     setFormData(prev => prev ? { ...prev, gallery: (prev.gallery || []).filter((_, i) => i !== index) } : null);
   };
 
-  const handleSaveAsset = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveAsset = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData) return;
+    if (!formData || !firestore) return;
     
-    const newAsset: Asset = {
-      ...formData,
-      clientId: selectedClient?.id || '',
-      id: editingAsset?.id || `asset-0${assets.length + 1}`,
-      gallery: (formData.gallery || []).filter(url => url.trim() !== ''),
-      creationDate: editingAsset?.creationDate || new Date().getTime(),
+    if (!editingAsset && hasReachedAssetLimit) {
+        toast({
+            variant: "destructive",
+            title: t('assets.limitReached', { limit: assetLimit, planName: clientPlan?.name })
+        });
+        return;
+    }
+    
+    const assetData: Omit<Asset, 'id'> = {
+        ...formData,
+        clientId: selectedClient?.id || '',
+        gallery: (formData.gallery || []).filter(url => url.trim() !== ''),
+        creationDate: editingAsset?.creationDate || new Date().getTime(),
     };
 
-    if (editingAsset) {
-      setAssets(assets.map(a => a.id === newAsset.id ? newAsset : a));
-    } else {
-      if(hasReachedAssetLimit) {
-        console.error("Asset limit reached");
-        return;
-      }
-      setAssets([newAsset, ...assets]);
+    try {
+        if (editingAsset) {
+            await updateDocument(firestore, 'assets', editingAsset.id, assetData);
+             toast({
+                title: "Ativo Atualizado!",
+                description: `O ativo "${assetData.name}" foi atualizado com sucesso.`,
+            });
+        } else {
+            await addDocument(firestore, 'assets', assetData);
+             toast({
+                title: "Ativo Criado!",
+                description: `O ativo "${assetData.name}" foi criado com sucesso.`,
+            });
+        }
+        closeDialog();
+    } catch (error) {
+        console.error("Erro ao salvar ativo:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar os dados do ativo. Tente novamente."
+        });
     }
-    closeDialog();
   };
 
   const getAssetTimeline = (asset: Asset | null) => {
@@ -312,6 +339,8 @@ export default function AssetsPage() {
       </Button>
   );
 
+  const isLoading = assetsLoading || segmentsLoading || locationsLoading;
+
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
@@ -353,7 +382,11 @@ export default function AssetsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {assets.map(asset => {
+              {isLoading ? (
+                 <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">Carregando ativos...</TableCell>
+                  </TableRow>
+              ) : assets.map(asset => {
                 const status = getAssetStatus(asset.id);
                 const osCount = getWorkOrderCount(asset.id);
                 return (
@@ -604,5 +637,3 @@ export default function AssetsPage() {
     </TooltipProvider>
   );
 }
-
-    
