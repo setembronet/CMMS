@@ -1,3 +1,4 @@
+
 {
   "header": {
     "changeLanguage": "Cambiar idioma",
@@ -37,7 +38,8 @@
     "accountsReceivable": "Cuentas por Cobrar",
     "backoffice": "Backoffice",
     "bankAccounts": "Cuentas Bancarias",
-    "schedule": "Horario de Técnicos"
+    "schedule": "Horario de Técnicos",
+    "clientPortal": "Portal del Cliente"
   },
   "common": {
     "save": "Guardar",

@@ -1,3 +1,4 @@
+
 {
   "header": {
     "changeLanguage": "Change language",
@@ -37,7 +38,8 @@
     "accountsReceivable": "Accounts Receivable",
     "backoffice": "Backoffice",
     "bankAccounts": "Bank Accounts",
-    "schedule": "Technician Schedule"
+    "schedule": "Technician Schedule",
+    "clientPortal": "Client Portal"
   },
   "common": {
     "save": "Save",

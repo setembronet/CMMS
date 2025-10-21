@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -41,12 +42,12 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from '../components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
-import { Logo } from '../components/logo';
-import { cn } from '../lib/utils';
+} from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Logo } from '@/components/logo';
+import { cn } from '@/lib/utils';
 import React from 'react';
-import { useI18n } from '../hooks/use-i18n';
+import { useI18n } from '@/hooks/use-i18n';
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -64,6 +65,7 @@ export function SidebarNav() {
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
   const isCmmsBackofficeActive = pathname.startsWith('/dashboard/cmms');
+  const isClientPortalActive = pathname.startsWith('/dashboard/client-portal');
   
   const settingsLinks = [
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
@@ -292,7 +294,7 @@ export function SidebarNav() {
                         </SidebarMenuSub>
                         
                         <Collapsible asChild defaultOpen={isCmmsBackofficeActive}>
-                            <SidebarMenuSubItem>
+                            <SidebarMenuItem>
                                 <CollapsibleTrigger asChild>
                                     <div className="flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 px-4 py-2 cursor-pointer hover:text-sidebar-foreground">
                                         <span>{t('sidebar.backoffice')} (CMMS)</span>
@@ -351,12 +353,43 @@ export function SidebarNav() {
                                         </SidebarMenuSubItem>
                                     </SidebarMenuSub>
                                 </CollapsibleContent>
-                            </SidebarMenuSubItem>
+                            </SidebarMenuItem>
                         </Collapsible>
 
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
+
+           <Collapsible asChild defaultOpen={isClientPortalActive}>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                         <SidebarMenuButton
+                            isActive={isClientPortalActive}
+                            className="justify-between"
+                            tooltip={{ children: 'Portal do Cliente' }}
+                         >
+                            <div className="flex items-center gap-2">
+                                <Home />
+                                <span>Portal do Cliente</span>
+                            </div>
+                            <ChevronDown className={cn("transition-transform duration-200", isClientPortalActive && "rotate-180")} />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                             <SidebarMenuSubItem>
+                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/client-portal', true)}>
+                                    <Link href="/dashboard/client-portal">
+                                        <LayoutGrid />
+                                        <span>Visão Geral</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                             </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+           </Collapsible>
+
         </SidebarMenu>
         <SidebarMenu className="mt-auto">
           <Collapsible asChild defaultOpen={isSettingsActive}>
