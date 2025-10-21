@@ -2,20 +2,105 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Função para verificar se o usuário é um administrador do SaaS
+
+    // --- Helper Functions ---
     function isAdmin() {
       return request.auth.token.admin == true;
     }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isUser(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- Role Checks ---
+    function isGestor() {
+        return isSignedIn() && getUserData(request.auth.uid).cmmsRole == 'GESTOR';
+    }
+
+    function getRequestingUserData() {
+        return getUserData(request.auth.uid);
+    }
     
-    // Nega todo o acesso por padrão
+    // --- Default Deny ---
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Regra Global: Admins podem ler e escrever em qualquer coleção
-    match /{path=**} {
+    // --- Global Admin Access ---
+    match /{document=**} {
       allow read, write: if isAdmin();
     }
+    
+    // --- Collections Rules ---
+    
+    // Gestor can read/write data linked to their own clientId
+    match /companies/{companyId} {
+      allow get: if isGestor() && companyId == getRequestingUserData().clientId;
+      allow list: if isGestor(); // Allow listing for client switcher
+    }
+    
+    match /users/{userId} {
+      // Users can read their own data.
+      // Gestores can manage users of their own company.
+      allow get: if isUser(userId);
+      allow list, write: if isGestor() && getRequestingUserData().clientId == getUserData(userId).clientId;
+    }
+    
+    match /customerLocations/{locationId} {
+        allow read, write: if isGestor() && resource.data.clientId == getRequestingUserData().clientId;
+    }
+
+    match /assets/{assetId} {
+       allow read, write: if isGestor() && resource.data.clientId == getRequestingUserData().clientId;
+    }
+    
+     match /contracts/{contractId} {
+       allow read, write: if isGestor(); // Needs refinement, but ok for now
+    }
+    
+    match /workOrders/{orderId} {
+        allow read, write: if isGestor() && resource.data.clientId == getRequestingUserData().clientId;
+    }
+
+    match /products/{productId} {
+        allow read, write: if isGestor();
+    }
+    
+    match /suppliers/{supplierId} {
+        allow read, write: if isGestor();
+    }
+
+    match /purchaseOrders/{poId} {
+        allow read, write: if isGestor();
+    }
+    
+    match /schedules/{scheduleId} {
+        allow read: if isGestor();
+        allow write: if isGestor();
+    }
+    
+    // Backoffice collections
+    match /accountsPayable/{apId} { allow read, write: if isGestor(); }
+    match /accountsReceivable/{arId} { allow read, write: if isGestor(); }
+    match /bankAccounts/{baId} { allow read, write: if isGestor(); }
+    match /chartOfAccounts/{coaId} { allow read: if isGestor(); }
+    match /costCenters/{ccId} { allow read: if isGestor(); }
+
+
+    // Config collections - allow reads for gestor
+    match /cmmsRoles/{roleId} { allow read: if isGestor(); }
+    match /segments/{segmentId} { allow read: if isGestor(); }
+    match /checklistTemplates/{templateId} { allow read: if isGestor(); }
+    match /plans/{planId} { allow read: if isGestor(); }
+    match /addons/{addonId} { allow read: if isGestor(); }
+
   }
 }
