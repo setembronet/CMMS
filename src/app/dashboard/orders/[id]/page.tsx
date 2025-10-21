@@ -124,6 +124,9 @@ export default function WorkOrderDetailPage() {
       case 'EM ANDAMENTO': return 'bg-blue-500 text-white';
       case 'CONCLUIDO': return 'bg-green-500 text-white';
       case 'CANCELADO': return 'bg-red-500 text-white';
+      case 'EM_ESPERA_PECAS': return 'bg-amber-500 text-white';
+      case 'AGUARDANDO_APROVACAO': return 'bg-cyan-500 text-white';
+      case 'PENDENTE_RETORNO': return 'bg-purple-500 text-white';
       default: return 'bg-gray-200';
     }
   };
@@ -155,7 +158,7 @@ export default function WorkOrderDetailPage() {
         </div>
         <div className="flex items-center gap-2">
             <Badge className={cn("hidden sm:flex", getPriorityBadgeClass(workOrder.priority))}>{workOrder.priority}</Badge>
-            <Badge className={getStatusBadgeClass(workOrder.status)}>{workOrder.status}</Badge>
+            <Badge className={getStatusBadgeClass(workOrder.status)}>{workOrder.status.replace(/_/g, ' ')}</Badge>
         </div>
       </header>
 

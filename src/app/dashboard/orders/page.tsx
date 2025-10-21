@@ -55,7 +55,7 @@ import Link from 'next/link';
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
 
-const orderStatuses: OrderStatus[] = ['ABERTO', 'EM ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
+const orderStatuses: OrderStatus[] = ['ABERTO', 'EM ANDAMENTO', 'CONCLUIDO', 'CANCELADO', 'EM_ESPERA_PECAS', 'AGUARDANDO_APROVACAO', 'PENDENTE_RETORNO'];
 const orderPriorities: OrderPriority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
 const checklistStatuses: ChecklistItemStatus[] = ['OK', 'NÃO OK', 'N/A'];
 
@@ -401,6 +401,9 @@ export default function WorkOrdersPage() {
       case 'EM ANDAMENTO': return 'default';
       case 'CONCLUIDO': return 'outline';
       case 'CANCELADO': return 'destructive';
+      case 'EM_ESPERA_PECAS': return 'bg-amber-500 text-white';
+      case 'AGUARDANDO_APROVACAO': return 'bg-cyan-500 text-white';
+      case 'PENDENTE_RETORNO': return 'bg-purple-500 text-white';
       default: return 'secondary';
     }
   };
@@ -635,7 +638,7 @@ export default function WorkOrdersPage() {
                           <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                  {orderStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                  {orderStatuses.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, ' ')}</SelectItem>)}
                               </SelectContent>
                           </Select>
                       </div>
@@ -897,4 +900,3 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
-
