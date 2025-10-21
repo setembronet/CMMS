@@ -306,28 +306,7 @@ export default function AccountsPayablePage() {
                           </Select>
                       </div>
                   </div>
-
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="costCenterId">Centro de Custo</Label>
-                            <Select name="costCenterId" value={formData.costCenterId} onValueChange={(v) => handleSelectChange('costCenterId', v)} required>
-                                <SelectTrigger><SelectValue placeholder="Selecione o centro de custo" /></SelectTrigger>
-                                <SelectContent>
-                                    {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="chartOfAccountId">Conta Contábil</Label>
-                            <Select name="chartOfAccountId" value={formData.chartOfAccountId} onValueChange={(v) => handleSelectChange('chartOfAccountId', v)} required>
-                                <SelectTrigger><SelectValue placeholder="Selecione a conta contábil" /></SelectTrigger>
-                                <SelectContent>
-                                   {selectableAccounts.map(ca => <SelectItem key={ca.id} value={ca.id}>{ca.code} - {ca.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    
+                   
                     {formData.status === 'Paga' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                             <div className="space-y-2">
@@ -355,6 +334,27 @@ export default function AccountsPayablePage() {
                     )}
 
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="costCenterId">Centro de Custo</Label>
+                            <Select name="costCenterId" value={formData.costCenterId} onValueChange={(v) => handleSelectChange('costCenterId', v)} required>
+                                <SelectTrigger><SelectValue placeholder="Selecione o centro de custo" /></SelectTrigger>
+                                <SelectContent>
+                                    {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="chartOfAccountId">Conta Contábil</Label>
+                            <Select name="chartOfAccountId" value={formData.chartOfAccountId} onValueChange={(v) => handleSelectChange('chartOfAccountId', v)} required>
+                                <SelectTrigger><SelectValue placeholder="Selecione a conta contábil" /></SelectTrigger>
+                                <SelectContent>
+                                   {selectableAccounts.map(ca => <SelectItem key={ca.id} value={ca.id}>{ca.code} - {ca.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    
                     {!editingAccount && (
                         <>
                             <Separator />
@@ -415,6 +415,5 @@ export default function AccountsPayablePage() {
     </div>
   );
 }
-    
 
-    
+  
