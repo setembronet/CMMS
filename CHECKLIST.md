@@ -22,8 +22,8 @@ O objetivo desta fase é substituir todos os dados mockados em `src/lib/data.ts`
 
 Atualmente, nossas regras são abertas para qualquer usuário autenticado. Precisamos restringir o acesso com base na função do usuário.
 
--   [ ] **Regra Base**: Modificar `firestore.rules` para negar acesso de leitura/escrita por padrão.
--   [ ] **Regras de Administrador (SaaS Admin)**: Criar uma função de `admin` que permita acesso total a todos os dados.
+-   [x] **Regra Base**: Modificar `firestore.rules` para negar acesso de leitura/escrita por padrão.
+-   [x] **Regras de Administrador (SaaS Admin)**: Criar uma função de `admin` que permita acesso total a todos os dados.
 -   [ ] **Regras de Gestor (Cliente)**: Permitir que um usuário com a função `GESTOR` leia/escreva apenas documentos que correspondam ao seu `clientId`.
 -   [ ] **Regras de Técnico**: Permitir que um `TECNICO` leia Ordens de Serviço e Ativos, mas só possa editar as OS que lhe foram atribuídas.
 -   [ ] **Regras de Cliente Final (Síndico/Zelador)**: Implementar a regra mais restritiva, garantindo que um `SINDICO` só possa criar novas OS e ler/comentar nas OS relacionadas aos seus ativos.
