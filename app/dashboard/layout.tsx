@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -19,7 +20,11 @@ export default function DashboardLayout({
 
   if (!currentUser) {
     // Or a loading spinner, or some other placeholder
-    return null;
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <p>Loading user...</p>
+      </div>
+    );
   }
   
   const isTechnician = currentUser?.cmmsRole === 'TECNICO';

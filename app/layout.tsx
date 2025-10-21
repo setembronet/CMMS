@@ -1,8 +1,9 @@
+
 import type { Metadata } from 'next';
-import './globals.css';
-import { cn } from './lib/utils';
-import { Toaster } from './components/ui/toaster';
-import { Providers } from './providers';
+import '@/app/globals.css';
+import { cn } from '@/lib/utils';
+import { Toaster } from '@/components/ui/toaster';
+import { Providers } from '@/app/providers';
 
 
 export const metadata: Metadata = {
@@ -23,10 +24,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased", "font-body")}>
-          <Providers>
-            {children}
-            <Toaster />
-          </Providers>
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );
