@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -139,14 +140,6 @@ export default function ClientPortalPage() {
   return (
     <>
       <div className="flex flex-col min-h-screen bg-muted/30">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-              <Logo />
-               <div className="flex w-full items-center justify-end gap-4">
-                  <ThemeToggle />
-                  <UserNav />
-              </div>
-          </header>
-
           <main className="flex-1 p-4 md:p-8 lg:p-10 space-y-8">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
