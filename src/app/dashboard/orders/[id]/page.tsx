@@ -1,9 +1,10 @@
+
 'use client';
 
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import SignatureCanvas from 'react-signature-canvas';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setWorkOrders as setGlobalWorkOrders, checklistTemplates, rootCauses, recommendedActions } from '@/lib/data';
+import { assets as allAssets, users as allUsers, products as initialProducts, checklistTemplates, rootCauses, recommendedActions } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Checklist, ChecklistItem, ChecklistItemStatus, WorkOrderPart, Product, RootCause, RecommendedAction } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Pause, CheckSquare, Info, ListChecks, Wrench, ShieldAlert, BadgeInfo, Trash2, PlusCircle, AlertTriangle, Camera, Edit } from 'lucide-react';
@@ -12,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { format, differenceInMilliseconds } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,6 +22,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useFirestore } from '@/firebase';
+import { useDocument } from '@/firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const checklistStatuses: ChecklistItemStatus[] = ['OK', 'NÃO OK', 'N/A'];
 
@@ -28,10 +33,12 @@ export default function WorkOrderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { t } = useI18n();
+  const firestore = useFirestore();
+  const { toast } = useToast();
   
   const orderId = params.id as string;
   
-  const [workOrder, setWorkOrder] = React.useState<WorkOrder | null>(null);
+  const { data: workOrder, setData: setWorkOrder, loading, error } = useDocument<WorkOrder>('workOrders', orderId);
   const [asset, setAsset] = React.useState<Asset | null>(null);
   const [creator, setCreator] = React.useState<User | null>(null);
   const [technician, setTechnician] = React.useState<User | null>(null);
@@ -40,27 +47,28 @@ export default function WorkOrderDetailPage() {
   const clientSigCanvas = React.useRef<SignatureCanvas>(null);
 
   React.useEffect(() => {
-    const order = initialWorkOrders.find(wo => wo.id === orderId);
-    if (order) {
-      const orderData = JSON.parse(JSON.stringify(order));
+    if (workOrder) {
+      const orderData = JSON.parse(JSON.stringify(workOrder));
        if (!orderData.checklist && orderData.checklistTemplateId) {
         const template = checklistTemplates.find(t => t.id === orderData.checklistTemplateId);
         if (template) {
           orderData.checklist = JSON.parse(JSON.stringify(template.checklistData));
         }
       }
-      setWorkOrder(orderData);
+      if(JSON.stringify(orderData) !== JSON.stringify(workOrder)) {
+        setWorkOrder(orderData);
+      }
       
-      const foundAsset = allAssets.find(a => a.id === order.assetId);
+      const foundAsset = allAssets.find(a => a.id === workOrder.assetId);
       setAsset(foundAsset || null);
       
-      const foundCreator = allUsers.find(u => u.id === order.createdByUserId);
+      const foundCreator = allUsers.find(u => u.id === workOrder.createdByUserId);
       setCreator(foundCreator || null);
       
-      const foundTechnician = allUsers.find(u => u.id === order.responsibleId);
+      const foundTechnician = allUsers.find(u => u.id === workOrder.responsibleId);
       setTechnician(foundTechnician || null);
     }
-  }, [orderId]);
+  }, [workOrder, setWorkOrder]);
   
   const handleChecklistItemChange = (groupIndex: number, itemIndex: number, field: keyof ChecklistItem, value: string) => {
     if (!workOrder || !workOrder.checklist) return;
@@ -110,12 +118,17 @@ export default function WorkOrderDetailPage() {
     setWorkOrder(updatedOrder);
   };
 
-  const handleSave = () => {
-    if (!workOrder) return;
-    const updatedWorkOrders = initialWorkOrders.map(wo => wo.id === workOrder.id ? workOrder : wo);
-    setGlobalWorkOrders(updatedWorkOrders);
-    // In a real app, you'd show a toast or confirmation
-    router.push('/dashboard/orders');
+  const handleSave = async () => {
+    if (!workOrder || !firestore) return;
+    try {
+        const { id, ...orderData } = workOrder;
+        await updateDoc(doc(firestore, 'workOrders', id), orderData);
+        toast({ title: "Sucesso!", description: "Ordem de serviço atualizada." });
+        router.push('/dashboard/orders');
+    } catch(error) {
+        console.error("Error saving work order:", error);
+        toast({ variant: 'destructive', title: "Erro", description: "Não foi possível salvar a ordem de serviço." });
+    }
   };
   
   const handleSaveSignature = (type: 'tecnico' | 'cliente') => {
@@ -164,7 +177,11 @@ export default function WorkOrderDetailPage() {
   const getProduct = (id: string) => initialProducts.find(p => p.id === id);
   const getProductStock = (id: string) => getProduct(id)?.stock || 0;
 
-  if (!workOrder) {
+  if (loading) {
+    return <div className="flex items-center justify-center h-full"><p>Carregando Ordem de Serviço...</p></div>;
+  }
+  
+  if (error || !workOrder) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">Ordem de Serviço não encontrada.</p>
@@ -441,40 +458,40 @@ export default function WorkOrderDetailPage() {
       </main>
 
       {/* Footer Actions */}
-      {!isConcluded && (
-        <footer className="p-4 border-t bg-background sticky bottom-0 z-10 space-y-2">
-            {isCompletionBlocked && workOrder.status === 'EM ANDAMENTO' && (
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Finalização Bloqueada</AlertTitle>
-                    <AlertDescription>
-                        É necessário anexar as fotos de "Antes" e "Depois" para concluir esta Ordem de Serviço.
-                    </AlertDescription>
-                </Alert>
-            )}
-            {workOrder.status === 'ABERTO' && (
-                <Button className="w-full" size="lg" onClick={() => handleStatusChange('EM ANDAMENTO')}>
-                    <Play className="mr-2 h-4 w-4" />
-                    Iniciar Serviço
-                </Button>
-            )}
-            {workOrder.status === 'EM ANDAMENTO' && (
-                 <div className="grid grid-cols-2 gap-2">
-                    <Button className="w-full" variant="outline" onClick={() => handleStatusChange('ABERTO')}>
-                        <Pause className="mr-2 h-4 w-4" />
-                        Pausar
-                    </Button>
-                    <Button className="w-full" onClick={() => handleStatusChange('CONCLUIDO')} disabled={isCompletionBlocked || !workOrder.assinaturaTecnicoUrl || !workOrder.assinaturaClienteUrl}>
-                        <CheckSquare className="mr-2 h-4 w-4" />
-                        Finalizar Serviço
-                    </Button>
-                </div>
-            )}
-            {(workOrder.status === 'CONCLUIDO' || workOrder.status === 'CANCELADO') && (
-                <Button className="w-full" onClick={handleSave}>Salvar Alterações</Button>
-            )}
-        </footer>
-      )}
+      <footer className="p-4 border-t bg-background sticky bottom-0 z-10 space-y-2">
+          {isCompletionBlocked && workOrder.status === 'EM ANDAMENTO' && (
+              <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Finalização Bloqueada</AlertTitle>
+                  <AlertDescription>
+                      É necessário anexar as fotos de "Antes" e "Depois" para concluir esta Ordem de Serviço.
+                  </AlertDescription>
+              </Alert>
+          )}
+           {!isConcluded && (
+            <>
+              {workOrder.status === 'ABERTO' && (
+                  <Button className="w-full" size="lg" onClick={() => handleStatusChange('EM ANDAMENTO')}>
+                      <Play className="mr-2 h-4 w-4" />
+                      Iniciar Serviço
+                  </Button>
+              )}
+              {workOrder.status === 'EM ANDAMENTO' && (
+                   <div className="grid grid-cols-2 gap-2">
+                      <Button className="w-full" variant="outline" onClick={() => handleStatusChange('ABERTO')}>
+                          <Pause className="mr-2 h-4 w-4" />
+                          Pausar
+                      </Button>
+                      <Button className="w-full" onClick={() => handleStatusChange('CONCLUIDO')} disabled={isCompletionBlocked || !workOrder.assinaturaTecnicoUrl || !workOrder.assinaturaClienteUrl}>
+                          <CheckSquare className="mr-2 h-4 w-4" />
+                          Finalizar Serviço
+                      </Button>
+                  </div>
+              )}
+            </>
+           )}
+            <Button className="w-full" onClick={handleSave}>Salvar e Fechar</Button>
+      </footer>
     </div>
   );
 }

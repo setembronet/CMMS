@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon, BrainCircuit } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations, checklistTemplates } from '@/lib/data';
+import { contracts, rootCauses, recommendedActions, checklistTemplates } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -51,7 +51,9 @@ import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
 import Link from 'next/link';
-
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
 
@@ -74,17 +76,23 @@ const getNextDueDate = (last: number, frequency: MaintenanceFrequency): Date => 
 export default function WorkOrdersPage() {
   const { selectedClient } = useClient();
   const { t } = useI18n();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const { data: allWorkOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
+  const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+  
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
   const [clientAssets, setClientAssets] = React.useState<Asset[]>([]);
   const [clientUsers, setClientUsers] = React.useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
   const [formData, setFormData] = React.useState<WorkOrder | null>(null);
-  const [products, setLocalProducts] = React.useState<Product[]>(initialProducts);
   const [availableChecklists, setAvailableChecklists] = React.useState<typeof checklistTemplates>([]);
 
-  const emptyWorkOrder: WorkOrder = React.useMemo(() => ({
-    id: '',
+  const emptyWorkOrder: Omit<WorkOrder, 'id'> = React.useMemo(() => ({
     title: '',
     description: '',
     clientId: selectedClient?.id || '',
@@ -105,9 +113,8 @@ export default function WorkOrdersPage() {
       const lookaheadDate = addDays(today, 7);
       
       const clientContracts = contracts.filter(c => {
-          const location = allAssets.find(a => a.id === c.coveredAssetIds[0])?.customerLocationId;
-          const contractClient = allLocations.find(l => l.id === location)?.clientId;
-          return contractClient === clientId;
+          const asset = allAssets.find(a => a.id === c.coveredAssetIds[0]);
+          return asset?.clientId === clientId;
       });
 
       clientContracts.forEach(contract => {
@@ -143,24 +150,20 @@ export default function WorkOrdersPage() {
       });
 
       return newWorkOrders;
-  }, [emptyWorkOrder]);
+  }, [emptyWorkOrder, allAssets]);
 
 
   React.useEffect(() => {
-    if (selectedClient) {
-      const newPreventiveOrders = generatePreventiveWorkOrders(initialWorkOrders, selectedClient.id);
-      let allClientOrders = initialWorkOrders.filter(wo => wo.clientId === selectedClient.id);
+    if (selectedClient && !workOrdersLoading && !assetsLoading && !usersLoading) {
+      const newPreventiveOrders = generatePreventiveWorkOrders(allWorkOrders, selectedClient.id);
+      let allClientOrders = allWorkOrders.filter(wo => wo.clientId === selectedClient.id);
 
       if (newPreventiveOrders.length > 0) {
-          const currentAndNew = [...allClientOrders, ...newPreventiveOrders];
-          const allGlobalOrders = [...initialWorkOrders, ...newPreventiveOrders];
-          // This is a mock update. In a real app, you'd have a more robust system.
-          // setGlobalWorkOrders(allGlobalOrders); 
-          setWorkOrders(currentAndNew);
-      } else {
-          setWorkOrders(allClientOrders);
+          allClientOrders = [...allClientOrders, ...newPreventiveOrders];
+          // In a real app, these new orders would be written to Firestore
       }
-
+      
+      setWorkOrders(allClientOrders);
       setClientAssets(allAssets.filter(a => a.clientId === selectedClient.id));
       setClientUsers(allUsers.filter(u => u.clientId === selectedClient.id && u.cmmsRole === 'TECNICO'));
     } else {
@@ -168,8 +171,7 @@ export default function WorkOrdersPage() {
       setClientAssets([]);
       setClientUsers([]);
     }
-    setLocalProducts(initialProducts);
-  }, [selectedClient, generatePreventiveWorkOrders]);
+  }, [selectedClient, allWorkOrders, allAssets, allUsers, workOrdersLoading, assetsLoading, usersLoading, generatePreventiveWorkOrders]);
 
 
   React.useEffect(() => {
@@ -199,7 +201,7 @@ export default function WorkOrdersPage() {
   const getTechnician = (id?: string) => id ? allUsers.find(u => u.id === id) : null;
   const getTechnicianName = (id?: string) => getTechnician(id)?.name || 'N/A';
   
-  const getProduct = (id: string) => products.find(p => p.id === id);
+  const getProduct = (id: string) => allProducts.find(p => p.id === id);
   const getProductName = (id: string) => getProduct(id)?.name || 'N/A';
   const getProductPrice = (id: string) => getProduct(id)?.price || 0;
   const getProductStock = (id: string) => getProduct(id)?.stock || 0;
@@ -207,13 +209,7 @@ export default function WorkOrdersPage() {
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
-    let orderData: WorkOrder;
-
-    if (order) {
-        orderData = JSON.parse(JSON.stringify(order));
-    } else {
-        orderData = JSON.parse(JSON.stringify(emptyWorkOrder));
-    }
+    let orderData = order ? JSON.parse(JSON.stringify(order)) : JSON.parse(JSON.stringify(emptyWorkOrder));
 
     if (!orderData.checklist && orderData.checklistTemplateId) {
       const template = checklistTemplates.find(t => t.id === orderData.checklistTemplateId);
@@ -261,7 +257,6 @@ export default function WorkOrdersPage() {
             if (template) {
                 newChecklist = JSON.parse(JSON.stringify(template.checklistData));
                 newChecklistTemplateId = value as string;
-                // Automatically set mediaObrigatoria based on checklist content (example logic)
                 mediaObrigatoria = newChecklist.some(group => group.title.toLowerCase().includes('reparo'));
             }
         }
@@ -317,7 +312,6 @@ export default function WorkOrdersPage() {
     setFormData(prev => {
         if (!prev) return null;
         const newParts = (prev.partsUsed || []).filter((_, i) => i !== index);
-        // If no more parts, media might not be mandatory anymore (depends on other logic)
         const mediaStillRequired = newParts.length > 0 || (prev.checklist && prev.checklist.some(g => g.title.toLowerCase().includes('reparo')));
         return { ...prev, partsUsed: newParts, mediaObrigatoria: mediaStillRequired };
     });
@@ -334,7 +328,7 @@ export default function WorkOrdersPage() {
   const calculatePartsCost = (order: WorkOrder | null) => {
     if (!order) return 0;
     return (order.partsUsed || []).reduce((total, part) => {
-      const product = products.find(p => p.id === part.productId);
+      const product = allProducts.find(p => p.id === part.productId);
       return total + (product ? product.price * part.quantity : 0);
     }, 0);
   };
@@ -351,53 +345,49 @@ export default function WorkOrdersPage() {
   };
 
 
-  const handleSaveOrder = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData || !selectedClient) return;
+    if (!formData || !selectedClient || !firestore) return;
 
-    const newOrder: WorkOrder = {
-      ...formData,
-      clientId: selectedClient.id,
-      id: editingOrder?.id || `os-${Date.now()}`,
-      creationDate: editingOrder?.creationDate || new Date().getTime(),
-      createdByUserId: editingOrder?.createdByUserId || CURRENT_USER_ID,
-    };
-
-    // --- Stock Logic ---
-    const originalParts = editingOrder?.partsUsed || [];
-    const newParts = newOrder.partsUsed || [];
-    const stockChanges = new Map<string, number>();
-
-    originalParts.forEach(part => {
-        stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) - part.quantity);
-    });
-    newParts.forEach(part => {
-        stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) + part.quantity);
-    });
-
-    const updatedProducts = products.map(product => {
-        if (stockChanges.has(product.id)) {
-            const change = stockChanges.get(product.id) || 0;
-            return { ...product, stock: product.stock - change };
+    try {
+        if (editingOrder) {
+            const { id, ...orderData } = formData;
+            await updateDocument(firestore, 'workOrders', id, orderData);
+        } else {
+            const { id, ...orderData } = formData; // Let firestore generate id
+            await addDocument(firestore, 'workOrders', orderData);
         }
-        return product;
-    });
 
-    setProducts(updatedProducts); // Update global data source
-    setLocalProducts(updatedProducts); // Update local state for UI
-    // --- End Stock Logic ---
+        // --- Stock Logic ---
+        const originalParts = editingOrder?.partsUsed || [];
+        const newParts = formData.partsUsed || [];
+        
+        // Calculate the difference
+        const stockChanges = new Map<string, number>();
+        originalParts.forEach(part => {
+            stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) + part.quantity);
+        });
+        newParts.forEach(part => {
+            stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) - part.quantity);
+        });
 
+        for (const [productId, quantityChange] of stockChanges.entries()) {
+            if (quantityChange !== 0) {
+                const product = allProducts.find(p => p.id === productId);
+                if (product) {
+                    const newStock = product.stock + quantityChange;
+                    await updateDocument(firestore, 'products', productId, { stock: newStock });
+                }
+            }
+        }
+        
+        toast({ title: "Ordem de Serviço Salva!", description: `A OS "${formData.title}" foi salva com sucesso.` });
+        closeDialog();
 
-    let allWorkOrders;
-    if (editingOrder) {
-      allWorkOrders = initialWorkOrders.map(wo => (wo.id === newOrder.id ? newOrder : wo));
-    } else {
-      allWorkOrders = [newOrder, ...initialWorkOrders];
+    } catch (error) {
+        console.error("Erro ao salvar Ordem de Serviço:", error);
+        toast({ variant: 'destructive', title: "Erro ao Salvar", description: "Não foi possível salvar a OS." });
     }
-    setGlobalWorkOrders(allWorkOrders);
-    setWorkOrders(allWorkOrders.filter(wo => wo.clientId === selectedClient.id));
-    
-    closeDialog();
   };
 
   const handleReopenOrder = () => {
@@ -519,6 +509,9 @@ export default function WorkOrdersPage() {
     )
   }
 
+  const isLoading = workOrdersLoading || assetsLoading || usersLoading || productsLoading;
+
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -542,7 +535,9 @@ export default function WorkOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {workOrders.map(order => (
+            {isLoading ? (
+                <TableRow><TableCell colSpan={7} className="h-24 text-center">Carregando ordens de serviço...</TableCell></TableRow>
+            ) : workOrders.map(order => (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
@@ -552,14 +547,7 @@ export default function WorkOrdersPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                    <Button variant="link" className="p-0 h-auto" onClick={() => {
-                        const assetToEdit = allAssets.find(a => a.id === order.assetId);
-                        if (assetToEdit) {
-                           // This is a placeholder for a function that would open the asset dialog.
-                           // In a real app, this might be a context function or a prop drill.
-                           console.log("Would open asset dossier for:", assetToEdit.name);
-                        }
-                    }}>
+                    <Button variant="link" className="p-0 h-auto">
                         {getAssetName(order.assetId)}
                         <LinkIcon className="ml-2 h-3 w-3" />
                     </Button>
@@ -806,7 +794,7 @@ export default function WorkOrdersPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {(formData.partsUsed || []).map((part, index) => {
+                                    {productsLoading ? <TableRow><TableCell colSpan={5} className="h-24 text-center">Carregando...</TableCell></TableRow> : (formData.partsUsed || []).map((part, index) => {
                                       const stock = getProductStock(part.productId);
                                       const insufficientStock = part.quantity > stock;
                                       return (
@@ -817,7 +805,7 @@ export default function WorkOrdersPage() {
                                                         <SelectValue placeholder={t('workOrders.dialog.partPlaceholder')} />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                                        {allProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                                                     </SelectContent>
                                                 </Select>
                                             </TableCell>
