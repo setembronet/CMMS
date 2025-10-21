@@ -16,7 +16,7 @@ O objetivo desta fase é substituir todos os dados mockados em `src/lib/data.ts`
 -   [x] **Peças (Products)**: Concluído.
 -   [x] **Fornecedores**: Concluído.
 -   [x] **Ordens de Serviço**: Concluído.
--   [ ] **Finanças (Backoffice)**: Migrar todas as páginas financeiras (Contas a Pagar, Contas a Receber, Contas Bancárias) para suas respectivas coleções.
+-   [x] **Finanças (Backoffice)**: Migrar todas as páginas financeiras (Contas a Pagar, Contas a Receber, Contas Bancárias) para suas respectivas coleções.
 
 ## Fase 2: Implementação de Regras de Segurança (Firestore Rules)
 
@@ -44,4 +44,4 @@ Para facilitar os testes, criaremos um script para popular o Firestore com os da
 
 ---
 
-Com este checklist, temos um caminho claro para a finalização do nosso protótipo funcional. Nosso **próximo passo** será a **Fase 1: Migrar as páginas do Financeiro (Backoffice)**.
+Com este checklist, temos um caminho claro para a finalização do nosso protótipo funcional. Nosso **próximo passo** será a **Fase 2: Implementação de Regras de Segurança (Firestore Rules)**.
