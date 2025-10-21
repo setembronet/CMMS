@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon, BrainCircuit } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon, BrainCircuit, Sparkles, Loader2 } from 'lucide-react';
 import { contracts, rootCauses, recommendedActions, checklistTemplates } from '@/lib/data';
 import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -54,6 +54,8 @@ import Link from 'next/link';
 import { useFirestore } from '@/firebase';
 import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { diagnoseWo } from '@/ai/flows/diagnose-wo-flow';
+
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
 
@@ -91,6 +93,8 @@ export default function WorkOrdersPage() {
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
   const [formData, setFormData] = React.useState<WorkOrder | null>(null);
   const [availableChecklists, setAvailableChecklists] = React.useState<typeof checklistTemplates>([]);
+  const [isDiagnosing, setIsDiagnosing] = React.useState(false);
+
 
   const emptyWorkOrder: Omit<WorkOrder, 'id'> = React.useMemo(() => ({
     title: '',
@@ -209,7 +213,7 @@ export default function WorkOrdersPage() {
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
-    let orderData = order ? JSON.parse(JSON.stringify(order)) : JSON.parse(JSON.stringify(emptyWorkOrder));
+    let orderData = order ? JSON.parse(JSON.stringify(order)) : { ...emptyWorkOrder };
 
     if (!orderData.checklist && orderData.checklistTemplateId) {
       const template = checklistTemplates.find(t => t.id === orderData.checklistTemplateId);
@@ -350,11 +354,10 @@ export default function WorkOrdersPage() {
     if (!formData || !selectedClient || !firestore) return;
 
     try {
+        const { id, ...orderData } = formData;
         if (editingOrder) {
-            const { id, ...orderData } = formData;
-            await updateDocument(firestore, 'workOrders', id, orderData);
+            await updateDocument(firestore, 'workOrders', editingOrder.id, orderData);
         } else {
-            const { id, ...orderData } = formData; // Let firestore generate id
             await addDocument(firestore, 'workOrders', orderData);
         }
 
@@ -362,7 +365,6 @@ export default function WorkOrdersPage() {
         const originalParts = editingOrder?.partsUsed || [];
         const newParts = formData.partsUsed || [];
         
-        // Calculate the difference
         const stockChanges = new Map<string, number>();
         originalParts.forEach(part => {
             stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) + part.quantity);
@@ -375,7 +377,7 @@ export default function WorkOrdersPage() {
             if (quantityChange !== 0) {
                 const product = allProducts.find(p => p.id === productId);
                 if (product) {
-                    const newStock = product.stock + quantityChange;
+                    const newStock = product.stock - quantityChange;
                     await updateDocument(firestore, 'products', productId, { stock: newStock });
                 }
             }
@@ -397,6 +399,53 @@ export default function WorkOrdersPage() {
         status: 'ABERTO',
         endDate: undefined, // Clear end date on reopen
     }) : null);
+  };
+
+  const handleDiagnose = async () => {
+    if (!formData || !formData.description || !formData.assetId) {
+      toast({
+        variant: 'destructive',
+        title: "Dados Insuficientes",
+        description: "Por favor, preencha a descrição e selecione o ativo para usar a IA."
+      });
+      return;
+    }
+    setIsDiagnosing(true);
+    try {
+      const asset = allAssets.find(a => a.id === formData.assetId);
+      const assetHistory = allWorkOrders.filter(wo => wo.assetId === formData.assetId && wo.status === 'CONCLUIDO');
+
+      const input = {
+        description: formData.description,
+        assetName: asset?.name || '',
+        technicians: clientUsers.map(u => ({ id: u.id, name: u.name, squad: u.squad || ''})),
+        assetHistory: assetHistory.map(wo => ({ title: wo.title, description: wo.description, rootCause: wo.rootCause })),
+      };
+
+      const suggestion = await diagnoseWo(input);
+      
+      setFormData(prev => prev ? ({
+        ...prev,
+        title: suggestion.title,
+        priority: suggestion.priority,
+        responsibleId: suggestion.recommendedTechnicianId,
+      }) : null);
+
+      toast({
+        title: "Sugestões da IA Aplicadas!",
+        description: "O título, prioridade e técnico foram preenchidos pela IA.",
+      });
+
+    } catch (error) {
+      console.error("Error diagnosing with AI:", error);
+      toast({
+        variant: 'destructive',
+        title: "Erro na Análise",
+        description: "Não foi possível obter sugestões da IA. Tente novamente.",
+      });
+    } finally {
+      setIsDiagnosing(false);
+    }
   };
   
   const getStatusBadgeVariant = (status: OrderStatus) => {
@@ -623,15 +672,23 @@ export default function WorkOrdersPage() {
                         </div>
                     </div>
 
-
-                    <div className="space-y-2">
-                      <Label htmlFor="title">{t('workOrders.dialog.title')}</Label>
-                      <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder={t('workOrders.dialog.titlePlaceholder')}/>
-                    </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="description">{t('workOrders.dialog.descriptionLabel')}</Label>
                       <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.descriptionPlaceholder')}/>
+                    </div>
+
+                    {!editingOrder && (
+                      <div className="flex justify-end">
+                        <Button type="button" size="sm" onClick={handleDiagnose} disabled={isDiagnosing || !formData.description || !formData.assetId}>
+                          {isDiagnosing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                          Analisar com IA
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="title">{t('workOrders.dialog.title')}</Label>
+                      <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder={t('workOrders.dialog.titlePlaceholder')}/>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
