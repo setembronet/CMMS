@@ -1,0 +1,24 @@
+/* We can remove the default calendar button borders for a cleaner look */
+.fc .fc-button-primary {
+    border-color: hsl(var(--border)) !important;
+    background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: hsl(var(--primary) / 0.9) !important;
+}
+
+.fc .fc-button-primary:disabled {
+    background-color: hsl(var(--secondary)) !important;
+    color: hsl(var(--secondary-foreground)) !important;
+    opacity: 0.5;
+}
+
+html.dark .fc .fc-button-primary {
+     background-color: hsl(var(--primary)) !important;
+     color: hsl(var(--primary-foreground)) !important;
+}
+html.dark .fc .fc-daygrid-day.fc-day-today {
+    background-color: hsl(var(--accent) / 0.2) !important;
+}
