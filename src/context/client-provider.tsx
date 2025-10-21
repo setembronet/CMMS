@@ -1,10 +1,12 @@
+
 'use client';
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { companies, users } from '../lib/data';
-import type { Company, User } from '../lib/types';
+import { companies, users } from '@/lib/data';
+import type { Company, User } from '@/lib/types';
 
 // Mocked current user ID. In a real app, this would come from an auth context.
-const MOCKED_CURRENT_USER_ID = 'user-01'; // Corrected to 'user-01' (Admin Master)
+// Change this to 'user-08' to test the client portal redirect.
+const MOCKED_CURRENT_USER_ID = 'user-01'; // 'user-01' (Admin) vs 'user-08' (Client)
 
 interface ClientContextType {
   selectedClientId: string | null;

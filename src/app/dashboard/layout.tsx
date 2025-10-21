@@ -41,8 +41,9 @@ export default function DashboardLayout({
   const isClient = CLIENT_ROLES.includes(currentUser?.cmmsRole || '');
 
   if (isClient) {
-      // The client portal page will handle its own layout
-      return <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>;
+      // The client portal page will handle its own layout, so we just render the children.
+      // This avoids layout shifts during redirection.
+      return <>{children}</>;
   }
 
   if (isTechnician) {
