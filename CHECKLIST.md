@@ -40,7 +40,7 @@ Substituir o login mockado por um sistema de autenticação real.
 
 Para facilitar os testes, criaremos um script para popular o Firestore com os dados iniciais.
 
--   [ ] **Criar Script de Seed**: Desenvolver um script (Node.js) que leia o arquivo `data.ts` e use o Admin SDK do Firebase para inserir os dados iniciais nas coleções do Firestore. Isso garante um ambiente de teste consistente.
+-   [x] **Criar Script de Seed**: Desenvolver um script (Node.js) que leia o arquivo `data.ts` e use o Admin SDK do Firebase para inserir os dados iniciais nas coleções do Firestore. Isso garante um ambiente de teste consistente.
 
 ---
 
