@@ -315,7 +315,7 @@ export let users: User[] = [
   { id: 'user-06', name: 'Carlos Pereira', email: 'carlos@escadasbr.com', role: 'GESTOR', saasRole: 'VIEWER', cmmsRole: 'GESTOR', clientId: 'client-02', clientName: 'Escadas Brasil', avatarUrl: userAvatar, costPerHour: 100, password: 'password' },
   { id: 'user-07', name: 'Ana Costa', email: 'ana.costa@escadasbr.com', role: 'TECNICO', saasRole: 'VIEWER', cmmsRole: 'TECNICO', clientId: 'client-02', clientName: 'Escadas Brasil', squad: 'Equipe Beta', avatarUrl: userAvatar, costPerHour: 80, password: 'password' },
   { id: 'user-08', name: 'Pedro Lima', email: 'pedro@xyz.com', role: 'SINDICO', saasRole: 'VIEWER', cmmsRole: 'SINDICO', clientId: 'client-03', clientName: 'Manutenção Predial XYZ', avatarUrl: userAvatar, costPerHour: 0, password: 'password' },
-  { id: 'user-09', name: 'Técnico Teste', email: 'tecnico@tenantcare.com', role: 'TECNICO', saasRole: 'VIEWER', cmmsRole: 'TECNICO', clientId: 'client-01', clientName: 'Elevadores Atlas', squad: 'Equipe Gama', avatarUrl: userAvatar, costPerHour: 70, password: '123456' },
+  { id: 'user-09', name: 'Técnico Teste', email: 'tecnico@tenantcare.com', role: 'TECNICO', saasRole: 'VIEWER', cmmsRole: 'TECNICO', clientId: 'client-01', clientName: 'Elevadores Atlas', squad: 'Equipe Gama', avatarUrl: userAvatar, costPerHour: 70, password: 'password' },
 ];
 
 export let assets: Asset[] = [

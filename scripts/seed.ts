@@ -62,11 +62,14 @@ async function seedUsers() {
     const authUsers = await auth.listUsers();
     
     // Delete existing Firebase Auth users
-    const uidsToDelete = authUsers.users.map(u => u.uid);
-    if (uidsToDelete.length > 0) {
-        await auth.deleteUsers(uidsToDelete);
-        console.log(`Deleted ${uidsToDelete.length} Firebase Auth users.`);
+    if (authUsers.users.length > 0) {
+        const uidsToDelete = authUsers.users.map(u => u.uid);
+        if (uidsToDelete.length > 0) {
+            await auth.deleteUsers(uidsToDelete);
+            console.log(`Deleted ${uidsToDelete.length} Firebase Auth users.`);
+        }
     }
+
 
     // Delete existing user documents in Firestore
     const usersCollectionRef = db.collection('users');
@@ -77,16 +80,17 @@ async function seedUsers() {
             deleteBatch.delete(doc.ref);
         });
         await deleteBatch.commit();
+        console.log('Deleted existing users from Firestore collection.');
     }
 
-    // Create new users
+    // Create new users in Auth and Firestore
     for (const user of users) {
         try {
             const { id, password, ...userData } = user;
             const userRecord = await auth.createUser({
                 uid: id,
                 email: user.email,
-                password: password || 'password', // Default password if not provided
+                password: password || 'password', // Use provided password or default to 'password'
                 displayName: user.name,
                 photoURL: user.avatarUrl,
                 emailVerified: true,
@@ -94,8 +98,11 @@ async function seedUsers() {
             });
             console.log(`Successfully created new auth user: ${userRecord.uid}`);
             
+            // Do not store password in Firestore
+            const firestoreUserData = { ...userData };
+
             const userDocRef = usersCollectionRef.doc(userRecord.uid);
-            await userDocRef.set(userData);
+            await userDocRef.set(firestoreUserData);
 
         } catch (error) {
             console.error(`Error creating user ${user.email}:`, error);
