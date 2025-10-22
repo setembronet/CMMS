@@ -54,7 +54,9 @@ export default function DashboardLayout({
           if (!currentUser) {
               router.replace('/');
           } else if (CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
-              router.replace('/dashboard/client-portal');
+              // Client users don't have a specific portal anymore,
+              // log them out or redirect to login.
+              router.replace('/');
           }
       }
   }, [currentUser, authLoading, router]);
