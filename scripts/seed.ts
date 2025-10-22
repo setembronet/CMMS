@@ -80,7 +80,7 @@ async function seedUsers() {
     }
 
     // Create new users
-    const userPromises = users.map(async (user) => {
+    for (const user of users) {
         try {
             const { id, password, ...userData } = user;
             const userRecord = await auth.createUser({
@@ -100,9 +100,8 @@ async function seedUsers() {
         } catch (error) {
             console.error(`Error creating user ${user.email}:`, error);
         }
-    });
+    }
 
-    await Promise.all(userPromises);
     console.log(`Users collection seeded and Firebase Auth users created.`);
 }
 
