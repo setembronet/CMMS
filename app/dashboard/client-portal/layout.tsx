@@ -1,0 +1,44 @@
+'use client';
+
+import * as React from 'react';
+import { useClient } from '@/context/client-provider';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+import { Header } from '@/components/dashboard/header';
+
+const NON_CLIENT_ROLES = ['ADMIN', 'FINANCEIRO', 'SUPORTE', 'TECNICO', 'GESTOR'];
+
+export default function ClientPortalLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { currentUser, authLoading } = useClient();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (!authLoading) {
+      if (!currentUser) {
+        router.replace('/');
+      } else if (NON_CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
+        // Redirect non-client users away from the portal
+        router.replace('/dashboard');
+      }
+    }
+  }, [currentUser, authLoading, router]);
+
+  if (authLoading || !currentUser || (currentUser && NON_CLIENT_ROLES.includes(currentUser.cmmsRole || ''))) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-muted/30">
+        <Header />
+        <main className="flex-1">{children}</main>
+    </div>
+  );
+}
