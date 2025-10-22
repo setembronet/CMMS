@@ -23,5 +23,3 @@ export default function TestPage() {
     </div>
   );
 }
-
-    

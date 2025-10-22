@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -30,13 +31,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Landmark, ArrowUpCircle, ArrowDownCircle, FileText } from 'lucide-react';
-import { bankAccounts as initialData, setBankAccounts, accountsPayable, accountsReceivable } from '@/lib/data';
+import { accountsPayable, accountsReceivable } from '@/lib/data';
 import type { BankAccount, AccountsPayable, AccountsReceivable } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 type StatementEntry = {
     date: number;
@@ -45,8 +49,7 @@ type StatementEntry = {
     type: 'credit' | 'debit';
 };
 
-const emptyAccount: BankAccount = {
-  id: '',
+const emptyAccount: Omit<BankAccount, 'id'> = {
   name: '',
   bank: '',
   agency: '',
@@ -56,23 +59,24 @@ const emptyAccount: BankAccount = {
 
 export default function BankAccountsPage() {
   const { t } = useI18n();
-  const [accounts, setAccounts] = React.useState<BankAccount[]>(initialData);
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const { data: accounts, loading } = useCollection<BankAccount>('bankAccounts');
+  
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<BankAccount | null>(null);
-  const [formData, setFormData] = React.useState<BankAccount | null>(null);
+  const [formData, setFormData] = React.useState<Omit<BankAccount, 'id'>>(emptyAccount);
   
   const [isStatementOpen, setIsStatementOpen] = React.useState(false);
   const [viewingAccount, setViewingAccount] = React.useState<BankAccount | null>(null);
   const [statement, setStatement] = React.useState<StatementEntry[]>([]);
 
-  React.useEffect(() => {
-    setAccounts(initialData);
-  }, []);
-
   const openFormDialog = (account: BankAccount | null = null) => {
     setEditingAccount(account);
-    const data = account ? { ...account } : { ...emptyAccount, id: `ba-${Date.now()}`};
-    setFormData(data);
+    const data = account ? { ...account } : { ...emptyAccount };
+    // Omit id for form data
+    const { id, ...formDataToSet } = data;
+    setFormData(formDataToSet);
     setIsFormOpen(true);
   };
   
@@ -105,7 +109,7 @@ export default function BankAccountsPage() {
   const closeFormDialog = () => {
     setEditingAccount(null);
     setIsFormOpen(false);
-    setFormData(null);
+    setFormData(emptyAccount);
   };
   
   const closeStatementDialog = () => {
@@ -115,25 +119,27 @@ export default function BankAccountsPage() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!formData) return;
     const { name, value, type } = e.target;
     const finalValue = type === 'number' ? parseFloat(value) || 0 : value;
-    setFormData(prev => (prev ? { ...prev, [name]: finalValue } : null));
+    setFormData(prev => ({ ...prev, [name]: finalValue }));
   };
   
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData) return;
+    if (!formData || !firestore) return;
 
-    let updatedAccounts;
-    if (editingAccount) {
-      updatedAccounts = accounts.map(acc => (acc.id === formData.id ? formData : acc));
-    } else {
-      updatedAccounts = [formData, ...accounts];
+    try {
+        if (editingAccount) {
+            await updateDocument(firestore, 'bankAccounts', editingAccount.id, formData);
+            toast({ title: 'Sucesso', description: 'Conta bancária atualizada.' });
+        } else {
+            await addDocument(firestore, 'bankAccounts', formData);
+            toast({ title: 'Sucesso', description: 'Conta bancária criada.' });
+        }
+        closeFormDialog();
+    } catch(err) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar a conta.' });
     }
-    setBankAccounts(updatedAccounts);
-    setAccounts(updatedAccounts);
-    closeFormDialog();
   };
 
   return (
@@ -147,7 +153,9 @@ export default function BankAccountsPage() {
       </div>
       
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {accounts.map(account => (
+        {loading ? (
+            <p>Carregando contas...</p>
+        ) : accounts.map(account => (
           <Card key={account.id} className="flex flex-col">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
@@ -183,32 +191,30 @@ export default function BankAccountsPage() {
               <DialogTitle>{editingAccount ? t('bankAccounts.dialog.editTitle') : t('bankAccounts.dialog.newTitle')}</DialogTitle>
               <DialogDescription>{t('bankAccounts.dialog.description')}</DialogDescription>
             </DialogHeader>
-            {formData && (
-              <form id="ba-form" onSubmit={handleSave} className="space-y-4 py-4">
+            <form id="ba-form" onSubmit={handleSave} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">{t('bankAccounts.dialog.name')}</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder={t('bankAccounts.dialog.namePlaceholder')} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank">{t('bankAccounts.dialog.bank')}</Label>
+                <Input id="bank" name="bank" value={formData.bank || ''} onChange={handleInputChange} placeholder={t('bankAccounts.dialog.bankPlaceholder')} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t('bankAccounts.dialog.name')}</Label>
-                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder={t('bankAccounts.dialog.namePlaceholder')} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bank">{t('bankAccounts.dialog.bank')}</Label>
-                  <Input id="bank" name="bank" value={formData.bank || ''} onChange={handleInputChange} placeholder={t('bankAccounts.dialog.bankPlaceholder')} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="agency">{t('bankAccounts.dialog.agency')}</Label>
-                    <Input id="agency" name="agency" value={formData.agency || ''} onChange={handleInputChange} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="accountNumber">{t('bankAccounts.dialog.account')}</Label>
-                    <Input id="accountNumber" name="accountNumber" value={formData.accountNumber || ''} onChange={handleInputChange} />
-                  </div>
+                  <Label htmlFor="agency">{t('bankAccounts.dialog.agency')}</Label>
+                  <Input id="agency" name="agency" value={formData.agency || ''} onChange={handleInputChange} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="balance">{t('bankAccounts.dialog.balance')}</Label>
-                  <Input id="balance" name="balance" type="number" step="0.01" value={formData.balance} onChange={handleInputChange} required />
+                  <Label htmlFor="accountNumber">{t('bankAccounts.dialog.account')}</Label>
+                  <Input id="accountNumber" name="accountNumber" value={formData.accountNumber || ''} onChange={handleInputChange} />
                 </div>
-              </form>
-            )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="balance">{t('bankAccounts.dialog.balance')}</Label>
+                <Input id="balance" name="balance" type="number" step="0.01" value={formData.balance} onChange={handleInputChange} required />
+              </div>
+            </form>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeFormDialog}>{t('common.cancel')}</Button>
               <Button type="submit" form="ba-form">{t('common.save')}</Button>
@@ -263,5 +269,3 @@ export default function BankAccountsPage() {
     </div>
   );
 }
-
-    

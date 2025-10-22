@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -29,7 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, FileUp } from 'lucide-react';
-import { accountsPayable as initialData, costCenters, chartOfAccounts, setAccountsPayable, bankAccounts, setBankAccounts } from '@/lib/data';
+import { costCenters, chartOfAccounts } from '@/lib/data';
 import type { AccountsPayable, AccountsPayableStatus, CostCenter, ChartOfAccount, BankAccount } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
@@ -43,9 +44,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
-const emptyAP: AccountsPayable = {
-  id: '',
+const emptyAP: Omit<AccountsPayable, 'id'> = {
   description: '',
   supplierOrCreditor: '',
   dueDate: new Date().getTime(),
@@ -62,23 +64,23 @@ const emptyAP: AccountsPayable = {
 export default function AccountsPayablePage() {
   const { t } = useI18n();
   const { toast } = useToast();
-  const [accounts, setAccounts] = React.useState<AccountsPayable[]>(initialData);
+  const firestore = useFirestore();
+  const { data: accounts, loading: accountsLoading } = useCollection<AccountsPayable>('accountsPayable');
+  const { data: availableBankAccounts, loading: bankAccountsLoading } = useCollection<BankAccount>('bankAccounts');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<AccountsPayable | null>(null);
-  const [formData, setFormData] = React.useState<AccountsPayable | null>(null);
+  const [formData, setFormData] = React.useState<Omit<AccountsPayable, 'id'>>(emptyAP);
 
   const [selectableAccounts, setSelectableAccounts] = React.useState<ChartOfAccount[]>([]);
-  const [availableBankAccounts, setAvailableBankAccounts] = React.useState<BankAccount[]>([]);
-
+  
   React.useEffect(() => {
     setSelectableAccounts(chartOfAccounts.filter(acc => !acc.isGroup));
-    setAccounts(initialData.sort((a,b) => b.dueDate - a.dueDate));
-    setAvailableBankAccounts(bankAccounts);
   }, []);
 
   const openDialog = (account: AccountsPayable | null = null) => {
     setEditingAccount(account);
-    const data = account ? { ...account } : { ...emptyAP, id: `ap-${Date.now()}` };
+    const { id, ...data } = account ? { ...account } : { ...emptyAP, id: '' };
     if(account?.isRecurring) {
         data.isRecurring = false; // Don't allow editing recurrence after creation
     }
@@ -89,101 +91,82 @@ export default function AccountsPayablePage() {
   const closeDialog = () => {
     setEditingAccount(null);
     setIsDialogOpen(false);
-    setFormData(null);
+    setFormData(emptyAP);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (!formData) return;
     const { name, value, type } = e.target;
     let finalValue: string | number = value;
     if (type === 'number') {
       finalValue = name === 'value' ? parseFloat(value) || 0 : parseInt(value, 10) || 1;
     }
-    setFormData(prev => (prev ? { ...prev, [name]: finalValue } : null));
+    setFormData(prev => ({ ...prev, [name]: finalValue }));
   };
   
-  const handleSelectChange = (name: keyof AccountsPayable, value: string) => {
-    if (!formData) return;
-    setFormData(prev => (prev ? { ...prev, [name]: value } : null));
+  const handleSelectChange = (name: keyof Omit<AccountsPayable, 'id'>, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSwitchChange = (name: keyof AccountsPayable, checked: boolean) => {
-    if (!formData) return;
-    setFormData(prev => (prev ? ({...prev, [name]: checked }) : null));
+  const handleSwitchChange = (name: keyof Omit<AccountsPayable, 'id'>, checked: boolean) => {
+    setFormData(prev => ({...prev, [name]: checked }));
   }
 
-  const handleDateChange = (name: keyof AccountsPayable, date: Date | undefined) => {
-    if (date && formData) {
-      setFormData(prev => (prev ? { ...prev, [name]: date.getTime() } : null));
+  const handleDateChange = (name: keyof Omit<AccountsPayable, 'id'>, date: Date | undefined) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, [name]: date.getTime() }));
     }
   };
 
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData) return;
+    if (!formData || !firestore) return;
 
-    let updatedAccountsPayable = [...accounts];
-    const originalAccount = editingAccount ? accounts.find(acc => acc.id === editingAccount.id) : null;
-    const wasPaid = originalAccount?.status === 'Paga';
-    const isNowPaid = formData.status === 'Paga';
+    try {
+        const originalAccount = editingAccount;
+        const wasPaid = originalAccount?.status === 'Paga';
+        const isNowPaid = formData.status === 'Paga';
 
-    if (editingAccount) {
-        updatedAccountsPayable = accounts.map(acc => (acc.id === formData.id ? formData : acc));
-    } else if (formData.isRecurring && formData.recurrenceInstallments > 1) {
-        const newAccounts: AccountsPayable[] = [];
-        const baseDescription = formData.description;
-        const firstDueDate = new Date(formData.dueDate);
-
-        for(let i = 0; i < formData.recurrenceInstallments; i++) {
-            const newAccount: AccountsPayable = {
-                ...formData,
-                id: `ap-${Date.now()}-${i}`,
-                isRecurring: false,
-                description: `${baseDescription} (Parcela ${i + 1}/${formData.recurrenceInstallments})`,
-                dueDate: addMonths(firstDueDate, i).getTime(),
-                status: 'Pendente', // Recurring payments start as pending
-                paymentDate: undefined,
-                bankAccountId: '',
-            };
-            newAccounts.push(newAccount);
+        // --- Bank Balance Logic ---
+        if (isNowPaid && !wasPaid && formData.bankAccountId && formData.value > 0) {
+            const bankAccount = availableBankAccounts.find(ba => ba.id === formData.bankAccountId);
+            if (bankAccount) {
+                await updateDocument(firestore, 'bankAccounts', bankAccount.id, { balance: bankAccount.balance - formData.value });
+                toast({ title: "Saldo Bancário Atualizado", description: `O saldo da conta foi ajustado.` });
+            }
+        } else if (!isNowPaid && wasPaid && originalAccount?.bankAccountId && originalAccount.value > 0) {
+            const bankAccount = availableBankAccounts.find(ba => ba.id === originalAccount.bankAccountId);
+            if (bankAccount) {
+                await updateDocument(firestore, 'bankAccounts', bankAccount.id, { balance: bankAccount.balance + originalAccount.value });
+                toast({ title: "Saldo Bancário Revertido", description: `O saldo da conta foi ajustado.` });
+            }
         }
-        updatedAccountsPayable = [...newAccounts, ...accounts];
-    } else {
-        updatedAccountsPayable = [formData, ...accounts];
-    }
-    
-    // --- Bank Balance Logic ---
-    let updatedBankAccounts = [...bankAccounts];
-    let balanceUpdated = false;
 
-    if (isNowPaid && !wasPaid && formData.bankAccountId && formData.value > 0) {
-        const bankAccountIndex = updatedBankAccounts.findIndex(ba => ba.id === formData.bankAccountId);
-        if (bankAccountIndex !== -1) {
-            updatedBankAccounts[bankAccountIndex].balance -= formData.value;
-            balanceUpdated = true;
+        if (editingAccount) {
+            await updateDocument(firestore, 'accountsPayable', editingAccount.id, formData);
+        } else if (formData.isRecurring && formData.recurrenceInstallments > 1) {
+            const baseDescription = formData.description;
+            const firstDueDate = new Date(formData.dueDate);
+            for (let i = 0; i < formData.recurrenceInstallments; i++) {
+                const newAccount: Omit<AccountsPayable, 'id'> = {
+                    ...formData,
+                    isRecurring: false,
+                    description: `${baseDescription} (Parcela ${i + 1}/${formData.recurrenceInstallments})`,
+                    dueDate: addMonths(firstDueDate, i).getTime(),
+                    status: 'Pendente',
+                    paymentDate: undefined,
+                    bankAccountId: '',
+                };
+                await addDocument(firestore, 'accountsPayable', newAccount);
+            }
+        } else {
+            await addDocument(firestore, 'accountsPayable', formData);
         }
-    } else if (!isNowPaid && wasPaid && originalAccount && originalAccount.bankAccountId && originalAccount.value > 0) {
-        // Revert balance if status is changed from 'Paga'
-        const bankAccountIndex = updatedBankAccounts.findIndex(ba => ba.id === originalAccount.bankAccountId);
-        if (bankAccountIndex !== -1) {
-            updatedBankAccounts[bankAccountIndex].balance += originalAccount.value;
-            balanceUpdated = true;
-        }
+
+        toast({ title: "Sucesso!", description: "Lançamento salvo com sucesso."});
+        closeDialog();
+    } catch(err) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar o lançamento.' });
     }
-    
-    if (balanceUpdated) {
-        setBankAccounts(updatedBankAccounts);
-        setAvailableBankAccounts(updatedBankAccounts); // Update local state for the select dropdown
-         toast({
-            title: "Saldo Bancário Atualizado",
-            description: `O saldo da conta foi ajustado em R$ ${formData.value.toFixed(2)}.`,
-        });
-    }
-    // --- End Bank Balance Logic ---
-    
-    setAccountsPayable(updatedAccountsPayable);
-    setAccounts(updatedAccountsPayable.sort((a,b) => b.dueDate - a.dueDate));
-    closeDialog();
   };
 
 
@@ -197,6 +180,8 @@ export default function AccountsPayablePage() {
           case 'Vencida': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
       }
   };
+
+  const sortedAccounts = React.useMemo(() => accounts.sort((a,b) => b.dueDate - a.dueDate), [accounts]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -222,7 +207,9 @@ export default function AccountsPayablePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {accounts.map(account => (
+            {accountsLoading ? (
+                 <TableRow><TableCell colSpan={8} className="h-24 text-center">Carregando...</TableCell></TableRow>
+            ) : sortedAccounts.map(account => (
               <TableRow key={account.id}>
                 <TableCell className="font-medium">{account.description}</TableCell>
                 <TableCell>{account.supplierOrCreditor}</TableCell>
@@ -256,7 +243,7 @@ export default function AccountsPayablePage() {
         </Table>
       </div>
 
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+       <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>{editingAccount ? 'Editar Lançamento' : 'Novo Lançamento a Pagar'}</DialogTitle>
@@ -264,7 +251,6 @@ export default function AccountsPayablePage() {
                 Registre uma despesa ou custo da empresa.
               </DialogDescription>
             </DialogHeader>
-            {formData && (
             <form id="ap-form" onSubmit={handleSave}>
               <ScrollArea className="max-h-[70vh] -mx-6 px-6">
                 <div className="space-y-4 py-4 px-1">
@@ -326,7 +312,7 @@ export default function AccountsPayablePage() {
                                 <Select name="bankAccountId" value={formData.bankAccountId} onValueChange={(v) => handleSelectChange('bankAccountId', v)} required>
                                     <SelectTrigger><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
                                     <SelectContent>
-                                        {availableBankAccounts.map(ba => <SelectItem key={ba.id} value={ba.id}>{ba.name}</SelectItem>)}
+                                        {bankAccountsLoading ? <SelectItem value="loading" disabled>Carregando...</SelectItem> : availableBankAccounts.map(ba => <SelectItem key={ba.id} value={ba.id}>{ba.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -405,7 +391,6 @@ export default function AccountsPayablePage() {
                 </div>
               </ScrollArea>
             </form>
-            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
               <Button type="submit" form="ap-form">{t('common.save')}</Button>
@@ -415,6 +400,3 @@ export default function AccountsPayablePage() {
     </div>
   );
 }
-    
-
-    

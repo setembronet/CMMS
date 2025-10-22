@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -30,12 +31,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
 import { 
-    accountsReceivable as initialData, 
     customerLocations, 
     chartOfAccounts, 
-    setAccountsReceivable, 
-    bankAccounts, 
-    setBankAccounts,
     generateReceivablesFromContracts
 } from '@/lib/data';
 import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount, BankAccount } from '@/lib/types';
@@ -50,10 +47,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
 
-const emptyAR: AccountsReceivable = {
-  id: '',
+const emptyAR: Omit<AccountsReceivable, 'id'> = {
   description: '',
   customerLocationId: '',
   dueDate: new Date().getTime(),
@@ -67,33 +65,38 @@ export default function AccountsReceivablePage() {
   const { t } = useI18n();
   const { toast } = useToast();
   const { selectedClient } = useClient();
+  const firestore = useFirestore();
 
-  const [accounts, setAccounts] = React.useState<AccountsReceivable[]>([]);
+  const { data: accounts, loading: accountsLoading, setData: setAccounts } = useCollection<AccountsReceivable>('accountsReceivable');
+  const { data: allLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
+  const { data: availableBankAccounts, loading: bankAccountsLoading } = useCollection<BankAccount>('bankAccounts');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<AccountsReceivable | null>(null);
-  const [formData, setFormData] = React.useState<AccountsReceivable | null>(null);
+  const [formData, setFormData] = React.useState<Omit<AccountsReceivable, 'id'>>(emptyAR);
 
   const [clientLocations, setClientLocations] = React.useState<CustomerLocation[]>([]);
   const [revenueAccounts, setRevenueAccounts] = React.useState<ChartOfAccount[]>([]);
-  const [availableBankAccounts, setAvailableBankAccounts] = React.useState<BankAccount[]>([]);
+  
+  const clientAccounts = React.useMemo(() => {
+    if (!selectedClient || locationsLoading) return [];
+    const locationIds = allLocations.filter(loc => loc.clientId === selectedClient.id).map(l => l.id);
+    return accounts.filter(ar => locationIds.includes(ar.customerLocationId)).sort((a,b) => b.dueDate - a.dueDate);
+  }, [accounts, selectedClient, allLocations, locationsLoading]);
+
 
   React.useEffect(() => {
-    if (selectedClient) {
-      const locations = customerLocations.filter(loc => loc.clientId === selectedClient.id);
-      setClientLocations(locations);
-      const locationIds = locations.map(l => l.id);
-      setAccounts(initialData.filter(ar => locationIds.includes(ar.customerLocationId)).sort((a,b) => b.dueDate - a.dueDate));
+    if (selectedClient && !locationsLoading) {
+      setClientLocations(allLocations.filter(loc => loc.clientId === selectedClient.id));
     } else {
-      setAccounts([]);
       setClientLocations([]);
     }
     setRevenueAccounts(chartOfAccounts.filter(acc => acc.type === 'RECEITA' && !acc.isGroup));
-    setAvailableBankAccounts(bankAccounts);
-  }, [selectedClient]);
+  }, [selectedClient, allLocations, locationsLoading]);
 
   const openDialog = (account: AccountsReceivable | null = null) => {
     setEditingAccount(account);
-    const data = account ? { ...account } : { ...emptyAR, id: `ar-${Date.now()}` };
+    const { id, ...data } = account ? { ...account } : { ...emptyAR, id: '' };
     setFormData(data);
     setIsDialogOpen(true);
   };
@@ -101,96 +104,83 @@ export default function AccountsReceivablePage() {
   const closeDialog = () => {
     setEditingAccount(null);
     setIsDialogOpen(false);
-    setFormData(null);
+    setFormData(emptyAR);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (!formData) return;
     const { name, value, type } = e.target;
     let finalValue: string | number = value;
     if (type === 'number') {
       finalValue = parseFloat(value) || 0;
     }
-    setFormData(prev => (prev ? { ...prev, [name]: finalValue } : null));
+    setFormData(prev => ({ ...prev, [name]: finalValue }));
   };
   
-  const handleSelectChange = (name: keyof AccountsReceivable, value: string) => {
-    if (!formData) return;
-    setFormData(prev => (prev ? { ...prev, [name]: value } : null));
+  const handleSelectChange = (name: keyof Omit<AccountsReceivable, 'id'>, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (name: keyof AccountsReceivable, date: Date | undefined) => {
-    if (date && formData) {
-      setFormData(prev => (prev ? { ...prev, [name]: date.getTime() } : null));
+  const handleDateChange = (name: keyof Omit<AccountsReceivable, 'id'>, date: Date | undefined) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, [name]: date.getTime() }));
     }
   };
 
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData) return;
+    if (!formData || !firestore) return;
 
-    let updatedAccountsReceivable;
-    const originalAccount = editingAccount ? accounts.find(acc => acc.id === editingAccount.id) : null;
-    const wasPaid = originalAccount?.status === 'Paga';
-    const isNowPaid = formData.status === 'Paga';
+    try {
+        const originalAccount = editingAccount;
+        const wasPaid = originalAccount?.status === 'Paga';
+        const isNowPaid = formData.status === 'Paga';
 
-    if (editingAccount) {
-      updatedAccountsReceivable = initialData.map(acc => (acc.id === formData.id ? formData : acc));
-    } else {
-      updatedAccountsReceivable = [formData, ...initialData];
-    }
-
-    // --- Bank Balance Logic ---
-    let updatedBankAccounts = [...bankAccounts];
-    let balanceUpdated = false;
-
-    if (isNowPaid && !wasPaid && formData.bankAccountId && formData.value > 0) {
-        const bankAccountIndex = updatedBankAccounts.findIndex(ba => ba.id === formData.bankAccountId);
-        if (bankAccountIndex !== -1) {
-            updatedBankAccounts[bankAccountIndex].balance += formData.value;
-            balanceUpdated = true;
+        // --- Bank Balance Logic ---
+        if (isNowPaid && !wasPaid && formData.bankAccountId && formData.value > 0) {
+            const bankAccount = availableBankAccounts.find(ba => ba.id === formData.bankAccountId);
+            if(bankAccount) {
+                await updateDocument(firestore, 'bankAccounts', bankAccount.id, { balance: bankAccount.balance + formData.value });
+                toast({ title: "Saldo Bancário Atualizado", description: "O saldo da conta foi ajustado." });
+            }
+        } else if (!isNowPaid && wasPaid && originalAccount?.bankAccountId && originalAccount.value > 0) {
+            const bankAccount = availableBankAccounts.find(ba => ba.id === originalAccount.bankAccountId);
+             if(bankAccount) {
+                await updateDocument(firestore, 'bankAccounts', bankAccount.id, { balance: bankAccount.balance - originalAccount.value });
+                toast({ title: "Saldo Bancário Revertido", description: "O saldo da conta foi ajustado." });
+            }
         }
-    } else if (!isNowPaid && wasPaid && originalAccount && originalAccount.bankAccountId && originalAccount.value > 0) {
-        // Revert balance if status is changed from 'Paga'
-        const bankAccountIndex = updatedBankAccounts.findIndex(ba => ba.id === originalAccount.bankAccountId);
-        if (bankAccountIndex !== -1) {
-            updatedBankAccounts[bankAccountIndex].balance -= originalAccount.value;
-            balanceUpdated = true;
+        
+        if (editingAccount) {
+            await updateDocument(firestore, 'accountsReceivable', editingAccount.id, formData);
+        } else {
+            await addDocument(firestore, 'accountsReceivable', formData);
         }
+        
+        toast({ title: "Sucesso!", description: "Lançamento salvo com sucesso."});
+        closeDialog();
+    } catch(err) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar o lançamento.' });
     }
-
-    if (balanceUpdated) {
-        setBankAccounts(updatedBankAccounts);
-        setAvailableBankAccounts(updatedBankAccounts);
-         toast({
-            title: "Saldo Bancário Atualizado",
-            description: `O saldo da conta foi ajustado em R$ ${formData.value.toFixed(2)}.`,
-        });
-    }
-    // --- End Bank Balance Logic ---
-
-    setAccountsReceivable(updatedAccountsReceivable);
-    
-    if (selectedClient) {
-        const locations = customerLocations.filter(loc => loc.clientId === selectedClient.id);
-        const locationIds = locations.map(l => l.id);
-        setAccounts(updatedAccountsReceivable.filter(ar => locationIds.includes(ar.customerLocationId)).sort((a, b) => b.dueDate - a.dueDate));
-    }
-
-    closeDialog();
   };
 
-  const handleGenerateInvoices = () => {
-      if (!selectedClient) return;
+  const handleGenerateInvoices = async () => {
+      if (!selectedClient || !firestore) return;
       const { newReceivables, generatedCount } = generateReceivablesFromContracts(selectedClient.id);
+      
       if (generatedCount > 0) {
-          setAccountsReceivable(newReceivables);
-          const locationIds = clientLocations.map(l => l.id);
-          setAccounts(newReceivables.filter(ar => locationIds.includes(ar.customerLocationId)).sort((a, b) => b.dueDate - a.dueDate));
-          toast({
-              title: t('receivables.generationSuccessTitle'),
-              description: t('receivables.generationSuccessDescription', { count: generatedCount }),
-          });
+        // This is not efficient for batch writes in a real app, but works for this mock.
+        for (const receivable of newReceivables) {
+          const {id, ...receivableData} = receivable; // We don't need the mock ID
+          const alreadyExists = accounts.some(ar => ar.description === receivable.description);
+          if (!alreadyExists) {
+            await addDocument(firestore, 'accountsReceivable', receivableData);
+          }
+        }
+        
+        toast({
+            title: t('receivables.generationSuccessTitle'),
+            description: t('receivables.generationSuccessDescription', { count: generatedCount }),
+        });
       } else {
           toast({
               title: t('receivables.generationNoNewTitle'),
@@ -200,7 +190,7 @@ export default function AccountsReceivablePage() {
   }
 
 
-  const getLocationName = (id: string) => customerLocations.find(c => c.id === id)?.name || 'N/A';
+  const getLocationName = (id: string) => allLocations.find(c => c.id === id)?.name || 'N/A';
   const getChartOfAccountName = (id: string) => chartOfAccounts.find(c => c.id === id)?.name || 'N/A';
   
   const getStatusBadgeVariant = (status: AccountsReceivableStatus) => {
@@ -248,7 +238,9 @@ export default function AccountsReceivablePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {accounts.map(account => (
+            {accountsLoading || locationsLoading ? (
+                 <TableRow><TableCell colSpan={7} className="h-24 text-center">Carregando...</TableCell></TableRow>
+            ) : clientAccounts.map(account => (
               <TableRow key={account.id}>
                 <TableCell className="font-medium">{account.description}</TableCell>
                 <TableCell>{getLocationName(account.customerLocationId)}</TableCell>
@@ -281,7 +273,7 @@ export default function AccountsReceivablePage() {
         </Table>
       </div>
 
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+       <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>{editingAccount ? 'Editar Lançamento' : 'Novo Lançamento a Receber'}</DialogTitle>
@@ -289,7 +281,6 @@ export default function AccountsReceivablePage() {
                 Registre uma receita da sua operação.
               </DialogDescription>
             </DialogHeader>
-            {formData && (
             <form id="ar-form" onSubmit={handleSave}>
               <ScrollArea className="max-h-[70vh] -mx-6 px-6">
                 <div className="space-y-4 py-4 px-1">
@@ -356,7 +347,7 @@ export default function AccountsReceivablePage() {
                                 <Select name="bankAccountId" value={formData.bankAccountId} onValueChange={(v) => handleSelectChange('bankAccountId', v)} required>
                                     <SelectTrigger><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
                                     <SelectContent>
-                                        {availableBankAccounts.map(ba => <SelectItem key={ba.id} value={ba.id}>{ba.name}</SelectItem>)}
+                                        {bankAccountsLoading ? <SelectItem value="loading" disabled>Carregando...</SelectItem> : availableBankAccounts.map(ba => <SelectItem key={ba.id} value={ba.id}>{ba.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -381,7 +372,6 @@ export default function AccountsReceivablePage() {
                 </div>
               </ScrollArea>
             </form>
-            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
               <Button type="submit" form="ar-form">{t('common.save')}</Button>
@@ -391,5 +381,3 @@ export default function AccountsReceivablePage() {
     </div>
   );
 }
-
-    
