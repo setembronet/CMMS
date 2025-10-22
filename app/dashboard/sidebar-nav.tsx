@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Building2,
   Settings,
@@ -48,10 +48,23 @@ import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { useI18n } from '@/hooks/use-i18n';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
   const isActive = (href: string, isSubItem: boolean = false) => {
     if (isSubItem) {
@@ -65,7 +78,6 @@ export function SidebarNav() {
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
   const isCmmsBackofficeActive = pathname.startsWith('/dashboard/cmms');
-  const isClientPortalActive = pathname.startsWith('/dashboard/client-portal');
   
   const settingsLinks = [
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
@@ -359,37 +371,6 @@ export function SidebarNav() {
                     </CollapsibleContent>
                 </SidebarMenuItem>
            </Collapsible>
-
-           <Collapsible asChild defaultOpen={isClientPortalActive}>
-                <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                         <SidebarMenuButton
-                            isActive={isClientPortalActive}
-                            className="justify-between"
-                            tooltip={{ children: 'Portal do Cliente' }}
-                         >
-                            <div className="flex items-center gap-2">
-                                <Home />
-                                <span>Portal do Cliente</span>
-                            </div>
-                            <ChevronDown className={cn("transition-transform duration-200", isClientPortalActive && "rotate-180")} />
-                        </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                             <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/client-portal', true)}>
-                                    <Link href="/dashboard/client-portal">
-                                        <LayoutGrid />
-                                        <span>Visão Geral</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                             </SidebarMenuSubItem>
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </SidebarMenuItem>
-           </Collapsible>
-
         </SidebarMenu>
         <SidebarMenu className="mt-auto">
           <Collapsible asChild defaultOpen={isSettingsActive}>
@@ -424,11 +405,9 @@ export function SidebarNav() {
                 </SidebarMenuItem>
            </Collapsible>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: t('sidebar.logout') }}>
-                    <Link href="/">
-                        <LogOut />
-                        <span>{t('sidebar.logout')}</span>
-                    </Link>
+                <SidebarMenuButton onClick={handleLogout} tooltip={{ children: t('sidebar.logout') }}>
+                    <LogOut />
+                    <span>{t('sidebar.logout')}</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
