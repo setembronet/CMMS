@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -11,6 +10,7 @@ import { Header } from '@/components/dashboard/header';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { useClient } from '@/context/client-provider';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 const CLIENT_ROLES = ['SINDICO', 'ZELADOR', 'PORTEIRO', 'GERENTE_PREDIAL'];
 
@@ -19,20 +19,19 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { currentUser } = useClient();
+  const { currentUser, authLoading } = useClient();
   const router = useRouter();
   
   React.useEffect(() => {
-      if (currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
+      if (!authLoading && currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
           router.replace('/dashboard/client-portal');
       }
-  }, [currentUser, router]);
+  }, [currentUser, authLoading, router]);
 
-  if (!currentUser) {
-    // Or a loading spinner, or some other placeholder
+  if (authLoading || !currentUser) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <p>Loading user...</p>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }

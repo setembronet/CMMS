@@ -1,33 +1,48 @@
-
 'use client';
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { users } from '@/lib/data';
 import { useCollection } from '@/firebase/firestore';
 import type { Company, User } from '@/lib/types';
-
-// Mocked current user ID. In a real app, this would come from an auth context.
-// Change this to 'user-08' to test the client portal redirect.
-const MOCKED_CURRENT_USER_ID = 'user-01'; // 'user-01' (Admin) vs 'user-08' (Client)
+import { useAuth } from '@/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface ClientContextType {
   selectedClientId: string | null;
   setSelectedClientId: (clientId: string) => void;
   selectedClient: Company | null;
   currentUser: User | null;
+  authLoading: boolean;
 }
 
 export const ClientContext = createContext<ClientContextType | undefined>(undefined);
 
 export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const { data: companies, loading: companiesLoading } = useCollection<Company>('companies');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
   const [selectedClientId, setSelectedClientIdState] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // Find the current user based on the mocked ID
-  const currentUser = useMemo(() => users.find(u => u.id === MOCKED_CURRENT_USER_ID) || null, []);
+  const auth = useAuth();
 
   useEffect(() => {
-    // This effect runs only on the client side after hydration
-    if (companiesLoading) return;
+    if (!auth) return;
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser && allUsers.length > 0) {
+        const appUser = allUsers.find(u => u.email.toLowerCase() === firebaseUser.email?.toLowerCase());
+        setCurrentUser(appUser || null);
+      } else {
+        setCurrentUser(null);
+      }
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [auth, allUsers]);
+
+
+  useEffect(() => {
+    if (authLoading || companiesLoading) return;
 
     const storedClientId = localStorage.getItem('selectedClientId');
     if (storedClientId && companies.some(c => c.id === storedClientId)) {
@@ -45,10 +60,9 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('selectedClientId', initialClientId);
       }
     }
-  }, [currentUser, companies, companiesLoading]);
+  }, [currentUser, companies, companiesLoading, authLoading]);
 
   const setSelectedClientId = (clientId: string) => {
-    // Technicians should not change client context
     if (currentUser?.cmmsRole === 'TECNICO') return;
     localStorage.setItem('selectedClientId', clientId);
     setSelectedClientIdState(clientId);
@@ -64,6 +78,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
     setSelectedClientId,
     selectedClient,
     currentUser,
+    authLoading,
   };
 
   return (
