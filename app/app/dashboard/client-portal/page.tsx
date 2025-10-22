@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -29,8 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Building, Wrench, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import { assets, workOrders, customerLocations, users, setWorkOrders } from '@/lib/data';
-import type { Asset, WorkOrder, OrderStatus, OrderPriority } from '@/lib/types';
+import type { Asset, WorkOrder, OrderStatus, OrderPriority, CustomerLocation } from '@/lib/types';
 import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserNav } from '@/components/dashboard/user-nav';
@@ -38,6 +38,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const symptoms = [
     { value: 'Ruído Anormal', label: 'Ruído Anormal' },
@@ -57,8 +60,17 @@ const urgencyLevels: { value: OrderPriority, label: string }[] = [
 export default function ClientPortalPage() {
   const { currentUser } = useClient();
   const { t } = useI18n();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
   const [isNewWoDialogOpen, setIsNewWoDialogOpen] = React.useState(false);
   const [newWoFormData, setNewWoFormData] = React.useState<Partial<WorkOrder>>({});
+
+  const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: allWorkOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
+  const { data: allCustomerLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
+  const { data: allUsers, loading: usersLoading } = useCollection<any>('users');
+
 
   const {
       userLocation,
@@ -67,20 +79,20 @@ export default function ClientPortalPage() {
       recentWorkOrders,
       criticalAssets,
   } = React.useMemo(() => {
-    if (!currentUser) {
+    if (!currentUser || assetsLoading || workOrdersLoading || locationsLoading) {
         return { userLocation: null, locationAssets: [], openWorkOrders: [], recentWorkOrders: [], criticalAssets: 0 };
     }
 
-    const userLoc = customerLocations.find(loc => (loc.contacts || []).some(c => c.email === currentUser.email));
-    const finalUserLocation = userLoc || customerLocations.find(loc => loc.clientId === currentUser.clientId);
+    const userLoc = allCustomerLocations.find(loc => (loc.contacts || []).some(c => c.email === currentUser.email));
+    const finalUserLocation = userLoc || allCustomerLocations.find(loc => loc.clientId === currentUser.clientId);
 
     if (!finalUserLocation) {
         return { userLocation: null, locationAssets: [], openWorkOrders: [], recentWorkOrders: [], criticalAssets: 0 };
     }
     
-    const locAssets = assets.filter(a => a.customerLocationId === finalUserLocation.id);
+    const locAssets = allAssets.filter(a => a.customerLocationId === finalUserLocation.id);
     const assetIds = locAssets.map(a => a.id);
-    const locWorkOrders = workOrders.filter(wo => assetIds.includes(wo.assetId));
+    const locWorkOrders = allWorkOrders.filter(wo => assetIds.includes(wo.assetId));
     
     const openWos = locWorkOrders.filter(wo => ['ABERTO', 'EM ANDAMENTO', 'EM_ESPERA_PECAS'].includes(wo.status));
     const recentWos = locWorkOrders.filter(wo => wo.status === 'CONCLUIDO').sort((a,b) => (b.endDate || 0) - (a.endDate || 0)).slice(0, 5);
@@ -88,7 +100,7 @@ export default function ClientPortalPage() {
 
     return { userLocation: finalUserLocation, locationAssets: locAssets, openWorkOrders: openWos, recentWorkOrders: recentWos, criticalAssets: critAssets };
 
-  }, [currentUser]);
+  }, [currentUser, allAssets, allWorkOrders, allCustomerLocations, assetsLoading, workOrdersLoading, locationsLoading]);
 
   const openNewWoDialog = () => {
     if (!userLocation || !currentUser) return;
@@ -97,6 +109,7 @@ export default function ClientPortalPage() {
         status: 'ABERTO',
         priority: 'Média',
         createdByUserId: currentUser.id,
+        creationDate: new Date().getTime(),
     });
     setIsNewWoDialogOpen(true);
   };
@@ -105,27 +118,35 @@ export default function ClientPortalPage() {
     setNewWoFormData(prev => ({...prev, [field]: value}));
   };
 
-  const handleNewWoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleNewWoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!firestore) return;
+    
     if (!newWoFormData.assetId || !newWoFormData.title || !newWoFormData.description) {
-        // In a real app, you'd show a toast here
-        console.error("Missing required fields");
+        toast({ variant: 'destructive', title: "Campos Obrigatórios", description: "Por favor, preencha todos os campos obrigatórios." });
         return;
     }
 
-    const finalWo: WorkOrder = {
-        ...newWoFormData,
-        id: `os-${Date.now()}`,
-        creationDate: new Date().getTime(),
-    } as WorkOrder;
-
-    setWorkOrders([finalWo, ...workOrders]);
-    setIsNewWoDialogOpen(false);
-    setNewWoFormData({});
+    try {
+        await addDocument(firestore, 'workOrders', newWoFormData);
+        toast({
+            title: "Chamado Aberto com Sucesso!",
+            description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
+        });
+        setIsNewWoDialogOpen(false);
+        setNewWoFormData({});
+    } catch(error) {
+        console.error("Erro ao abrir chamado:", error);
+        toast({
+            variant: 'destructive',
+            title: "Erro ao Abrir Chamado",
+            description: "Não foi possível registrar sua solicitação. Tente novamente.",
+        });
+    }
   };
 
-  const getAssetName = (assetId: string) => assets.find(a => a.id === assetId)?.name || 'N/A';
-  const getTechnicianName = (techId?: string) => users.find(u => u.id === techId)?.name || 'Aguardando';
+  const getAssetName = (assetId: string) => allAssets.find(a => a.id === assetId)?.name || 'N/A';
+  const getTechnicianName = (techId?: string) => allUsers.find((u:any) => u.id === techId)?.name || 'Aguardando';
 
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
@@ -135,6 +156,8 @@ export default function ClientPortalPage() {
       default: return <Badge variant="destructive">{status.replace(/_/g, ' ')}</Badge>;
     }
   };
+  
+  const isLoading = assetsLoading || workOrdersLoading || locationsLoading || usersLoading;
 
   return (
     <>
@@ -218,22 +241,30 @@ export default function ClientPortalPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {openWorkOrders.map(wo => (
-                                  <TableRow key={`open-${wo.id}`}>
-                                      <TableCell className="font-medium">{getAssetName(wo.assetId)}</TableCell>
-                                      <TableCell>{wo.title}</TableCell>
-                                      <TableCell>{getTechnicianName(wo.responsibleId)}</TableCell>
-                                      <TableCell>{getStatusBadge(wo.status)}</TableCell>
-                                  </TableRow>
-                              ))}
-                               {recentWorkOrders.map(wo => (
-                                  <TableRow key={`recent-${wo.id}`} className="bg-muted/30">
-                                      <TableCell className="font-medium text-muted-foreground">{getAssetName(wo.assetId)}</TableCell>
-                                      <TableCell className="text-muted-foreground">{wo.title}</TableCell>
-                                      <TableCell className="text-muted-foreground">{getTechnicianName(wo.responsibleId)}</TableCell>
-                                      <TableCell>{getStatusBadge(wo.status)}</TableCell>
-                                  </TableRow>
-                              ))}
+                              {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">Carregando...</TableCell>
+                                </TableRow>
+                              ) : (
+                                <>
+                                {openWorkOrders.map(wo => (
+                                    <TableRow key={`open-${wo.id}`}>
+                                        <TableCell className="font-medium">{getAssetName(wo.assetId)}</TableCell>
+                                        <TableCell>{wo.title}</TableCell>
+                                        <TableCell>{getTechnicianName(wo.responsibleId)}</TableCell>
+                                        <TableCell>{getStatusBadge(wo.status)}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {recentWorkOrders.map(wo => (
+                                    <TableRow key={`recent-${wo.id}`} className="bg-muted/30">
+                                        <TableCell className="font-medium text-muted-foreground">{getAssetName(wo.assetId)}</TableCell>
+                                        <TableCell className="text-muted-foreground">{wo.title}</TableCell>
+                                        <TableCell className="text-muted-foreground">{getTechnicianName(wo.responsibleId)}</TableCell>
+                                        <TableCell>{getStatusBadge(wo.status)}</TableCell>
+                                    </TableRow>
+                                ))}
+                                </>
+                              )}
                           </TableBody>
                       </Table>
                   </CardContent>
@@ -289,8 +320,8 @@ export default function ClientPortalPage() {
                       <Input id="title" name="title" onChange={(e) => handleNewWoFormChange('title', e.target.value)} placeholder="Título curto do problema" required />
                   </div>
                   <div className="space-y-2">
-                      <Label htmlFor="description">Descrição Detalhada</Label>
-                      <Textarea id="description" name="description" onChange={(e) => handleNewWoFormChange('description', e.target.value)} placeholder="Forneça mais detalhes sobre o problema, se necessário." />
+                      <Label htmlFor="description_details">Descrição Detalhada</Label>
+                      <Textarea id="description_details" name="description_details" onChange={(e) => handleNewWoFormChange('description', e.target.value)} placeholder="Forneça mais detalhes sobre o problema, se necessário." />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="media">Fotos ou Vídeos</Label>
@@ -307,3 +338,4 @@ export default function ClientPortalPage() {
     </>
   );
 }
+
