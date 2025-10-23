@@ -1,3 +1,4 @@
+
 'use client';
 import { FirebaseProvider, initializeFirebase } from '@/firebase';
 import React, { ReactNode } from 'react';

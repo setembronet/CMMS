@@ -218,7 +218,7 @@ export default function AssetsPage() {
     setFormData(prev => prev ? { ...prev, gallery: (prev.gallery || []).filter((_, i) => i !== index) } : null);
   };
 
-  const handleSaveAsset = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveAsset = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData || !firestore) return;
     
@@ -237,29 +237,20 @@ export default function AssetsPage() {
         creationDate: editingAsset?.creationDate || new Date().getTime(),
     };
 
-    try {
-        if (editingAsset) {
-            await updateDocument(firestore, 'assets', editingAsset.id, assetData);
-             toast({
-                title: "Ativo Atualizado!",
-                description: `O ativo "${assetData.name}" foi atualizado com sucesso.`,
-            });
-        } else {
-            await addDocument(firestore, 'assets', assetData);
-             toast({
-                title: "Ativo Criado!",
-                description: `O ativo "${assetData.name}" foi criado com sucesso.`,
-            });
-        }
-        closeDialog();
-    } catch (error) {
-        console.error("Erro ao salvar ativo:", error);
+    if (editingAsset) {
+        updateDocument(firestore, 'assets', editingAsset.id, assetData);
         toast({
-            variant: "destructive",
-            title: "Erro ao Salvar",
-            description: "Não foi possível salvar os dados do ativo. Tente novamente."
+            title: "Ativo Atualizado!",
+            description: `O ativo "${assetData.name}" foi atualizado com sucesso.`,
+        });
+    } else {
+        addDocument(firestore, 'assets', assetData);
+        toast({
+            title: "Ativo Criado!",
+            description: `O ativo "${assetData.name}" foi criado com sucesso.`,
         });
     }
+    closeDialog();
   };
 
   const getAssetTimeline = (asset: Asset | null) => {
