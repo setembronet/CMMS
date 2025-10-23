@@ -30,7 +30,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { companies as initialCompanies, segments as initialSegments, plans, addons } from '@/lib/data';
+import { plans, addons } from '@/lib/data';
 import type { Company, CompanySegment, Plan, Addon } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,9 +38,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useI18n } from '@/hooks/use-i18n';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
-const emptyCompany: Company = {
-  id: '',
+const emptyCompany: Omit<Company, 'id'> = {
   name: '',
   cnpj: '',
   email: '',
@@ -63,15 +64,23 @@ const emptyCompany: Company = {
 export default function CompaniesPage() {
   const { t } = useI18n();
   const { toast } = useToast();
-  const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
+  const firestore = useFirestore();
+
+  const { data: companies, loading: companiesLoading } = useCollection<Company>('companies');
+  const { data: segments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
-  const [formData, setFormData] = React.useState<Company>(emptyCompany);
-  const [segments] = React.useState<CompanySegment[]>(initialSegments);
+  const [formData, setFormData] = React.useState<Omit<Company, 'id'>>(emptyCompany);
 
   const openDialog = (company: Company | null = null) => {
     setEditingCompany(company);
-    setFormData(company ? JSON.parse(JSON.stringify(company)) : emptyCompany);
+    if (company) {
+      const { id, ...companyData } = company;
+      setFormData(companyData);
+    } else {
+      setFormData(emptyCompany);
+    }
     setIsDialogOpen(true);
   };
 
@@ -84,22 +93,23 @@ export default function CompaniesPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          // @ts-ignore
-          ...prev[parent],
-          [child]: value
+    setFormData(prev => {
+        const newFormData = { ...prev };
+        if (name.includes('.')) {
+            const [parent, child] = name.split('.');
+            // @ts-ignore
+            if (!newFormData[parent]) newFormData[parent] = {};
+            // @ts-ignore
+            newFormData[parent][child] = value;
+        } else {
+            // @ts-ignore
+            newFormData[name] = type === 'checkbox' ? checked : value;
         }
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-    }
+        return newFormData;
+    });
   };
 
-  const handleSelectChange = (name: keyof Company, value: string) => {
+  const handleSelectChange = (name: keyof Omit<Company, 'id'>, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
@@ -154,26 +164,32 @@ export default function CompaniesPage() {
 
   const handleSaveCompany = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!firestore) return;
     
-    const newCompany: Company = {
-      ...formData,
-      id: editingCompany?.id || `client-0${companies.length + 1}`,
-    };
-
     if (editingCompany) {
-      setCompanies(companies.map(c => c.id === newCompany.id ? newCompany : c));
+        updateDocument(firestore, 'companies', editingCompany.id, formData);
+        toast({
+            title: "Empresa Atualizada!",
+            description: `A empresa "${formData.name}" foi atualizada com sucesso.`,
+        });
     } else {
-      setCompanies([newCompany, ...companies]);
+        addDocument(firestore, 'companies', formData);
+        toast({
+            title: "Empresa Criada!",
+            description: `A empresa "${formData.name}" foi criada com sucesso.`,
+        });
     }
-    toast({
-      title: "Empresa Salva!",
-      description: `A empresa "${newCompany.name}" foi salva com sucesso.`,
-    });
     closeDialog();
   };
 
-  const toggleCompanyStatus = (companyId: string, status: boolean) => {
-    setCompanies(companies.map(c => c.id === companyId ? { ...c, status: status ? 'active' : 'inactive' } : c));
+  const toggleCompanyStatus = (company: Company) => {
+    if (!firestore) return;
+    const newStatus = company.status === 'active' ? 'inactive' : 'active';
+    updateDocument(firestore, 'companies', company.id, { status: newStatus });
+    toast({
+        title: "Status Alterado",
+        description: `A empresa "${company.name}" foi marcada como ${newStatus === 'active' ? 'ativa' : 'inativa'}.`
+    });
   };
   
   return (
@@ -197,7 +213,11 @@ export default function CompaniesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companies.map((company) => {
+            {companiesLoading ? (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">Carregando empresas...</TableCell>
+                </TableRow>
+            ) : companies.map((company) => {
                 const plan = plans.find(p => p.id === company.planId);
                 return (
                   <TableRow key={company.id}>
@@ -209,7 +229,7 @@ export default function CompaniesPage() {
                     <TableCell>
                         <Switch
                             checked={company.status === 'active'}
-                            onCheckedChange={(checked) => toggleCompanyStatus(company.id, checked)}
+                            onCheckedChange={() => toggleCompanyStatus(company)}
                             aria-label={t('companies.toggleStatus')}
                         />
                     </TableCell>
@@ -319,7 +339,7 @@ export default function CompaniesPage() {
                   <div>
                     <Label>{t('companies.actingSegments')}</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4 mt-2">
-                        {segments.map(segment => (
+                        {segmentsLoading ? <p>Carregando segmentos...</p> : segments.map(segment => (
                           <div key={segment.id} className="flex items-center gap-2">
                               <Checkbox 
                                 id={`segment-${segment.id}`}

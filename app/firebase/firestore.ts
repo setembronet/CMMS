@@ -174,17 +174,18 @@ export const updateDocument = (
 
 
 // Function to delete a document
-export const deleteDocument = async (
+export const deleteDocument = (
   firestore: Firestore,
   collectionName: string,
   docId: string
 ) => {
   const path = `${collectionName}/${docId}`;
   const context: SecurityRuleContext = { path, operation: 'delete' };
-  try {
-    const docRef = doc(firestore, collectionName, docId);
-    return await deleteDoc(docRef);
-  } catch (error) {
-    handleError(context, error as Error);
-  }
+  const docRef = doc(firestore, collectionName, docId);
+
+  deleteDoc(docRef).catch((serverError) => {
+    const permissionError = new FirestorePermissionError(context);
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };
+
