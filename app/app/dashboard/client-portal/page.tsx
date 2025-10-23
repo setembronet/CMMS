@@ -31,9 +31,6 @@ import { PlusCircle, Building, Wrench, AlertTriangle, CheckCircle } from 'lucide
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
 import type { Asset, WorkOrder, OrderStatus, OrderPriority, CustomerLocation } from '@/lib/types';
-import { Logo } from '@/components/logo';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { UserNav } from '@/components/dashboard/user-nav';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -127,22 +124,13 @@ export default function ClientPortalPage() {
         return;
     }
 
-    try {
-        await addDocument(firestore, 'workOrders', newWoFormData);
-        toast({
-            title: "Chamado Aberto com Sucesso!",
-            description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
-        });
-        setIsNewWoDialogOpen(false);
-        setNewWoFormData({});
-    } catch(error) {
-        console.error("Erro ao abrir chamado:", error);
-        toast({
-            variant: 'destructive',
-            title: "Erro ao Abrir Chamado",
-            description: "Não foi possível registrar sua solicitação. Tente novamente.",
-        });
-    }
+    addDocument(firestore, 'workOrders', newWoFormData);
+    toast({
+        title: "Chamado Aberto com Sucesso!",
+        description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
+    });
+    setIsNewWoDialogOpen(false);
+    setNewWoFormData({});
   };
 
   const getAssetName = (assetId: string) => allAssets.find(a => a.id === assetId)?.name || 'N/A';
@@ -161,116 +149,106 @@ export default function ClientPortalPage() {
 
   return (
     <>
-      <div className="flex flex-col min-h-screen bg-muted/30">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-              <Logo />
-               <div className="flex w-full items-center justify-end gap-4">
-                  <ThemeToggle />
-                  <UserNav />
+      <div className="p-4 md:p-8 lg:p-10 space-y-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                  <h1 className="text-3xl font-bold font-headline">Portal do Cliente</h1>
+                  <p className="text-muted-foreground">Bem-vindo, {currentUser?.name}. Aqui você acompanha tudo sobre seus ativos.</p>
               </div>
-          </header>
+              <Button size="lg" onClick={openNewWoDialog}>
+                  <PlusCircle className="mr-2 h-5 w-5" />
+                  Solicitar Serviço
+              </Button>
+          </div>
 
-          <main className="flex-1 p-4 md:p-8 lg:p-10 space-y-8">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div>
-                      <h1 className="text-3xl font-bold font-headline">Portal do Cliente</h1>
-                      <p className="text-muted-foreground">Bem-vindo, {currentUser?.name}. Aqui você acompanha tudo sobre seus ativos.</p>
-                  </div>
-                  <Button size="lg" onClick={openNewWoDialog}>
-                      <PlusCircle className="mr-2 h-5 w-5" />
-                      Solicitar Serviço
-                  </Button>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Total de Ativos</CardTitle>
-                          <Building className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                          <div className="text-2xl font-bold">{locationAssets.length}</div>
-                          <p className="text-xs text-muted-foreground">Equipamentos sob nosso cuidado.</p>
-                      </CardContent>
-                  </Card>
-                  <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Chamados Abertos</CardTitle>
-                          <Wrench className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                          <div className="text-2xl font-bold">{openWorkOrders.length}</div>
-                          <p className="text-xs text-muted-foreground">Serviços em andamento ou aguardando.</p>
-                      </CardContent>
-                  </Card>
-                  <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Ativos em Alerta</CardTitle>
-                          <AlertTriangle className="h-4 w-4 text-destructive" />
-                      </CardHeader>
-                      <CardContent>
-                          <div className="text-2xl font-bold text-destructive">{criticalAssets}</div>
-                          <p className="text-xs text-muted-foreground">Equipamentos com chamados urgentes.</p>
-                      </CardContent>
-                  </Card>
-                  <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Contrato</CardTitle>
-                           <CheckCircle className="h-4 w-4 text-green-500" />
-                      </CardHeader>
-                      <CardContent>
-                          <div className="text-2xl font-bold">{userLocation?.contractStatus || 'N/A'}</div>
-                          <p className="text-xs text-muted-foreground">Status do seu contrato de manutenção.</p>
-                      </CardContent>
-                  </Card>
-              </div>
-
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
-                  <CardHeader>
-                      <CardTitle>Acompanhamento de Ordens de Serviço</CardTitle>
-                      <CardDescription>Veja o andamento dos chamados abertos e os últimos concluídos.</CardDescription>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total de Ativos</CardTitle>
+                      <Building className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                      <Table>
-                          <TableHeader>
-                              <TableRow>
-                                  <TableHead>Ativo</TableHead>
-                                  <TableHead>Serviço</TableHead>
-                                  <TableHead>Técnico</TableHead>
-                                  <TableHead>Status</TableHead>
-                              </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                              {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">Carregando...</TableCell>
-                                </TableRow>
-                              ) : (
-                                <>
-                                {openWorkOrders.map(wo => (
-                                    <TableRow key={`open-${wo.id}`}>
-                                        <TableCell className="font-medium">{getAssetName(wo.assetId)}</TableCell>
-                                        <TableCell>{wo.title}</TableCell>
-                                        <TableCell>{getTechnicianName(wo.responsibleId)}</TableCell>
-                                        <TableCell>{getStatusBadge(wo.status)}</TableCell>
-                                    </TableRow>
-                                ))}
-                                {recentWorkOrders.map(wo => (
-                                    <TableRow key={`recent-${wo.id}`} className="bg-muted/30">
-                                        <TableCell className="font-medium text-muted-foreground">{getAssetName(wo.assetId)}</TableCell>
-                                        <TableCell className="text-muted-foreground">{wo.title}</TableCell>
-                                        <TableCell className="text-muted-foreground">{getTechnicianName(wo.responsibleId)}</TableCell>
-                                        <TableCell>{getStatusBadge(wo.status)}</TableCell>
-                                    </TableRow>
-                                ))}
-                                </>
-                              )}
-                          </TableBody>
-                      </Table>
+                      <div className="text-2xl font-bold">{locationAssets.length}</div>
+                      <p className="text-xs text-muted-foreground">Equipamentos sob nosso cuidado.</p>
                   </CardContent>
               </Card>
+              <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Chamados Abertos</CardTitle>
+                      <Wrench className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                      <div className="text-2xl font-bold">{openWorkOrders.length}</div>
+                      <p className="text-xs text-muted-foreground">Serviços em andamento ou aguardando.</p>
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Ativos em Alerta</CardTitle>
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                  </CardHeader>
+                  <CardContent>
+                      <div className="text-2xl font-bold text-destructive">{criticalAssets}</div>
+                      <p className="text-xs text-muted-foreground">Equipamentos com chamados urgentes.</p>
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Contrato</CardTitle>
+                       <CheckCircle className="h-4 w-4 text-green-500" />
+                  </CardHeader>
+                  <CardContent>
+                      <div className="text-2xl font-bold">{userLocation?.contractStatus || 'N/A'}</div>
+                      <p className="text-xs text-muted-foreground">Status do seu contrato de manutenção.</p>
+                  </CardContent>
+              </Card>
+          </div>
 
-          </main>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Acompanhamento de Ordens de Serviço</CardTitle>
+                  <CardDescription>Veja o andamento dos chamados abertos e os últimos concluídos.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead>Ativo</TableHead>
+                              <TableHead>Serviço</TableHead>
+                              <TableHead>Técnico</TableHead>
+                              <TableHead>Status</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                          {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-24 text-center">Carregando...</TableCell>
+                            </TableRow>
+                          ) : (
+                            <>
+                            {openWorkOrders.map(wo => (
+                                <TableRow key={`open-${wo.id}`}>
+                                    <TableCell className="font-medium">{getAssetName(wo.assetId)}</TableCell>
+                                    <TableCell>{wo.title}</TableCell>
+                                    <TableCell>{getTechnicianName(wo.responsibleId)}</TableCell>
+                                    <TableCell>{getStatusBadge(wo.status)}</TableCell>
+                                </TableRow>
+                            ))}
+                            {recentWorkOrders.map(wo => (
+                                <TableRow key={`recent-${wo.id}`} className="bg-muted/30">
+                                    <TableCell className="font-medium text-muted-foreground">{getAssetName(wo.assetId)}</TableCell>
+                                    <TableCell className="text-muted-foreground">{wo.title}</TableCell>
+                                    <TableCell className="text-muted-foreground">{getTechnicianName(wo.responsibleId)}</TableCell>
+                                    <TableCell>{getStatusBadge(wo.status)}</TableCell>
+                                </TableRow>
+                            ))}
+                            </>
+                          )}
+                      </TableBody>
+                  </Table>
+              </CardContent>
+          </Card>
+
       </div>
 
       <Dialog open={isNewWoDialogOpen} onOpenChange={setIsNewWoDialogOpen}>
@@ -338,4 +316,3 @@ export default function ClientPortalPage() {
     </>
   );
 }
-

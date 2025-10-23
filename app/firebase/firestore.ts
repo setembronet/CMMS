@@ -129,18 +129,23 @@ export const addDocument = async (
   collectionName: string,
   data: DocumentData
 ) => {
-  const context: SecurityRuleContext = { path: collectionName, operation: 'create', requestResourceData: data };
-  try {
-    const collectionRef = collection(firestore, collectionName);
-    return await addDoc(collectionRef, {
-      ...data,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  } catch (error) {
-    handleError(context, error as Error);
-  }
+  const collectionRef = collection(firestore, collectionName);
+  
+  addDoc(collectionRef, {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }).catch((serverError) => {
+    const context: SecurityRuleContext = {
+      path: collectionName,
+      operation: 'create',
+      requestResourceData: data
+    };
+    const permissionError = new FirestorePermissionError(context);
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };
+
 
 // Function to update a document
 export const updateDocument = async (
@@ -150,17 +155,22 @@ export const updateDocument = async (
   data: DocumentData
 ) => {
   const path = `${collectionName}/${docId}`;
-  const context: SecurityRuleContext = { path, operation: 'update', requestResourceData: data };
-  try {
-    const docRef = doc(firestore, collectionName, docId);
-    return await updateDoc(docRef, {
-      ...data,
-      updatedAt: serverTimestamp(),
-    });
-  } catch (error) {
-    handleError(context, error as Error);
-  }
+  const docRef = doc(firestore, collectionName, docId);
+
+  updateDoc(docRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  }).catch((serverError) => {
+    const context: SecurityRuleContext = {
+      path: path,
+      operation: 'update',
+      requestResourceData: data
+    };
+    const permissionError = new FirestorePermissionError(context);
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };
+
 
 // Function to delete a document
 export const deleteDocument = async (
