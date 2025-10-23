@@ -124,22 +124,13 @@ export default function ClientPortalPage() {
         return;
     }
 
-    try {
-        await addDocument(firestore, 'workOrders', newWoFormData);
-        toast({
-            title: "Chamado Aberto com Sucesso!",
-            description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
-        });
-        setIsNewWoDialogOpen(false);
-        setNewWoFormData({});
-    } catch(error) {
-        console.error("Erro ao abrir chamado:", error);
-        toast({
-            variant: 'destructive',
-            title: "Erro ao Abrir Chamado",
-            description: "Não foi possível registrar sua solicitação. Tente novamente.",
-        });
-    }
+    addDocument(firestore, 'workOrders', newWoFormData);
+    toast({
+        title: "Chamado Aberto com Sucesso!",
+        description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
+    });
+    setIsNewWoDialogOpen(false);
+    setNewWoFormData({});
   };
 
   const getAssetName = (assetId: string) => allAssets.find(a => a.id === assetId)?.name || 'N/A';
@@ -325,5 +316,3 @@ export default function ClientPortalPage() {
     </>
   );
 }
-
-

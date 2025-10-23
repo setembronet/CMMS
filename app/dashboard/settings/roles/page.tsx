@@ -94,7 +94,7 @@ export default function RolesPage() {
     } catch (error) {
         console.error("Erro ao salvar função:", error);
         toast({
-            variant: 'destructive',
+            variant: "destructive",
             title: "Erro ao Salvar",
             description: "Não foi possível salvar a função. Tente novamente.",
         });

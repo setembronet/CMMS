@@ -124,7 +124,7 @@ export const useDocument = <T extends { id: string }>(collectionName: string, do
 
 
 // Function to add a document
-export const addDocument = async (
+export const addDocument = (
   firestore: Firestore,
   collectionName: string,
   data: DocumentData
@@ -148,7 +148,7 @@ export const addDocument = async (
 
 
 // Function to update a document
-export const updateDocument = async (
+export const updateDocument = (
   firestore: Firestore,
   collectionName: string,
   docId: string,
