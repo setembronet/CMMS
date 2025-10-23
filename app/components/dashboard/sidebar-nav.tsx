@@ -48,23 +48,14 @@ import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { useI18n } from '@/hooks/use-i18n';
-import { useAuth } from '@/firebase';
-import { signOut } from 'firebase/auth';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { t } = useI18n();
-  const auth = useAuth();
   const router = useRouter();
 
-  const handleLogout = async () => {
-    if (!auth) return;
-    try {
-      await signOut(auth);
-      router.push('/');
-    } catch (error) {
-      console.error("Error signing out: ", error);
-    }
+  const handleLogout = () => {
+    router.push('/');
   };
 
   const isActive = (href: string, isSubItem: boolean = false) => {

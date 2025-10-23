@@ -1,9 +1,9 @@
+
 'use client';
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { useCollection } from '@/firebase/firestore';
 import type { Company, User } from '@/lib/types';
-import { useAuth } from '@/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { users as allUsersData } from '@/lib/data';
 
 interface ClientContextType {
   selectedClientId: string | null;
@@ -20,51 +20,28 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   
-  const auth = useAuth();
-  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
   const { data: companies, loading: companiesLoading } = useCollection<Company>('companies');
-
+  
+  // Simulate a logged-in user without Firebase Auth
   useEffect(() => {
-    if (!auth || usersLoading) return;
+    // Find the admin user from the mock data
+    const adminUser = allUsersData.find(u => u.email === 'admin@tenantcare.com');
+    setCurrentUser(adminUser || null);
+    
+    // Set a default client if none is selected
+    if (!localStorage.getItem('selectedClientId') && companies.length > 0) {
+      const initialClientId = companies[0].id;
+      setSelectedClientIdState(initialClientId);
+      localStorage.setItem('selectedClientId', initialClientId);
+    } else {
+        setSelectedClientIdState(localStorage.getItem('selectedClientId'));
+    }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        const appUser = allUsers.find(u => u.email.toLowerCase() === firebaseUser.email?.toLowerCase());
-        setCurrentUser(appUser || null);
-        
-        // Logic to set initial client, moved inside here
-        if (appUser) {
-            const storedClientId = localStorage.getItem('selectedClientId');
-            if (storedClientId && companies.some(c => c.id === storedClientId)) {
-              setSelectedClientIdState(storedClientId);
-            } else {
-              let initialClientId: string | null = null;
-              if (appUser.clientId) {
-                initialClientId = appUser.clientId;
-              } else if (companies.length > 0) {
-                initialClientId = companies[0].id;
-              }
-              if (initialClientId) {
-                setSelectedClientIdState(initialClientId);
-                localStorage.setItem('selectedClientId', initialClientId);
-              }
-            }
-        }
-
-      } else {
-        setCurrentUser(null);
-        setSelectedClientIdState(null);
-        localStorage.removeItem('selectedClientId');
-      }
-      setAuthLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [auth, allUsers, usersLoading, companies]);
+    setAuthLoading(false);
+  }, [companies]);
 
 
   const setSelectedClientId = (clientId: string) => {
-    if (currentUser?.cmmsRole === 'TECNICO') return;
     localStorage.setItem('selectedClientId', clientId);
     setSelectedClientIdState(clientId);
   };

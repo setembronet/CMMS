@@ -47,29 +47,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { currentUser, authLoading } = useClient();
-  const router = useRouter();
   
-  React.useEffect(() => {
-      if (!authLoading) {
-          if (!currentUser) {
-              router.replace('/');
-          } else if (CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
-              router.replace('/dashboard/client-portal');
-          }
-      }
-  }, [currentUser, authLoading, router]);
-
-  if (authLoading || !currentUser) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  // If the user is a client role, they should be redirected,
-  // but we also prevent rendering the main dashboard to avoid flashes of content.
-  if (CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
+  if (authLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
