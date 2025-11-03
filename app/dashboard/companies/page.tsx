@@ -182,14 +182,23 @@ export default function CompaniesPage() {
     closeDialog();
   };
 
-  const toggleCompanyStatus = (company: Company) => {
+  const toggleCompanyStatus = async (company: Company) => {
     if (!firestore) return;
     const newStatus = company.status === 'active' ? 'inactive' : 'active';
-    updateDocument(firestore, 'companies', company.id, { status: newStatus });
-    toast({
-        title: "Status Alterado",
-        description: `A empresa "${company.name}" foi marcada como ${newStatus === 'active' ? 'ativa' : 'inativa'}.`
-    });
+    try {
+        await updateDocument(firestore, 'companies', company.id, { status: newStatus });
+        toast({
+            title: "Status Alterado",
+            description: `A empresa "${company.name}" foi marcada como ${newStatus === 'active' ? 'ativa' : 'inativa'}.`
+        });
+    } catch(error) {
+        console.error("Erro ao alterar status:", error);
+         toast({
+            variant: "destructive",
+            title: "Erro ao Alterar Status",
+            description: "Não foi possível alterar o status da empresa."
+        });
+    }
   };
   
   return (
