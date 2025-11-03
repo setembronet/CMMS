@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -19,16 +18,8 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, ArrowUpCircle, ArrowDownCircle, Banknote } from 'lucide-react';
-import { 
-    accountsPayable as allAccountsPayable, 
-    accountsReceivable as allAccountsReceivable,
-    customerLocations as allCustomerLocations,
-    contracts as allContracts,
-    costCenters,
-    chartOfAccounts
-} from '@/lib/data';
-import type { AccountsPayable, AccountsReceivable } from '@/lib/types';
+import { DollarSign, ArrowUpCircle, ArrowDownCircle, Banknote, Loader2 } from 'lucide-react';
+import type { AccountsPayable, AccountsReceivable, CustomerLocation, Contract, CostCenter, ChartOfAccount } from '@/lib/types';
 import { 
     ResponsiveContainer,
     BarChart,
@@ -44,8 +35,9 @@ import {
 } from 'recharts';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import { format, getMonth, getYear } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useCollection } from '@/firebase/firestore';
 
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -54,8 +46,17 @@ export default function CmmsFinanceDashboardPage() {
   const { selectedClient } = useClient();
   const { t } = useI18n();
 
+  const { data: allAccountsPayable, loading: payablesLoading } = useCollection<AccountsPayable>('accountsPayable');
+  const { data: allAccountsReceivable, loading: receivablesLoading } = useCollection<AccountsReceivable>('accountsReceivable');
+  const { data: allCustomerLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
+  const { data: allContracts, loading: contractsLoading } = useCollection<Contract>('contracts');
+  const { data: costCenters, loading: costCentersLoading } = useCollection<CostCenter>('costCenters');
+  const { data: chartOfAccounts, loading: chartOfAccountsLoading } = useCollection<ChartOfAccount>('chartOfAccounts');
+
+
   const financeData = React.useMemo(() => {
-    if (!selectedClient) {
+    const isLoading = payablesLoading || receivablesLoading || locationsLoading || contractsLoading || costCentersLoading || chartOfAccountsLoading;
+    if (!selectedClient || isLoading) {
       return { 
         totalReceivable: 0, 
         totalPayable: 0, 
@@ -64,6 +65,7 @@ export default function CmmsFinanceDashboardPage() {
         cashFlow: [],
         expensesByCostCenter: [],
         expensesByChartOfAccount: [],
+        isLoading
       };
     }
 
@@ -158,17 +160,25 @@ export default function CmmsFinanceDashboardPage() {
     const expensesByChartOfAccount = Object.entries(expensesByChartOfAccountData).map(([name, value]) => ({ name, value }));
 
 
-    return { totalReceivable, totalPayable, balance, nextEntries, cashFlow, expensesByCostCenter, expensesByChartOfAccount };
+    return { totalReceivable, totalPayable, balance, nextEntries, cashFlow, expensesByCostCenter, expensesByChartOfAccount, isLoading };
 
-  }, [selectedClient]);
+  }, [selectedClient, payablesLoading, receivablesLoading, locationsLoading, contractsLoading, costCentersLoading, chartOfAccountsLoading, allAccountsPayable, allAccountsReceivable, allCustomerLocations, allContracts, costCenters, chartOfAccounts]);
 
-  const { totalReceivable, totalPayable, balance, nextEntries, cashFlow, expensesByCostCenter, expensesByChartOfAccount } = financeData;
+  const { totalReceivable, totalPayable, balance, nextEntries, cashFlow, expensesByCostCenter, expensesByChartOfAccount, isLoading } = financeData;
 
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
             <h1 className="text-3xl font-bold font-headline mb-4">{t('cmms.finance.dashboardTitle')}</h1>
             <p className="text-muted-foreground">{t('clients.selectClientPrompt')}</p>
+        </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     )
   }
@@ -254,7 +264,7 @@ export default function CmmsFinanceDashboardPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {nextEntries.map(entry => (
+                        {nextEntries.map((entry: any) => (
                             <TableRow key={`${entry.id}-${entry.type}`}>
                                 <TableCell className="font-medium">{entry.description}</TableCell>
                                 <TableCell>{format(new Date(entry.dueDate), 'dd/MM/yy')}</TableCell>
