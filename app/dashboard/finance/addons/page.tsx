@@ -28,26 +28,36 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { addons as initialAddons } from '@/lib/data';
 import type { Addon } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
-const emptyAddon: Addon = {
-  id: '',
+
+const emptyAddon: Omit<Addon, 'id'> = {
   name: '',
   price: 0,
 };
 
 export default function AddonsPage() {
   const { t } = useI18n();
-  const [addons, setAddons] = React.useState<Addon[]>(initialAddons);
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const { data: addons, loading } = useCollection<Addon>('addons');
+  
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAddon, setEditingAddon] = React.useState<Addon | null>(null);
-  const [formData, setFormData] = React.useState<Addon>(emptyAddon);
+  const [formData, setFormData] = React.useState<Omit<Addon, 'id'>>(emptyAddon);
 
   const openDialog = (addon: Addon | null = null) => {
     setEditingAddon(addon);
-    setFormData(addon || emptyAddon);
+    if (addon) {
+        const { id, ...addonData } = addon;
+        setFormData(addonData);
+    } else {
+        setFormData(emptyAddon);
+    }
     setIsDialogOpen(true);
   };
 
@@ -65,19 +75,33 @@ export default function AddonsPage() {
     }));
   };
 
-  const handleSaveAddon = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveAddon = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newAddon: Addon = {
-      ...formData,
-      id: editingAddon?.id || `addon_${formData.name.toLowerCase().replace(/\s/g, '_')}`,
-    };
+    if (!firestore) return;
 
-    if (editingAddon) {
-      setAddons(addons.map(a => (a.id === newAddon.id ? newAddon : a)));
-    } else {
-      setAddons([newAddon, ...addons]);
+    try {
+        if (editingAddon) {
+            await updateDocument(firestore, 'addons', editingAddon.id, formData);
+            toast({
+                title: "Add-on Atualizado!",
+                description: `O add-on "${formData.name}" foi atualizado com sucesso.`,
+            });
+        } else {
+            await addDocument(firestore, 'addons', formData);
+             toast({
+                title: "Add-on Criado!",
+                description: `O add-on "${formData.name}" foi criado com sucesso.`,
+            });
+        }
+        closeDialog();
+    } catch (error) {
+         console.error("Erro ao salvar add-on:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar os dados do add-on."
+        });
     }
-    closeDialog();
   };
 
   return (
@@ -99,7 +123,11 @@ export default function AddonsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {addons.map(addon => (
+            {loading ? (
+                <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center">Carregando add-ons...</TableCell>
+                </TableRow>
+            ) : addons.map(addon => (
               <TableRow key={addon.id}>
                 <TableCell className="font-medium">{addon.name}</TableCell>
                 <TableCell>R$ {addon.price.toLocaleString('pt-BR')}</TableCell>
