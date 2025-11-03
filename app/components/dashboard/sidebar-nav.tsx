@@ -98,7 +98,7 @@ export function SidebarNav() {
           {/* Manager/Admin Menus */}
           <SidebarMenuItem>
             <Collapsible asChild defaultOpen={isSaaSFinanceActive}>
-              <>
+              <div>
                 <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         isActive={isSaaSFinanceActive}
@@ -159,13 +159,13 @@ export function SidebarNav() {
                           </SidebarMenuSubItem>
                     </SidebarMenuSub>
                 </CollapsibleContent>
-              </>
+              </div>
             </Collapsible>
           </SidebarMenuItem>
 
           <SidebarMenuItem>
             <Collapsible asChild defaultOpen={isCompaniesActive}>
-              <>
+              <div>
                 <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         isActive={isCompaniesActive}
@@ -199,13 +199,13 @@ export function SidebarNav() {
                           </SidebarMenuSubItem>
                     </SidebarMenuSub>
                 </CollapsibleContent>
-              </>
+              </div>
             </Collapsible>
           </SidebarMenuItem>
           
           <SidebarMenuItem>
             <Collapsible asChild defaultOpen={isCmmsActive}>
-                <>
+                <div>
                     <CollapsibleTrigger asChild>
                         <SidebarMenuButton
                             isActive={isCmmsActive}
@@ -320,7 +320,7 @@ export function SidebarNav() {
                         </SidebarMenuSub>
                         
                         <Collapsible asChild defaultOpen={isCmmsBackofficeActive}>
-                            <>
+                            <div>
                                 <CollapsibleTrigger className="w-full">
                                     <div className="flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 px-4 py-2 cursor-pointer hover:text-sidebar-foreground">
                                         <span>{t('sidebar.backoffice')} (CMMS)</span>
@@ -379,17 +379,17 @@ export function SidebarNav() {
                                         </SidebarMenuSubItem>
                                     </SidebarMenuSub>
                                 </CollapsibleContent>
-                            </>
+                            </div>
                         </Collapsible>
                     </CollapsibleContent>
-                </>
+                </div>
             </Collapsible>
            </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu className="mt-auto">
            <SidebarMenuItem>
                 <Collapsible asChild defaultOpen={isSettingsActive}>
-                    <>
+                    <div>
                         <CollapsibleTrigger asChild>
                             <SidebarMenuButton
                                 isActive={isSettingsActive}
@@ -417,7 +417,7 @@ export function SidebarNav() {
                                 ))}
                             </SidebarMenuSub>
                         </CollapsibleContent>
-                    </>
+                    </div>
                 </Collapsible>
            </SidebarMenuItem>
             <SidebarMenuItem>
