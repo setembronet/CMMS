@@ -700,5 +700,3 @@ export default function ClientsPage() {
     </TooltipProvider>
   );
 }
-
-    
