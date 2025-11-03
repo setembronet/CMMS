@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -10,6 +11,8 @@ import {
   serverTimestamp,
   type DocumentData,
   type Firestore,
+  type DocumentReference,
+  onSnapshot as onSnapshot_
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useFirestore } from './provider';
@@ -30,13 +33,14 @@ const handleError = (context: SecurityRuleContext, error: Error) => {
 };
 
 // Hook to get a collection
-export const useCollection = <T>(collectionName: string) => {
+export const useCollection = <T extends { id: string }>(collectionName: string) => {
   const firestore = useFirestore();
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!firestore) return;
     const context: SecurityRuleContext = { path: collectionName, operation: 'list' };
     const collectionRef = collection(firestore, collectionName);
     
@@ -63,60 +67,116 @@ export const useCollection = <T>(collectionName: string) => {
     return () => unsubscribe();
   }, [collectionName, firestore]);
 
-  return { data, loading, error };
+  return { data, loading, error, setData };
 };
 
+
+export const useDocument = <T extends { id: string }>(collectionName: string, docId: string) => {
+  const firestore = useFirestore();
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!firestore || !docId) {
+      setLoading(false);
+      setData(null);
+      return;
+    };
+
+    const path = `${collectionName}/${docId}`;
+    const context: SecurityRuleContext = { path, operation: 'get' };
+    const docRef = doc(firestore, collectionName, docId);
+
+    const unsubscribe = onSnapshot_(
+      docRef,
+      (doc) => {
+        if (doc.exists()) {
+          setData({ id: doc.id, ...doc.data() } as T);
+        } else {
+          setData(null);
+        }
+        setLoading(false);
+      },
+      (err) => {
+        try {
+          handleError(context, err);
+        } catch (e) {
+          setError(e as Error);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [collectionName, docId, firestore]);
+
+  return { data, loading, error, setData };
+};
+
+
 // Function to add a document
-export const addDocument = async (
+export const addDocument = (
   firestore: Firestore,
   collectionName: string,
   data: DocumentData
-) => {
-  const context: SecurityRuleContext = { path: collectionName, operation: 'create', requestResourceData: data };
-  try {
-    const collectionRef = collection(firestore, collectionName);
-    return await addDoc(collectionRef, {
-      ...data,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  } catch (error) {
-    handleError(context, error as Error);
-  }
+): Promise<DocumentReference<DocumentData>> => {
+  const collectionRef = collection(firestore, collectionName);
+  
+  return addDoc(collectionRef, {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }).catch((serverError) => {
+    const context: SecurityRuleContext = {
+      path: collectionName,
+      operation: 'create',
+      requestResourceData: data
+    };
+    const permissionError = new FirestorePermissionError(context);
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError; 
+  });
 };
 
+
 // Function to update a document
-export const updateDocument = async (
+export const updateDocument = (
   firestore: Firestore,
   collectionName: string,
   docId: string,
   data: DocumentData
 ) => {
   const path = `${collectionName}/${docId}`;
-  const context: SecurityRuleContext = { path, operation: 'update', requestResourceData: data };
-  try {
-    const docRef = doc(firestore, collectionName, docId);
-    return await updateDoc(docRef, {
-      ...data,
-      updatedAt: serverTimestamp(),
-    });
-  } catch (error) {
-    handleError(context, error as Error);
-  }
+  const docRef = doc(firestore, collectionName, docId);
+
+  updateDoc(docRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  }).catch((serverError) => {
+    const context: SecurityRuleContext = {
+      path: path,
+      operation: 'update',
+      requestResourceData: data
+    };
+    const permissionError = new FirestorePermissionError(context);
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };
 
+
 // Function to delete a document
-export const deleteDocument = async (
+export const deleteDocument = (
   firestore: Firestore,
   collectionName: string,
   docId: string
 ) => {
   const path = `${collectionName}/${docId}`;
   const context: SecurityRuleContext = { path, operation: 'delete' };
-  try {
-    const docRef = doc(firestore, collectionName, docId);
-    return await deleteDoc(docRef);
-  } catch (error) {
-    handleError(context, error as Error);
-  }
+  const docRef = doc(firestore, collectionName, docId);
+
+  deleteDoc(docRef).catch((serverError) => {
+    const permissionError = new FirestorePermissionError(context);
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };

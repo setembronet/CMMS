@@ -137,7 +137,7 @@ export default function SegmentsPage() {
 
   const handleSaveSegment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!firestore) return;
+    if (!firestore || !formData) return;
 
     try {
         if (editingSegment) {
@@ -147,11 +147,7 @@ export default function SegmentsPage() {
                 description: `O segmento "${formData.name}" foi atualizado.`,
             });
         } else {
-            const newSegmentData = {
-                ...formData,
-                id: formData.name.toUpperCase().replace(/\s/g, '_'),
-            }
-            await addDocument(firestore, 'segments', newSegmentData);
+            await addDocument(firestore, 'segments', formData);
              toast({
                 title: "Segmento Criado!",
                 description: `O segmento "${formData.name}" foi criado com sucesso.`,
