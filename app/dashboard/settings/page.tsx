@@ -1,14 +1,64 @@
 
 'use client';
+import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useI18n } from "@/hooks/use-i18n";
+import { useClient } from '@/context/client-provider';
+import { useToast } from '@/hooks/use-toast';
+import { useFirestore, updateDocument } from '@/firebase/firestore';
 
 export default function SettingsPage() {
   const { t } = useI18n();
+  const { currentUser } = useClient();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const [name, setName] = React.useState(currentUser?.name || '');
+  const [email, setEmail] = React.useState(currentUser?.email || '');
+  
+  const [currentPassword, setCurrentPassword] = React.useState('');
+  const [newPassword, setNewPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  
+  React.useEffect(() => {
+    if (currentUser) {
+      setName(currentUser.name);
+      setEmail(currentUser.email);
+    }
+  }, [currentUser]);
+
+  const handleProfileSave = async () => {
+    if (!currentUser || !firestore) return;
+    try {
+      await updateDocument(firestore, 'users', currentUser.id, { name, email });
+      toast({
+        title: "Perfil Atualizado",
+        description: "Suas informações foram salvas com sucesso.",
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao Salvar",
+        description: "Não foi possível atualizar seu perfil.",
+      });
+    }
+  };
+
+  const handlePasswordUpdate = () => {
+    // Firebase Auth password changes require recent sign-in and are more complex.
+    // This is a placeholder for the UI.
+    toast({
+      variant: 'destructive',
+      title: 'Função não implementada',
+      description: 'A alteração de senha ainda não está funcional.',
+    });
+  }
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -22,13 +72,13 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">{t('common.name')}</Label>
-            <Input id="name" defaultValue="Admin Master" />
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">{t('common.email')}</Label>
-            <Input id="email" type="email" defaultValue="admin@tenantcare.com" />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <Button>{t('common.saveChanges')}</Button>
+          <Button onClick={handleProfileSave}>{t('common.saveChanges')}</Button>
         </CardContent>
       </Card>
 
@@ -56,19 +106,20 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="current-password">{t('settings.currentPassword')}</Label>
-            <Input id="current-password" type="password" />
+            <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="new-password">{t('settings.newPassword')}</Label>
-            <Input id="new-password" type="password" />
+            <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
           </div>
            <div className="space-y-2">
             <Label htmlFor="confirm-password">{t('settings.confirmPassword')}</Label>
-            <Input id="confirm-password" type="password" />
+            <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
           </div>
-          <Button>{t('settings.updatePassword')}</Button>
+          <Button onClick={handlePasswordUpdate}>{t('settings.updatePassword')}</Button>
         </CardContent>
       </Card>
     </div>
   );
 }
+
