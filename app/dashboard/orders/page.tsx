@@ -38,9 +38,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon, BrainCircuit } from 'lucide-react';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setProducts, contracts, setWorkOrders as setGlobalWorkOrders, rootCauses, recommendedActions, segments, customerLocations as allLocations, checklistTemplates } from '@/lib/data';
-import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
+import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon, BrainCircuit, Sparkles, Loader2 } from 'lucide-react';
+import { rootCauses, recommendedActions, maintenanceFrequencies } from '@/lib/data';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist, Contract, ChecklistTemplate } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format, addDays, addMonths, addWeeks, addQuarters, addYears, differenceInMilliseconds } from 'date-fns';
@@ -51,11 +51,15 @@ import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
 import Link from 'next/link';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { diagnoseWo } from '@/ai/flows/diagnose-wo-flow';
 
 
 const CURRENT_USER_ID = 'user-04'; // Assuming the logged in user is a manager for this client
 
-const orderStatuses: OrderStatus[] = ['ABERTO', 'EM ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
+const orderStatuses: OrderStatus[] = ['ABERTO', 'EM ANDAMENTO', 'CONCLUIDO', 'CANCELADO', 'EM_ESPERA_PECAS', 'AGUARDANDO_APROVACAO', 'PENDENTE_RETORNO'];
 const orderPriorities: OrderPriority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
 const checklistStatuses: ChecklistItemStatus[] = ['OK', 'NÃO OK', 'N/A'];
 
@@ -74,17 +78,27 @@ const getNextDueDate = (last: number, frequency: MaintenanceFrequency): Date => 
 export default function WorkOrdersPage() {
   const { selectedClient } = useClient();
   const { t } = useI18n();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const { data: allWorkOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
+  const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+  const { data: allContracts, loading: contractsLoading } = useCollection<Contract>('contracts');
+  const { data: allChecklistTemplates, loading: checklistsLoading } = useCollection<ChecklistTemplate>('checklistTemplates');
+  
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
   const [clientAssets, setClientAssets] = React.useState<Asset[]>([]);
   const [clientUsers, setClientUsers] = React.useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
   const [formData, setFormData] = React.useState<WorkOrder | null>(null);
-  const [products, setLocalProducts] = React.useState<Product[]>(initialProducts);
-  const [availableChecklists, setAvailableChecklists] = React.useState<typeof checklistTemplates>([]);
+  const [availableChecklists, setAvailableChecklists] = React.useState<ChecklistTemplate[]>([]);
+  const [isDiagnosing, setIsDiagnosing] = React.useState(false);
 
-  const emptyWorkOrder: WorkOrder = React.useMemo(() => ({
-    id: '',
+
+  const emptyWorkOrder: Omit<WorkOrder, 'id'> = React.useMemo(() => ({
     title: '',
     description: '',
     clientId: selectedClient?.id || '',
@@ -96,21 +110,22 @@ export default function WorkOrdersPage() {
     internalObservation: '',
     squad: '',
     partsUsed: [],
+    mediaObrigatoria: false,
   }), [selectedClient]);
 
-  const generatePreventiveWorkOrders = React.useCallback((existingWorkOrders: WorkOrder[], clientId: string): WorkOrder[] => {
+  const generatePreventiveWorkOrders = React.useCallback((existingWorkOrders: WorkOrder[], clientId: string, contracts: Contract[], assets: Asset[]): WorkOrder[] => {
+      if (!contracts.length || !assets.length) return [];
       const newWorkOrders: WorkOrder[] = [];
       const today = new Date();
       const lookaheadDate = addDays(today, 7);
       
       const clientContracts = contracts.filter(c => {
-          const location = allAssets.find(a => a.id === c.coveredAssetIds[0])?.customerLocationId;
-          const contractClient = allLocations.find(l => l.id === location)?.clientId;
-          return contractClient === clientId;
+          const asset = assets.find(a => c.coveredAssetIds.includes(a.id));
+          return asset?.clientId === clientId;
       });
 
       clientContracts.forEach(contract => {
-          contract.plans.forEach(plan => {
+          (contract.plans || []).forEach(plan => {
               let nextDueDate = getNextDueDate(plan.lastGenerated, plan.frequency);
               
               while (nextDueDate <= lookaheadDate) {
@@ -146,29 +161,25 @@ export default function WorkOrdersPage() {
 
 
   React.useEffect(() => {
-    if (selectedClient) {
-      const newPreventiveOrders = generatePreventiveWorkOrders(initialWorkOrders, selectedClient.id);
-      let allClientOrders = initialWorkOrders.filter(wo => wo.clientId === selectedClient.id);
+    const isLoading = workOrdersLoading || assetsLoading || usersLoading || contractsLoading;
+    if (selectedClient && !isLoading) {
+      const newPreventiveOrders = generatePreventiveWorkOrders(allWorkOrders, selectedClient.id, allContracts, allAssets);
+      let allClientOrders = allWorkOrders.filter(wo => wo.clientId === selectedClient.id);
 
       if (newPreventiveOrders.length > 0) {
-          const currentAndNew = [...allClientOrders, ...newPreventiveOrders];
-          const allGlobalOrders = [...initialWorkOrders, ...newPreventiveOrders];
-          // This is a mock update. In a real app, you'd have a more robust system.
-          // setGlobalWorkOrders(allGlobalOrders); 
-          setWorkOrders(currentAndNew);
-      } else {
-          setWorkOrders(allClientOrders);
+          allClientOrders = [...allClientOrders, ...newPreventiveOrders];
+          // In a real app, these new orders would be written to Firestore
       }
-
+      
+      setWorkOrders(allClientOrders);
       setClientAssets(allAssets.filter(a => a.clientId === selectedClient.id));
       setClientUsers(allUsers.filter(u => u.clientId === selectedClient.id && u.cmmsRole === 'TECNICO'));
-    } else {
+    } else if (!selectedClient) {
       setWorkOrders([]);
       setClientAssets([]);
       setClientUsers([]);
     }
-    setLocalProducts(initialProducts);
-  }, [selectedClient, generatePreventiveWorkOrders]);
+  }, [selectedClient, allWorkOrders, allAssets, allUsers, allContracts, workOrdersLoading, assetsLoading, usersLoading, contractsLoading, generatePreventiveWorkOrders]);
 
 
   React.useEffect(() => {
@@ -181,24 +192,24 @@ export default function WorkOrdersPage() {
   }, [formData, clientUsers]);
 
   React.useEffect(() => {
-    if (formData?.assetId) {
+    if (formData?.assetId && !checklistsLoading) {
         const asset = clientAssets.find(a => a.id === formData.assetId);
         if (asset) {
-            setAvailableChecklists(checklistTemplates.filter(t => t.segmentId === asset.activeSegment));
+            setAvailableChecklists(allChecklistTemplates.filter(t => t.segmentId === asset.activeSegment));
         } else {
             setAvailableChecklists([]);
         }
     } else {
         setAvailableChecklists([]);
     }
-  }, [formData?.assetId, clientAssets]);
+  }, [formData?.assetId, clientAssets, allChecklistTemplates, checklistsLoading]);
 
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
   const getTechnician = (id?: string) => id ? allUsers.find(u => u.id === id) : null;
   const getTechnicianName = (id?: string) => getTechnician(id)?.name || 'N/A';
   
-  const getProduct = (id: string) => products.find(p => p.id === id);
+  const getProduct = (id: string) => allProducts.find(p => p.id === id);
   const getProductName = (id: string) => getProduct(id)?.name || 'N/A';
   const getProductPrice = (id: string) => getProduct(id)?.price || 0;
   const getProductStock = (id: string) => getProduct(id)?.stock || 0;
@@ -206,16 +217,10 @@ export default function WorkOrdersPage() {
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
-    let orderData: WorkOrder;
-
-    if (order) {
-        orderData = JSON.parse(JSON.stringify(order));
-    } else {
-        orderData = JSON.parse(JSON.stringify(emptyWorkOrder));
-    }
+    let orderData = order ? JSON.parse(JSON.stringify(order)) : JSON.parse(JSON.stringify({ ...emptyWorkOrder, id: '' }));
 
     if (!orderData.checklist && orderData.checklistTemplateId) {
-      const template = checklistTemplates.find(t => t.id === orderData.checklistTemplateId);
+      const template = allChecklistTemplates.find(t => t.id === orderData.checklistTemplateId);
       if(template) {
         orderData.checklist = JSON.parse(JSON.stringify(template.checklistData));
       }
@@ -237,7 +242,7 @@ export default function WorkOrdersPage() {
     setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
-  const handleSelectChange = (name: keyof WorkOrder, value: string) => {
+  const handleSelectChange = (name: keyof WorkOrder, value: string | boolean) => {
     if (!formData) return;
     const oldStatus = formData.status;
     const newStatus = name === 'status' ? value as OrderStatus : oldStatus;
@@ -248,6 +253,7 @@ export default function WorkOrdersPage() {
         let newEndDate = prev.endDate;
         let newChecklist = prev.checklist;
         let newChecklistTemplateId = prev.checklistTemplateId;
+        let mediaObrigatoria = prev.mediaObrigatoria;
 
         if (name === 'assetId') {
             newChecklist = undefined;
@@ -255,10 +261,11 @@ export default function WorkOrdersPage() {
         }
 
         if (name === 'checklistTemplateId') {
-            const template = checklistTemplates.find(t => t.id === value);
+            const template = allChecklistTemplates.find(t => t.id === value);
             if (template) {
                 newChecklist = JSON.parse(JSON.stringify(template.checklistData));
-                newChecklistTemplateId = value;
+                newChecklistTemplateId = value as string;
+                mediaObrigatoria = newChecklist.some(group => group.title.toLowerCase().includes('reparo'));
             }
         }
 
@@ -281,6 +288,7 @@ export default function WorkOrdersPage() {
             endDate: newEndDate,
             checklist: newChecklist,
             checklistTemplateId: newChecklistTemplateId,
+            mediaObrigatoria,
         };
     });
   };
@@ -293,7 +301,10 @@ export default function WorkOrdersPage() {
   const handleAddPart = () => {
     if (!formData) return;
     const newPart: WorkOrderPart = { productId: '', quantity: 1 };
-    setFormData(prev => prev ? ({ ...prev, partsUsed: [...(prev.partsUsed || []), newPart] }) : null);
+    setFormData(prev => {
+        if (!prev) return null;
+        return { ...prev, partsUsed: [...(prev.partsUsed || []), newPart], mediaObrigatoria: true };
+    });
   };
 
   const handlePartChange = (index: number, field: keyof WorkOrderPart, value: string | number) => {
@@ -306,7 +317,12 @@ export default function WorkOrdersPage() {
 
   const handleRemovePart = (index: number) => {
     if (!formData) return;
-    setFormData(prev => prev ? ({ ...prev, partsUsed: (prev.partsUsed || []).filter((_, i) => i !== index) }) : null);
+    setFormData(prev => {
+        if (!prev) return null;
+        const newParts = (prev.partsUsed || []).filter((_, i) => i !== index);
+        const mediaStillRequired = newParts.length > 0 || (prev.checklist && prev.checklist.some(g => g.title.toLowerCase().includes('reparo')));
+        return { ...prev, partsUsed: newParts, mediaObrigatoria: mediaStillRequired };
+    });
   };
 
   const handleChecklistItemChange = (groupIndex: number, itemIndex: number, field: keyof ChecklistItem, value: string) => {
@@ -320,7 +336,7 @@ export default function WorkOrdersPage() {
   const calculatePartsCost = (order: WorkOrder | null) => {
     if (!order) return 0;
     return (order.partsUsed || []).reduce((total, part) => {
-      const product = products.find(p => p.id === part.productId);
+      const product = allProducts.find(p => p.id === part.productId);
       return total + (product ? product.price * part.quantity : 0);
     }, 0);
   };
@@ -337,53 +353,47 @@ export default function WorkOrdersPage() {
   };
 
 
-  const handleSaveOrder = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData || !selectedClient) return;
+    if (!formData || !selectedClient || !firestore) return;
 
-    const newOrder: WorkOrder = {
-      ...formData,
-      clientId: selectedClient.id,
-      id: editingOrder?.id || `os-${Date.now()}`,
-      creationDate: editingOrder?.creationDate || new Date().getTime(),
-      createdByUserId: editingOrder?.createdByUserId || CURRENT_USER_ID,
-    };
-
-    // --- Stock Logic ---
-    const originalParts = editingOrder?.partsUsed || [];
-    const newParts = newOrder.partsUsed || [];
-    const stockChanges = new Map<string, number>();
-
-    originalParts.forEach(part => {
-        stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) - part.quantity);
-    });
-    newParts.forEach(part => {
-        stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) + part.quantity);
-    });
-
-    const updatedProducts = products.map(product => {
-        if (stockChanges.has(product.id)) {
-            const change = stockChanges.get(product.id) || 0;
-            return { ...product, stock: product.stock - change };
+    try {
+        const { id, ...orderData } = formData;
+        if (editingOrder && editingOrder.id) {
+            await updateDocument(firestore, 'workOrders', editingOrder.id, orderData);
+        } else {
+            await addDocument(firestore, 'workOrders', orderData);
         }
-        return product;
-    });
 
-    setProducts(updatedProducts); // Update global data source
-    setLocalProducts(updatedProducts); // Update local state for UI
-    // --- End Stock Logic ---
+        // --- Stock Logic ---
+        const originalParts = editingOrder?.partsUsed || [];
+        const newParts = formData.partsUsed || [];
+        
+        const stockChanges = new Map<string, number>();
+        originalParts.forEach(part => {
+            stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) + part.quantity);
+        });
+        newParts.forEach(part => {
+            stockChanges.set(part.productId, (stockChanges.get(part.productId) || 0) - part.quantity);
+        });
 
+        for (const [productId, quantityChange] of stockChanges.entries()) {
+            if (quantityChange !== 0) {
+                const product = allProducts.find(p => p.id === productId);
+                if (product) {
+                    const newStock = product.stock + quantityChange; // add back old, subtract new
+                    await updateDocument(firestore, 'products', productId, { stock: newStock });
+                }
+            }
+        }
+        
+        toast({ title: "Ordem de Serviço Salva!", description: `A OS "${formData.title}" foi salva com sucesso.` });
+        closeDialog();
 
-    let allWorkOrders;
-    if (editingOrder) {
-      allWorkOrders = initialWorkOrders.map(wo => (wo.id === newOrder.id ? newOrder : wo));
-    } else {
-      allWorkOrders = [newOrder, ...initialWorkOrders];
+    } catch (error) {
+        console.error("Erro ao salvar Ordem de Serviço:", error);
+        toast({ variant: 'destructive', title: "Erro ao Salvar", description: "Não foi possível salvar a OS." });
     }
-    setGlobalWorkOrders(allWorkOrders);
-    setWorkOrders(allWorkOrders.filter(wo => wo.clientId === selectedClient.id));
-    
-    closeDialog();
   };
 
   const handleReopenOrder = () => {
@@ -394,6 +404,54 @@ export default function WorkOrdersPage() {
         endDate: undefined, // Clear end date on reopen
     }) : null);
   };
+
+  const handleDiagnose = async () => {
+    if (!formData || !formData.description || !formData.assetId) {
+      toast({
+        variant: 'destructive',
+        title: "Dados Insuficientes",
+        description: "Por favor, preencha a descrição e selecione o ativo para usar a IA."
+      });
+      return;
+    }
+    setIsDiagnosing(true);
+    try {
+      const asset = allAssets.find(a => a.id === formData.assetId);
+      const assetHistory = allWorkOrders.filter(wo => wo.assetId === formData.assetId && wo.status === 'CONCLUIDO');
+
+      const input = {
+        description: formData.description,
+        assetName: asset?.name || '',
+        technicians: clientUsers.map(u => ({ id: u.id, name: u.name, squad: u.squad || ''})),
+        assetHistory: assetHistory.map(wo => ({ title: wo.title, description: wo.description, rootCause: wo.rootCause })),
+      };
+
+      const suggestion = await diagnoseWo(input);
+      
+      setFormData(prev => prev ? ({
+        ...prev,
+        title: suggestion.title,
+        priority: suggestion.priority,
+        responsibleId: suggestion.recommendedTechnicianId,
+        usedIA: true,
+      }) : null);
+
+      toast({
+        title: "Sugestões da IA Aplicadas!",
+        description: "O título, prioridade e técnico foram preenchidos pela IA.",
+      });
+
+    } catch (error) {
+      console.error("Error diagnosing with AI:", error);
+      toast({
+        variant: 'destructive',
+        title: "Erro na Análise",
+        description: "Não foi possível obter sugestões da IA. Tente novamente.",
+      });
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
   
   const getStatusBadgeVariant = (status: OrderStatus) => {
     switch (status) {
@@ -401,6 +459,9 @@ export default function WorkOrdersPage() {
       case 'EM ANDAMENTO': return 'default';
       case 'CONCLUIDO': return 'outline';
       case 'CANCELADO': return 'destructive';
+      case 'EM_ESPERA_PECAS': return 'bg-amber-500 text-white';
+      case 'AGUARDANDO_APROVACAO': return 'bg-cyan-500 text-white';
+      case 'PENDENTE_RETORNO': return 'bg-purple-500 text-white';
       default: return 'secondary';
     }
   };
@@ -502,6 +563,9 @@ export default function WorkOrdersPage() {
     )
   }
 
+  const isLoading = workOrdersLoading || assetsLoading || usersLoading || productsLoading || contractsLoading || checklistsLoading;
+
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -525,7 +589,9 @@ export default function WorkOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {workOrders.map(order => (
+            {isLoading ? (
+                <TableRow><TableCell colSpan={7} className="h-24 text-center">Carregando ordens de serviço...</TableCell></TableRow>
+            ) : workOrders.map(order => (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
@@ -535,14 +601,7 @@ export default function WorkOrdersPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                    <Button variant="link" className="p-0 h-auto" onClick={() => {
-                        const assetToEdit = allAssets.find(a => a.id === order.assetId);
-                        if (assetToEdit) {
-                           // This is a placeholder for a function that would open the asset dialog.
-                           // In a real app, this might be a context function or a prop drill.
-                           console.log("Would open asset dossier for:", assetToEdit.name);
-                        }
-                    }}>
+                    <Button variant="link" className="p-0 h-auto">
                         {getAssetName(order.assetId)}
                         <LinkIcon className="ml-2 h-3 w-3" />
                     </Button>
@@ -555,7 +614,7 @@ export default function WorkOrdersPage() {
                     </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
+                  <Badge variant={getStatusBadgeVariant(order.status)}>{order.status.replace(/_/g, ' ')}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -618,15 +677,23 @@ export default function WorkOrdersPage() {
                         </div>
                     </div>
 
-
-                    <div className="space-y-2">
-                      <Label htmlFor="title">{t('workOrders.dialog.title')}</Label>
-                      <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder={t('workOrders.dialog.titlePlaceholder')}/>
-                    </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="description">{t('workOrders.dialog.descriptionLabel')}</Label>
                       <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.descriptionPlaceholder')}/>
+                    </div>
+
+                    {!editingOrder && (
+                      <div className="flex justify-end">
+                        <Button type="button" size="sm" onClick={handleDiagnose} disabled={isDiagnosing || !formData.description || !formData.assetId}>
+                          {isDiagnosing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                          Analisar com IA
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="title">{t('workOrders.dialog.title')}</Label>
+                      <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder={t('workOrders.dialog.titlePlaceholder')}/>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -635,7 +702,7 @@ export default function WorkOrdersPage() {
                           <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value as OrderStatus)} required>
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                  {orderStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                  {orderStatuses.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, ' ')}</SelectItem>)}
                               </SelectContent>
                           </Select>
                       </div>
@@ -684,6 +751,17 @@ export default function WorkOrdersPage() {
                             <Label htmlFor="squad">{t('workOrders.dialog.squad')}</Label>
                             <Input id="squad" name="squad" value={formData.squad || ''} onChange={handleInputChange} placeholder={t('workOrders.dialog.squadPlaceholder')}/>
                         </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <Input
+                            type="checkbox"
+                            id="mediaObrigatoria"
+                            checked={formData.mediaObrigatoria || false}
+                            onChange={(e) => handleSelectChange('mediaObrigatoria', e.target.checked)}
+                            className="h-4 w-4"
+                        />
+                        <Label htmlFor="mediaObrigatoria">Exigir fotos de Antes/Depois para conclusão?</Label>
                     </div>
 
                     {formData.checklist && (
@@ -778,7 +856,7 @@ export default function WorkOrdersPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {(formData.partsUsed || []).map((part, index) => {
+                                    {productsLoading ? <TableRow><TableCell colSpan={5} className="h-24 text-center">Carregando...</TableCell></TableRow> : (formData.partsUsed || []).map((part, index) => {
                                       const stock = getProductStock(part.productId);
                                       const insufficientStock = part.quantity > stock;
                                       return (
@@ -789,7 +867,7 @@ export default function WorkOrdersPage() {
                                                         <SelectValue placeholder={t('workOrders.dialog.partPlaceholder')} />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                                        {allProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                                                     </SelectContent>
                                                 </Select>
                                             </TableCell>
