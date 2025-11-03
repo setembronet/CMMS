@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -176,8 +177,8 @@ export default function PlansPage() {
               {editingPlan ? t('plans.dialog.editDescription') : t('plans.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
-            <form onSubmit={handleSavePlan} id="plan-form" className="flex-1 overflow-y-auto -mx-6 px-6">
-              <ScrollArea className="h-full pr-6">
+          <form onSubmit={handleSavePlan} id="plan-form" className="flex-1 -mx-6 px-6 overflow-y-auto">
+            <ScrollArea className="h-full pr-6">
                 <div className="space-y-6 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
