@@ -29,26 +29,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import {
-  checklistTemplates as initialChecklistTemplates,
-  segments,
-  setChecklistTemplates as setGlobalChecklistTemplates,
-} from '@/lib/data';
 import type { ChecklistTemplate, ChecklistGroup, ChecklistItem, CompanySegment, CustomFieldType } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useI18n } from '@/hooks/use-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
-const emptyTemplate: ChecklistTemplate = {
-  id: '',
+const emptyTemplate: Omit<ChecklistTemplate, 'id'> = {
   name: '',
   segmentId: '',
   checklistData: [],
 };
 
-const emptyGroup: ChecklistGroup = {
-  id: `group_${Date.now()}`,
+const emptyGroup: Omit<ChecklistGroup, 'id'> = {
   title: '',
   items: [],
 };
@@ -61,14 +57,24 @@ const emptyItem: Omit<ChecklistItem, 'id'> = {
 
 export default function ChecklistTemplatesPage() {
   const { t } = useI18n();
-  const [templates, setTemplates] = React.useState<ChecklistTemplate[]>(initialChecklistTemplates);
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const { data: templates, loading: templatesLoading } = useCollection<ChecklistTemplate>('checklistTemplates');
+  const { data: segments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingTemplate, setEditingTemplate] = React.useState<ChecklistTemplate | null>(null);
-  const [formData, setFormData] = React.useState<ChecklistTemplate>(emptyTemplate);
+  const [formData, setFormData] = React.useState<Omit<ChecklistTemplate, 'id'>>(emptyTemplate);
 
   const openDialog = (template: ChecklistTemplate | null = null) => {
     setEditingTemplate(template);
-    setFormData(template ? JSON.parse(JSON.stringify(template)) : emptyTemplate);
+    if (template) {
+        const { id, ...templateData } = template;
+        setFormData(templateData);
+    } else {
+        setFormData(emptyTemplate);
+    }
     setIsDialogOpen(true);
   };
 
@@ -83,63 +89,77 @@ export default function ChecklistTemplatesPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSelectChange = (name: keyof ChecklistTemplate, value: string) => {
+  const handleSelectChange = (name: keyof Omit<ChecklistTemplate, 'id'>, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleGroupChange = (groupIdx: number, value: string) => {
-    const newChecklistData = [...formData.checklistData];
+    const newChecklistData = [...(formData.checklistData || [])];
     newChecklistData[groupIdx].title = value;
     setFormData(prev => ({ ...prev, checklistData: newChecklistData }));
   };
   
   const handleItemChange = (groupIdx: number, itemIdx: number, value: string) => {
-      const newChecklistData = [...formData.checklistData];
+      const newChecklistData = [...(formData.checklistData || [])];
       newChecklistData[groupIdx].items[itemIdx].text = value;
       setFormData(prev => ({...prev, checklistData: newChecklistData}));
   };
   
   const addGroup = () => {
-      setFormData(prev => ({ ...prev, checklistData: [...prev.checklistData, { ...emptyGroup, id: `group_${Date.now()}` }] }));
+      const newGroup = { ...emptyGroup, id: `group_${Date.now()}` };
+      setFormData(prev => ({ ...prev, checklistData: [...(prev.checklistData || []), newGroup] }));
   }
 
   const removeGroup = (groupIdx: number) => {
-      setFormData(prev => ({ ...prev, checklistData: prev.checklistData.filter((_, idx) => idx !== groupIdx) }));
+      setFormData(prev => ({ ...prev, checklistData: (prev.checklistData || []).filter((_, idx) => idx !== groupIdx) }));
   }
 
   const addItem = (groupIdx: number) => {
-      const newChecklistData = [...formData.checklistData];
+      const newChecklistData = [...(formData.checklistData || [])];
       newChecklistData[groupIdx].items.push({ ...emptyItem, id: `item_${Date.now()}`});
       setFormData(prev => ({...prev, checklistData: newChecklistData}));
   }
 
   const removeItem = (groupIdx: number, itemIdx: number) => {
-      const newChecklistData = [...formData.checklistData];
+      const newChecklistData = [...(formData.checklistData || [])];
       newChecklistData[groupIdx].items = newChecklistData[groupIdx].items.filter((_, idx) => idx !== itemIdx);
       setFormData(prev => ({ ...prev, checklistData: newChecklistData }));
   }
 
-  const handleSaveTemplate = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveTemplate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newTemplate: ChecklistTemplate = {
-      ...formData,
-      id: editingTemplate?.id || `template-${Date.now()}`,
-    };
+    if (!firestore || !formData) return;
 
-    let updatedTemplates;
-    if (editingTemplate) {
-      updatedTemplates = templates.map(t => (t.id === newTemplate.id ? newTemplate : t));
-    } else {
-      updatedTemplates = [newTemplate, ...templates];
+    try {
+        if (editingTemplate) {
+            await updateDocument(firestore, 'checklistTemplates', editingTemplate.id, formData);
+            toast({
+                title: "Modelo Atualizado!",
+                description: `O modelo "${formData.name}" foi atualizado com sucesso.`,
+            });
+        } else {
+            await addDocument(firestore, 'checklistTemplates', formData);
+            toast({
+                title: "Modelo Criado!",
+                description: `O modelo "${formData.name}" foi criado com sucesso.`,
+            });
+        }
+        closeDialog();
+    } catch (error) {
+        console.error("Erro ao salvar modelo:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar o modelo de checklist."
+        });
     }
-    setTemplates(updatedTemplates);
-    setGlobalChecklistTemplates(updatedTemplates);
-    closeDialog();
   };
 
   const getSegmentName = (segmentId: string) => {
     return segments.find(s => s.id === segmentId)?.name || 'N/A';
   }
+  
+  const isLoading = templatesLoading || segmentsLoading;
 
   return (
     <div className="flex flex-col gap-8">
@@ -161,14 +181,18 @@ export default function ChecklistTemplatesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {templates.map(template => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">Carregando modelos...</TableCell>
+              </TableRow>
+            ) : templates.map(template => (
               <TableRow key={template.id}>
                 <TableCell className="font-medium">{template.name}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">{getSegmentName(template.segmentId)}</Badge>
                 </TableCell>
                 <TableCell>
-                  {template.checklistData.reduce((acc, group) => acc + group.items.length, 0)}
+                  {(template.checklistData || []).reduce((acc, group) => acc + group.items.length, 0)}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -214,7 +238,7 @@ export default function ChecklistTemplatesPage() {
                                     <SelectValue placeholder="Selecione o segmento" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {segments.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                                    {segmentsLoading ? <SelectItem value="loading" disabled>Carregando...</SelectItem> : segments.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -223,7 +247,7 @@ export default function ChecklistTemplatesPage() {
                     <Separator />
 
                     <div className="space-y-4">
-                        {formData.checklistData.map((group, groupIdx) => (
+                        {(formData.checklistData || []).map((group, groupIdx) => (
                             <div key={group.id} className="p-4 border rounded-lg space-y-4">
                                 <div className="flex items-center gap-2">
                                     <Input 
@@ -237,7 +261,7 @@ export default function ChecklistTemplatesPage() {
                                     </Button>
                                 </div>
                                 <div className="pl-4 space-y-2">
-                                    {group.items.map((item, itemIdx) => (
+                                    {(group.items || []).map((item, itemIdx) => (
                                         <div key={item.id} className="flex items-center gap-2">
                                             <Input 
                                                 value={item.text} 
@@ -272,3 +296,4 @@ export default function ChecklistTemplatesPage() {
     </div>
   );
 }
+
