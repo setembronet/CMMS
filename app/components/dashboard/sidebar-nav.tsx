@@ -76,14 +76,14 @@ export function SidebarNav() {
   
   const isSaaSFinanceActive = pathname.startsWith('/dashboard/finance');
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
-  const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
+  const isSettingsActive = ['/dashboard/settings', '/dashboard/saas-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
   const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
   const isClientPortalActive = pathname.startsWith('/dashboard/client-portal');
   const isCmmsBackofficeActive = pathname.startsWith('/dashboard/cmms');
   
   const settingsLinks = [
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
-      { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
+      { href: '/dashboard/saas-users', label: t('sidebar.saasUsers'), icon: UserSquare },
       { href: '/dashboard/settings/roles', label: t('sidebar.roles'), icon: Briefcase },
       { href: '/dashboard/settings/checklists', label: t('sidebar.checklistTemplates'), icon: ClipboardList },
       { href: '/dashboard/settings/backup', label: t('sidebar.backupRestore'), icon: History },

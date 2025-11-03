@@ -164,7 +164,7 @@ export default function SaaSUsersPage() {
             const userCredential = await createUserWithEmailAndPassword(auth, userToSave.email, password);
             const authUser = userCredential.user;
 
-            // Then save user data to Firestore with the same ID
+            // Then save user data to Firestore using the Auth UID as the document ID
             await updateDocument(firestore, 'users', authUser.uid, userToSave);
             
             toast({ title: "Usuário Criado!", description: "O novo usuário foi criado com sucesso." });
@@ -241,7 +241,7 @@ export default function SaaSUsersPage() {
         </Table>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingUser ? t('saasUsers.dialog.editTitle') : t('saasUsers.dialog.newTitle')}</DialogTitle>
