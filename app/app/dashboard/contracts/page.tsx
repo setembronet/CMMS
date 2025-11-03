@@ -39,12 +39,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Trash2, FileText } from 'lucide-react';
-import { 
-    maintenanceFrequencies,
-    workOrders as allWorkOrders,
-    products as allProducts,
-    users as allUsers
-} from '@/lib/data';
+import { maintenanceFrequencies } from '@/lib/data';
 import type { Contract, MaintenancePlan, ContractType, MaintenanceFrequency, CustomerLocation, Asset, ContractStatus, WorkOrder, Product, User } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -72,6 +67,10 @@ export default function ContractsPage() {
   const { data: allContracts, loading: contractsLoading } = useCollection<Contract>('contracts');
   const { data: allLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
   const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: allWorkOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
+  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+
 
   const [contracts, setLocalContracts] = React.useState<Contract[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -278,7 +277,7 @@ export default function ContractsPage() {
     }, 0);
 
     return partsCost + laborCost;
-  }, []);
+  }, [allWorkOrders, allProducts, allUsers]);
 
   const getMarginStyle = (margin: number) => {
       if (margin < 0) return "text-destructive";
@@ -286,6 +285,7 @@ export default function ContractsPage() {
       return "text-green-600 dark:text-green-500";
   }
 
+  const isLoading = contractsLoading || locationsLoading || assetsLoading || workOrdersLoading || productsLoading || usersLoading;
 
   if (!selectedClient) {
     return (
@@ -318,7 +318,7 @@ export default function ContractsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-             {contractsLoading ? (
+             {isLoading ? (
                 <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">Carregando contratos...</TableCell>
                 </TableRow>
@@ -519,3 +519,5 @@ export default function ContractsPage() {
     </div>
   );
 }
+
+    
