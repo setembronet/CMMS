@@ -29,8 +29,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Landmark, ArrowUpCircle, ArrowDownCircle, FileText } from 'lucide-react';
-import { accountsPayable, accountsReceivable } from '@/lib/data';
+import { PlusCircle, Landmark, ArrowUpCircle, ArrowDownCircle, FileText, Loader2 } from 'lucide-react';
 import type { BankAccount, AccountsPayable, AccountsReceivable } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { format } from 'date-fns';
@@ -60,7 +59,10 @@ export default function BankAccountsPage() {
   const { t } = useI18n();
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { data: accounts, loading } = useCollection<BankAccount>('bankAccounts');
+
+  const { data: accounts, loading: accountsLoading } = useCollection<BankAccount>('bankAccounts');
+  const { data: accountsPayable, loading: payablesLoading } = useCollection<AccountsPayable>('accountsPayable');
+  const { data: accountsReceivable, loading: receivablesLoading } = useCollection<AccountsReceivable>('accountsReceivable');
   
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<BankAccount | null>(null);
@@ -140,6 +142,8 @@ export default function BankAccountsPage() {
         toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar a conta.' });
     }
   };
+  
+  const isLoading = accountsLoading || payablesLoading || receivablesLoading;
 
   return (
     <div className="flex flex-col gap-8">
@@ -152,8 +156,10 @@ export default function BankAccountsPage() {
       </div>
       
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-            <p>Carregando contas...</p>
+        {isLoading ? (
+            <div className="col-span-full flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
         ) : accounts.map(account => (
           <Card key={account.id} className="flex flex-col">
             <CardHeader>
