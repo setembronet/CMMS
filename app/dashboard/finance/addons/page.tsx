@@ -122,18 +122,20 @@ export default function AddonsPage() {
             <TableRow>
               <TableHead>{t('addons.table.name')}</TableHead>
               <TableHead>{t('addons.table.monthlyValue')}</TableHead>
+              <TableHead>{t('common.description')}</TableHead>
               <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
                 <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">Carregando add-ons...</TableCell>
+                    <TableCell colSpan={4} className="h-24 text-center">Carregando add-ons...</TableCell>
                 </TableRow>
             ) : addons.map(addon => (
               <TableRow key={addon.id}>
                 <TableCell className="font-medium">{addon.name}</TableCell>
                 <TableCell>R$ {addon.price.toLocaleString('pt-BR')}</TableCell>
+                <TableCell className="text-muted-foreground">{addon.description}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
