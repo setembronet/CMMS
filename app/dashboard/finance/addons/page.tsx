@@ -33,11 +33,13 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useFirestore } from '@/firebase';
 import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const emptyAddon: Omit<Addon, 'id'> = {
   name: '',
   price: 0,
+  description: '',
 };
 
 export default function AddonsPage() {
@@ -67,8 +69,9 @@ export default function AddonsPage() {
     setFormData(emptyAddon);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    // @ts-ignore
     setFormData(prev => ({
       ...prev,
       [name]: type === 'number' ? parseFloat(value) || 0 : value,
@@ -168,6 +171,10 @@ export default function AddonsPage() {
               <div className="space-y-2">
                   <Label htmlFor="price">{t('addons.dialog.monthlyValue')}</Label>
                   <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} required />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="description">Descrição (Opcional)</Label>
+                  <Textarea id="description" name="description" value={formData.description || ''} onChange={handleInputChange} />
               </div>
           </form>
           <DialogFooter>

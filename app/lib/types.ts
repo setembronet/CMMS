@@ -1,3 +1,4 @@
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -99,14 +100,14 @@ export type Plan = {
   technicianUserLimit: number; // -1 for unlimited
   hasMultiModuleAccess: boolean;
   hasBasicBigQueryAccess: boolean;
-  hasIaAddonAccess: boolean;
-  hasIotAddonAccess: boolean;
+  allowedAddonIds?: string[];
 };
 
 export type Addon = {
   id: string;
   name: string;
   price: number;
+  description?: string;
 };
 
 export type Company = {
@@ -209,7 +210,6 @@ export type WorkOrder = {
   assinaturaClienteUrl?: string;
   dataAssinaturaTecnico?: number;
   dataAssinaturaCliente?: number;
-  usedIA?: boolean;
 };
 
 export type Product = {

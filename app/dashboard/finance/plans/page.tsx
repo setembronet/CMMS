@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import type { Plan } from '@/lib/types';
+import type { Plan, Addon } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/use-i18n';
@@ -45,8 +45,7 @@ const emptyPlan: Omit<Plan, 'id'> = {
   technicianUserLimit: 0,
   hasMultiModuleAccess: false,
   hasBasicBigQueryAccess: false,
-  hasIaAddonAccess: false,
-  hasIotAddonAccess: false,
+  allowedAddonIds: [],
 };
 
 export default function PlansPage() {
@@ -54,6 +53,7 @@ export default function PlansPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { data: plans, loading } = useCollection<Plan>('plans');
+  const { data: addons, loading: addonsLoading } = useCollection<Addon>('addons');
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingPlan, setEditingPlan] = React.useState<Plan | null>(null);
@@ -63,7 +63,7 @@ export default function PlansPage() {
     setEditingPlan(plan);
     if (plan) {
         const { id, ...planData } = plan;
-        setFormData(planData);
+        setFormData({ ...planData, allowedAddonIds: plan.allowedAddonIds || [] });
     } else {
         setFormData(emptyPlan);
     }
@@ -87,6 +87,17 @@ export default function PlansPage() {
   const handleSwitchChange = (name: keyof Omit<Plan, 'id'>, checked: boolean) => {
     setFormData(prev => ({...prev, [name]: checked }));
   }
+
+  const handleAddonPermissionChange = (addonId: string, checked: boolean) => {
+    setFormData(prev => {
+        const currentAddons = prev.allowedAddonIds || [];
+        if (checked) {
+            return { ...prev, allowedAddonIds: [...currentAddons, addonId] };
+        } else {
+            return { ...prev, allowedAddonIds: currentAddons.filter(id => id !== addonId) };
+        }
+    });
+  };
 
   const handleSavePlan = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -169,7 +180,7 @@ export default function PlansPage() {
         </Table>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
         <DialogContent className="sm:max-w-lg flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingPlan ? t('plans.dialog.editTitle') : t('plans.dialog.newTitle')}</DialogTitle>
@@ -220,21 +231,22 @@ export default function PlansPage() {
                           </div>
                           <Switch name="hasBasicBigQueryAccess" checked={formData.hasBasicBigQueryAccess} onCheckedChange={(checked) => handleSwitchChange('hasBasicBigQueryAccess', checked)} />
                       </div>
-                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                          <div className="space-y-0.5">
-                              <Label>{t('plans.dialog.iaAddon')}</Label>
-                              <p className="text-xs text-muted-foreground">{t('plans.dialog.iaAddonDescription')}</p>
-                          </div>
-                          <Switch name="hasIaAddonAccess" checked={formData.hasIaAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIaAddonAccess', checked)} />
-                      </div>
-                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                          <div className="space-y-0.5">
-                              <Label>{t('plans.dialog.iotAddon')}</Label>
-                              <p className="text-xs text-muted-foreground">{t('plans.dialog.iotAddonDescription')}</p>
-                          </div>
-                          <Switch name="hasIotAddonAccess" checked={formData.hasIotAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIotAddonAccess', checked)} />
-                      </div>
+                      
+                      {addonsLoading ? <p>Carregando add-ons...</p> : addons.map(addon => (
+                        <div key={addon.id} className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <Label htmlFor={`addon-${addon.id}`}>{addon.name}</Label>
+                                {addon.description && <p className="text-xs text-muted-foreground">{addon.description}</p>}
+                            </div>
+                            <Switch
+                                id={`addon-${addon.id}`}
+                                checked={(formData.allowedAddonIds || []).includes(addon.id)}
+                                onCheckedChange={(checked) => handleAddonPermissionChange(addon.id, checked)}
+                            />
+                        </div>
+                      ))}
                   </div>
+
                 </div>
               </ScrollArea>
             </form>
