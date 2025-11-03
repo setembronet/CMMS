@@ -149,9 +149,9 @@ export default function PlansPage() {
               {editingPlan ? t('plans.dialog.editDescription') : t('plans.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
-          <div className='flex-1 overflow-y-auto -mx-6 px-6'>
+          <form onSubmit={handleSavePlan} id="plan-form" className="flex-1 overflow-y-auto -mx-6 px-6">
             <ScrollArea className="h-full pr-6">
-              <form onSubmit={handleSavePlan} id="plan-form" className="space-y-6 py-4">
+              <div className="space-y-6 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="name">{t('plans.dialog.name')}</Label>
@@ -208,10 +208,10 @@ export default function PlansPage() {
                     </div>
                 </div>
 
-              </form>
+              </div>
             </ScrollArea>
-          </div>
-          <DialogFooter className="pt-4 mt-auto border-t bg-background -mx-6 px-6 pb-6 sticky bottom-0">
+          </form>
+          <DialogFooter className="pt-4 mt-auto border-t -mx-6 px-6 pb-6 sticky bottom-0 bg-background">
             <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" form="plan-form">{t('common.save')}</Button>
           </DialogFooter>
