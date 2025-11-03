@@ -29,12 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
-import { 
-    customerLocations, 
-    chartOfAccounts, 
-    generateReceivablesFromContracts
-} from '@/lib/data';
-import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount, BankAccount } from '@/lib/types';
+import type { AccountsReceivable, AccountsReceivableStatus, CustomerLocation, ChartOfAccount, BankAccount, Contract } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { useClient } from '@/context/client-provider';
 import { cn } from '@/lib/utils';
@@ -66,9 +61,11 @@ export default function AccountsReceivablePage() {
   const { selectedClient } = useClient();
   const firestore = useFirestore();
 
-  const { data: accounts, loading: accountsLoading, setData: setAccounts } = useCollection<AccountsReceivable>('accountsReceivable');
+  const { data: accounts, loading: accountsLoading } = useCollection<AccountsReceivable>('accountsReceivable');
   const { data: allLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
   const { data: availableBankAccounts, loading: bankAccountsLoading } = useCollection<BankAccount>('bankAccounts');
+  const { data: allContracts, loading: contractsLoading } = useCollection<Contract>('contracts');
+  const { data: allChartOfAccounts, loading: chartOfAccountsLoading } = useCollection<ChartOfAccount>('chartOfAccounts');
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<AccountsReceivable | null>(null);
@@ -90,8 +87,10 @@ export default function AccountsReceivablePage() {
     } else {
       setClientLocations([]);
     }
-    setRevenueAccounts(chartOfAccounts.filter(acc => acc.type === 'RECEITA' && !acc.isGroup));
-  }, [selectedClient, allLocations, locationsLoading]);
+    if (!chartOfAccountsLoading) {
+        setRevenueAccounts(allChartOfAccounts.filter(acc => acc.type === 'RECEITA' && !acc.isGroup));
+    }
+  }, [selectedClient, allLocations, locationsLoading, allChartOfAccounts, chartOfAccountsLoading]);
 
   const openDialog = (account: AccountsReceivable | null = null) => {
     setEditingAccount(account);
@@ -163,34 +162,50 @@ export default function AccountsReceivablePage() {
   };
 
   const handleGenerateInvoices = async () => {
-      if (!selectedClient || !firestore) return;
-      const { newReceivables, generatedCount } = generateReceivablesFromContracts(selectedClient.id);
-      
-      if (generatedCount > 0) {
-        // This is not efficient for batch writes in a real app, but works for this mock.
-        for (const receivable of newReceivables) {
-          const {id, ...receivableData} = receivable; // We don't need the mock ID
-          const alreadyExists = accounts.some(ar => ar.description === receivable.description);
-          if (!alreadyExists) {
-            await addDocument(firestore, 'accountsReceivable', receivableData);
-          }
+    if (!selectedClient || !firestore || contractsLoading || accountsLoading) return;
+    
+    const today = new Date();
+    const clientContracts = allContracts.filter(c => {
+        const location = allLocations.find(l => l.id === c.customerLocationId);
+        return location?.clientId === selectedClient.id;
+    }).filter(c => new Date(c.endDate) >= today && new Date(c.startDate) <= today);
+
+    let generatedCount = 0;
+
+    for (const contract of clientContracts) {
+        const descriptionPattern = `Fatura Contrato #${contract.id.slice(-5)} - ${format(today, 'MM/yyyy')}`;
+        const alreadyExists = accounts.some(ar => ar.description === descriptionPattern);
+
+        if (!alreadyExists) {
+            const newReceivable: Omit<AccountsReceivable, 'id'> = {
+                description: descriptionPattern,
+                customerLocationId: contract.customerLocationId,
+                dueDate: new Date(today.getFullYear(), today.getMonth(), 10).getTime(), 
+                value: contract.monthlyValue,
+                status: 'Pendente',
+                chartOfAccountId: 'coa-3', 
+            };
+            await addDocument(firestore, 'accountsReceivable', newReceivable);
+            generatedCount++;
         }
-        
+    }
+      
+    if (generatedCount > 0) {
         toast({
             title: t('receivables.generationSuccessTitle'),
             description: t('receivables.generationSuccessDescription', { count: generatedCount }),
         });
-      } else {
-          toast({
-              title: t('receivables.generationNoNewTitle'),
-              description: t('receivables.generationNoNewDescription'),
-          });
-      }
+    } else {
+        toast({
+            title: t('receivables.generationNoNewTitle'),
+            description: t('receivables.generationNoNewDescription'),
+        });
+    }
   }
 
 
   const getLocationName = (id: string) => allLocations.find(c => c.id === id)?.name || 'N/A';
-  const getChartOfAccountName = (id: string) => chartOfAccounts.find(c => c.id === id)?.name || 'N/A';
+  const getChartOfAccountName = (id: string) => allChartOfAccounts.find(c => c.id === id)?.name || 'N/A';
   
   const getStatusBadgeVariant = (status: AccountsReceivableStatus) => {
       switch (status) {
@@ -199,6 +214,8 @@ export default function AccountsReceivablePage() {
           case 'Vencida': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
       }
   };
+
+  const isLoading = accountsLoading || locationsLoading || bankAccountsLoading || contractsLoading || chartOfAccountsLoading;
   
   if (!selectedClient) {
     return (
@@ -213,7 +230,7 @@ export default function AccountsReceivablePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold font-headline">{t('sidebar.accountsReceivable')}</h1>
         <div className="flex gap-2">
-            <Button onClick={handleGenerateInvoices} variant="secondary">
+            <Button onClick={handleGenerateInvoices} variant="secondary" disabled={isLoading}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 {t('receivables.generateInvoicesButton')}
             </Button>
@@ -237,7 +254,7 @@ export default function AccountsReceivablePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {accountsLoading || locationsLoading ? (
+            {isLoading ? (
                  <TableRow><TableCell colSpan={7} className="h-24 text-center">Carregando...</TableCell></TableRow>
             ) : clientAccounts.map(account => (
               <TableRow key={account.id}>
