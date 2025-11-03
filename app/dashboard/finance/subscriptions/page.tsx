@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -10,10 +11,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Company, Plan, Addon } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { useCollection } from '@/firebase/firestore';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { MoreHorizontal } from 'lucide-react';
+
 
 export default function SubscriptionsPage() {
   const { t } = useI18n();
@@ -22,6 +32,7 @@ export default function SubscriptionsPage() {
   const { data: addons, loading: addonsLoading } = useCollection<Addon>('addons');
 
   const calculateMrr = (company: Company): number => {
+    if (!plans || !addons) return 0;
     const plan = plans.find(p => p.id === company.planId);
     const planPrice = plan?.price || 0;
 
@@ -48,12 +59,13 @@ export default function SubscriptionsPage() {
               <TableHead>{t('sidebar.plans')}</TableHead>
               <TableHead>{t('sidebar.addons')}</TableHead>
               <TableHead className="text-right">{t('finance.mrr')}</TableHead>
+              <TableHead className="w-[50px] text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   Carregando assinaturas...
                 </TableCell>
               </TableRow>
@@ -78,6 +90,23 @@ export default function SubscriptionsPage() {
                     ) : 'N/A'}
                   </TableCell>
                   <TableCell className="text-right font-medium">R$ {mrr.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">{t('common.openMenu')}</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                           <Link href="/dashboard/companies">
+                            {t('common.edit')}
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               );
             })}
