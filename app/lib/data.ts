@@ -102,5 +102,3 @@ export const setAddons = (newAddons: Addon[]) => {};
 export const setSegments = (newSegments: CompanySegment[]) => {};
 export const setChecklistTemplates = (newTemplates: ChecklistTemplate[]) => {};
 export const setCmmsRoles = (newRoles: CMMSRole[]) => {};
-
-    

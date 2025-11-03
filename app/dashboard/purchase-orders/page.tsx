@@ -37,20 +37,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal, Trash2, FileOutput } from 'lucide-react';
-import { 
-  purchaseOrders as initialPurchaseOrders, 
-  setPurchaseOrders, 
-  suppliers, 
-  products as allProducts,
-  setProducts,
-  createAccountPayableFromPO
-} from '@/lib/data';
-import type { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Supplier, Product } from '@/lib/types';
+import type { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Supplier, Product, AccountsPayable } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useI18n } from '@/hooks/use-i18n';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
 const poStatuses: PurchaseOrderStatus[] = ['Pendente', 'Aprovada', 'Recebida', 'Cancelada'];
 
@@ -58,7 +52,12 @@ export default function PurchaseOrdersPage() {
   const { t } = useI18n();
   const { toast } = useToast();
   const router = useRouter();
-  const [purchaseOrders, setLocalPurchaseOrders] = React.useState<PurchaseOrder[]>(initialPurchaseOrders);
+  const firestore = useFirestore();
+
+  const { data: purchaseOrders, loading: poLoading } = useCollection<PurchaseOrder>('purchaseOrders');
+  const { data: allSuppliers, loading: suppliersLoading } = useCollection<Supplier>('suppliers');
+  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<PurchaseOrder | null>(null);
   const [formData, setFormData] = React.useState<PurchaseOrder | null>(null);
@@ -66,8 +65,7 @@ export default function PurchaseOrdersPage() {
   const [partsSuppliers, setPartsSuppliers] = React.useState<Supplier[]>([]);
   const [availableProducts, setAvailableProducts] = React.useState<Product[]>([]);
 
-  const emptyPO: PurchaseOrder = {
-    id: `oc-${Date.now()}`,
+  const emptyPO: Omit<PurchaseOrder, 'id'> = {
     supplierId: '',
     status: 'Pendente',
     creationDate: new Date().getTime(),
@@ -76,24 +74,25 @@ export default function PurchaseOrdersPage() {
   };
 
   React.useEffect(() => {
-    setPartsSuppliers(suppliers.filter(s => s.categories.includes('PEÇAS')));
-    setLocalPurchaseOrders(initialPurchaseOrders);
-  }, []);
+    if (!suppliersLoading) {
+        setPartsSuppliers(allSuppliers.filter(s => s.categories.includes('PEÇAS')));
+    }
+  }, [allSuppliers, suppliersLoading]);
   
   React.useEffect(() => {
-    if(formData?.supplierId) {
+    if(formData?.supplierId && !productsLoading) {
         setAvailableProducts(allProducts.filter(p => p.supplierId === formData.supplierId));
     } else {
         setAvailableProducts([]);
     }
-  }, [formData?.supplierId]);
+  }, [formData?.supplierId, allProducts, productsLoading]);
 
-  const getSupplierName = (id: string) => suppliers.find(s => s.id === id)?.name || 'N/A';
+  const getSupplierName = (id: string) => allSuppliers.find(s => s.id === id)?.name || 'N/A';
 
   const openDialog = (po: PurchaseOrder | null = null) => {
     setEditingOrder(po);
-    const poData = po ? JSON.parse(JSON.stringify(po)) : { ...emptyPO, id: `oc-${Date.now()}`};
-    setFormData(poData);
+    const poData = po ? JSON.parse(JSON.stringify(po)) : { ...emptyPO };
+    setFormData(poData as PurchaseOrder);
     setIsDialogOpen(true);
   };
 
@@ -136,57 +135,76 @@ export default function PurchaseOrdersPage() {
     setFormData(prev => prev ? {...prev, items: newItems, totalValue} : null);
   };
 
-  const handleSaveOrder = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData) return;
+    if (!formData || !firestore) return;
 
-    // Logic to update stock on receiving goods
-    if (editingOrder && editingOrder.status !== 'Recebida' && formData.status === 'Recebida') {
-        const updatedProducts = [...allProducts];
-        let stockUpdated = false;
-        
-        formData.items.forEach(item => {
-            const productIndex = updatedProducts.findIndex(p => p.id === item.productId);
-            if (productIndex !== -1 && updatedProducts[productIndex].manageStock) {
-                updatedProducts[productIndex].stock += item.quantity;
-                stockUpdated = true;
+    try {
+        // Logic to update stock on receiving goods
+        if (editingOrder && editingOrder.status !== 'Recebida' && formData.status === 'Recebida') {
+            for (const item of formData.items) {
+                const product = allProducts.find(p => p.id === item.productId);
+                if (product && product.manageStock) {
+                    const newStock = product.stock + item.quantity;
+                    await updateDocument(firestore, 'products', product.id, { stock: newStock });
+                }
             }
-        });
-
-        if (stockUpdated) {
-            setProducts(updatedProducts);
-            toast({
+             toast({
                 title: "Estoque Atualizado!",
                 description: "O estoque das peças recebidas foi atualizado com sucesso.",
             });
         }
-    }
+        
+        const { id, ...poData } = formData;
 
+        if (editingOrder) {
+            await updateDocument(firestore, 'purchaseOrders', id, poData);
+        } else {
+            await addDocument(firestore, 'purchaseOrders', poData);
+        }
 
-    let updatedPOs;
-    if (editingOrder) {
-      updatedPOs = initialPurchaseOrders.map(po => (po.id === formData.id ? formData : po));
-    } else {
-      updatedPOs = [formData, ...initialPurchaseOrders];
+        toast({
+            title: "Ordem de Compra Salva!",
+            description: `A OC para ${getSupplierName(formData.supplierId)} foi salva.`,
+        });
+
+        closeDialog();
+    } catch (error) {
+        console.error("Erro ao salvar ordem de compra: ", error);
+        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar a ordem de compra.' });
     }
-    
-    setPurchaseOrders(updatedPOs);
-    setLocalPurchaseOrders(updatedPOs);
-    closeDialog();
   };
   
-  const handleLaunchAP = () => {
-    if (!formData) return;
+  const handleLaunchAP = async () => {
+    if (!formData || !firestore) return;
     
-    const newAP = createAccountPayableFromPO(formData);
+    const supplier = allSuppliers.find(s => s.id === formData.supplierId);
+    
+    const newAP: Omit<AccountsPayable, 'id'> = {
+        description: `Fatura referente à OC #${formData.id.slice(-6)}`,
+        supplierOrCreditor: supplier?.name || 'Fornecedor Desconhecido',
+        dueDate: new Date().getTime(),
+        value: formData.totalValue,
+        status: 'Pendente',
+        costCenterId: 'cc-03', // Compras
+        chartOfAccountId: 'coa-9', // Fornecedores
+        isRecurring: false,
+        recurrenceFrequency: 'MENSAL',
+        recurrenceInstallments: 1
+    };
 
-    toast({
-        title: "Conta a Pagar Lançada!",
-        description: `A fatura para a OC #${formData.id} foi pré-lançada. Redirecionando...`,
-    });
-
-    closeDialog();
-    router.push('/dashboard/cmms/accounts-payable');
+    try {
+        await addDocument(firestore, 'accountsPayable', newAP);
+        toast({
+            title: "Conta a Pagar Lançada!",
+            description: `A fatura para a OC #${formData.id.slice(-6)} foi pré-lançada. Redirecionando...`,
+        });
+        closeDialog();
+        router.push('/dashboard/cmms/accounts-payable');
+    } catch (error) {
+         console.error("Erro ao lançar conta a pagar: ", error);
+         toast({ variant: 'destructive', title: 'Erro ao Lançar', description: 'Não foi possível criar a conta a pagar.' });
+    }
   };
 
   const getStatusBadgeVariant = (status: PurchaseOrderStatus) => {
@@ -198,6 +216,8 @@ export default function PurchaseOrdersPage() {
       default: return 'secondary';
     }
   };
+
+  const isLoading = poLoading || suppliersLoading || productsLoading;
 
   return (
     <div className="flex flex-col gap-8">
@@ -221,9 +241,13 @@ export default function PurchaseOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {purchaseOrders.map(po => (
+            {isLoading ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">Carregando ordens de compra...</TableCell>
+                </TableRow>
+            ) : purchaseOrders.map(po => (
               <TableRow key={po.id}>
-                <TableCell className="font-mono">{po.id}</TableCell>
+                <TableCell className="font-mono">{po.id.slice(-6)}</TableCell>
                 <TableCell>{getSupplierName(po.supplierId)}</TableCell>
                 <TableCell>{format(new Date(po.creationDate), 'dd/MM/yyyy')}</TableCell>
                 <TableCell>R$ {po.totalValue.toFixed(2)}</TableCell>
@@ -247,7 +271,7 @@ export default function PurchaseOrdersPage() {
                 </TableCell>
               </TableRow>
             ))}
-             {purchaseOrders.length === 0 && (
+             {purchaseOrders.length === 0 && !isLoading && (
                 <TableRow>
                     <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                         Nenhuma Ordem de Compra encontrada.
@@ -368,5 +392,3 @@ export default function PurchaseOrdersPage() {
     </div>
   );
 }
-
-  
