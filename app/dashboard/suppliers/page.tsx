@@ -28,13 +28,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus } from 'lucide-react';
-import { suppliers as initialSuppliers, setSuppliers } from '@/lib/data';
 import type { Supplier, SupplierContact, SupplierCategory } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/use-i18n';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const emptyContact: SupplierContact = {
   id: '',
@@ -44,8 +46,7 @@ const emptyContact: SupplierContact = {
   phone: '',
 };
 
-const emptySupplier: Supplier = {
-  id: '',
+const emptySupplier: Omit<Supplier, 'id'> = {
   name: '',
   cnpj: '',
   email: '',
@@ -71,45 +72,51 @@ const supplierCategories: { id: SupplierCategory, label: string }[] = [
 
 export default function SuppliersPage() {
   const { t } = useI18n();
-  const [suppliers, setLocalSuppliers] = React.useState<Supplier[]>(initialSuppliers);
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const { data: suppliers, loading } = useCollection<Supplier>('suppliers');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingSupplier, setEditingSupplier] = React.useState<Supplier | null>(null);
-  const [formData, setFormData] = React.useState<Supplier | null>(null);
+  const [formData, setFormData] = React.useState<Omit<Supplier, 'id'>>(emptySupplier);
 
   const openDialog = (supplier: Supplier | null = null) => {
     setEditingSupplier(supplier);
-    setFormData(supplier ? JSON.parse(JSON.stringify(supplier)) : JSON.parse(JSON.stringify(emptySupplier)));
+    if (supplier) {
+        const { id, ...supplierData } = supplier;
+        setFormData(supplierData);
+    } else {
+        setFormData(emptySupplier);
+    }
     setIsDialogOpen(true);
   };
 
   const closeDialog = () => {
     setEditingSupplier(null);
     setIsDialogOpen(false);
-    setFormData(null);
+    setFormData(emptySupplier);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!formData) return;
     const { name, value } = e.target;
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData(prev => prev ? ({
-        ...prev,
-        [parent]: {
-          // @ts-ignore
-          ...prev[parent],
-          [child]: value
+    setFormData(prev => {
+        const newFormData = { ...prev };
+        if (name.includes('.')) {
+            const [parent, child] = name.split('.');
+            // @ts-ignore
+            if (!newFormData[parent]) newFormData[parent] = {};
+            // @ts-ignore
+            newFormData[parent][child] = value;
+        } else {
+            // @ts-ignore
+            newFormData[name] = value;
         }
-      }) : null);
-    } else {
-      setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
-    }
+        return newFormData;
+    });
   };
 
   const handleCategoryChange = (categoryId: SupplierCategory, checked: boolean) => {
-    if (!formData) return;
     setFormData(prev => {
-        if (!prev) return null;
         const currentCategories = prev.categories || [];
         if (checked) {
             return { ...prev, categories: [...currentCategories, categoryId] };
@@ -120,33 +127,32 @@ export default function SuppliersPage() {
   };
 
   const handleContactChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!formData) return;
     const { name, value } = e.target;
-    const newContacts = [...(formData.contacts || [])];
-    // @ts-ignore
-    newContacts[index][name] = value;
-    setFormData(prev => prev ? ({ ...prev, contacts: newContacts }) : null);
+    setFormData(prev => {
+        if (!prev || !prev.contacts) return prev;
+        const newContacts = [...prev.contacts];
+        // @ts-ignore
+        newContacts[index][name] = value;
+        return { ...prev, contacts: newContacts };
+    });
   };
 
   const addContact = () => {
-    if (!formData) return;
     const newContact: SupplierContact = { ...emptyContact, id: `contact-${Date.now()}` };
-    setFormData(prev => prev ? ({
+    setFormData(prev => ({
       ...prev,
       contacts: [...(prev.contacts || []), newContact],
-    }) : null);
+    }));
   };
 
   const removeContact = (index: number) => {
-    if (!formData) return;
-    setFormData(prev => prev ? ({
+    setFormData(prev => ({
       ...prev,
       contacts: (prev.contacts || []).filter((_, i) => i !== index),
-    }) : null);
+    }));
   };
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    if (!formData) return;
     const cep = e.target.value.replace(/\D/g, '');
     if (cep.length !== 8) return;
 
@@ -154,7 +160,7 @@ export default function SuppliersPage() {
       const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await response.json();
       if (!data.erro) {
-        setFormData(prev => prev ? ({
+        setFormData(prev => ({
           ...prev,
           address: {
             ...prev.address,
@@ -163,31 +169,34 @@ export default function SuppliersPage() {
             city: data.localidade,
             state: data.uf,
           },
-        }) : null);
+        }));
       }
     } catch (error) {
       console.error("Falha ao buscar CEP:", error);
     }
   };
 
-  const handleSaveSupplier = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveSupplier = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData) return;
-    let updatedSuppliers;
+    if (!firestore || !formData) return;
 
-    if (editingSupplier) {
-      updatedSuppliers = suppliers.map(s => (s.id === editingSupplier.id ? formData : s));
-    } else {
-      const newSupplier: Supplier = {
-        ...formData,
-        id: `supp-${Date.now()}`,
-      };
-      updatedSuppliers = [newSupplier, ...suppliers];
+    try {
+        if (editingSupplier) {
+            await updateDocument(firestore, 'suppliers', editingSupplier.id, formData);
+            toast({ title: "Fornecedor Atualizado!", description: `O fornecedor "${formData.name}" foi atualizado.` });
+        } else {
+            await addDocument(firestore, 'suppliers', formData);
+            toast({ title: "Fornecedor Criado!", description: `O fornecedor "${formData.name}" foi criado.` });
+        }
+        closeDialog();
+    } catch (error) {
+        console.error("Erro ao salvar fornecedor:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar os dados do fornecedor. Tente novamente."
+        });
     }
-
-    setSuppliers(updatedSuppliers);
-    setLocalSuppliers(updatedSuppliers);
-    closeDialog();
   };
   
   const getCategoryLabel = (id: SupplierCategory) => {
@@ -216,7 +225,9 @@ export default function SuppliersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {suppliers.map(supplier => (
+            {loading ? (
+                <TableRow><TableCell colSpan={5} className="h-24 text-center">Carregando fornecedores...</TableCell></TableRow>
+            ) : suppliers.map(supplier => (
               <TableRow key={supplier.id}>
                 <TableCell className="font-medium">{supplier.name}</TableCell>
                 <TableCell>{supplier.contacts && supplier.contacts[0] ? supplier.contacts[0].name : 'N/A'}</TableCell>
@@ -249,7 +260,7 @@ export default function SuppliersPage() {
         </Table>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editingSupplier ? t('suppliers.dialog.editTitle') : t('suppliers.dialog.newTitle')}</DialogTitle>
@@ -257,10 +268,9 @@ export default function SuppliersPage() {
               {editingSupplier ? t('suppliers.dialog.editDescription') : t('suppliers.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
-          {formData && (
-            <>
+          <form onSubmit={handleSaveSupplier} id="supplier-form">
               <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-                <form onSubmit={handleSaveSupplier} id="supplier-form" className="space-y-6 py-4 px-1">
+                <div className="space-y-6 py-4 px-1">
                   <h3 className="text-lg font-medium">{t('suppliers.dialog.registrationData')}</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -353,7 +363,7 @@ export default function SuppliersPage() {
                     </div>
                     <div className="space-y-4">
                       {(formData.contacts || []).map((contact, index) => (
-                        <div key={contact.id} className="p-4 border rounded-lg space-y-4 relative">
+                        <div key={contact.id || index} className="p-4 border rounded-lg space-y-4 relative">
                           <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeContact(index)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                             <span className="sr-only">{t('clients.dialog.removeContact')}</span>
@@ -382,18 +392,17 @@ export default function SuppliersPage() {
                       ))}
                     </div>
                   </div>
-                </form>
+                </div>
               </ScrollArea>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
                 <Button type="submit" form="supplier-form">{t('common.save')}</Button>
               </DialogFooter>
-            </>
-          )}
+            </form>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-  
+    
