@@ -51,10 +51,10 @@ export default function RolesPage() {
   const openDialog = (role: CMMSRole | null = null) => {
     setEditingRole(role);
     if (role) {
-        const { id, ...roleData } = role;
-        setFormData(roleData);
+      const { id, ...roleData } = role;
+      setFormData(roleData);
     } else {
-        setFormData(emptyRole);
+      setFormData(emptyRole);
     }
     setIsDialogOpen(true);
   };
@@ -72,19 +72,22 @@ export default function RolesPage() {
 
   const handleSaveRole = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!firestore) return;
+    if (!firestore || !formData.name) return;
 
     const roleId = editingRole?.id || formData.name.toUpperCase().replace(/\s/g, '_');
+    const roleData = { ...formData, id: roleId };
+
 
     try {
         if (editingRole) {
-            await updateDocument(firestore, 'cmmsRoles', roleId, formData);
+            await updateDocument(firestore, 'cmmsRoles', editingRole.id, formData);
             toast({
                 title: "Função Atualizada!",
                 description: `A função "${formData.name}" foi atualizada com sucesso.`,
             });
         } else {
-            await addDocument(firestore, 'cmmsRoles', { ...formData, id: roleId });
+            // Firestore will auto-generate an ID, but we also save our manual ID inside the doc
+            await addDocument(firestore, 'cmmsRoles', roleData);
             toast({
                 title: "Função Criada!",
                 description: `A função "${formData.name}" foi criada com sucesso.`,
@@ -122,9 +125,7 @@ export default function RolesPage() {
           <TableBody>
             {loading ? (
                 <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
-                        Carregando funções...
-                    </TableCell>
+                    <TableCell colSpan={3} className="h-24 text-center">Carregando funções...</TableCell>
                 </TableRow>
             ) : (
                 roles.map(role => (
@@ -153,7 +154,7 @@ export default function RolesPage() {
         </Table>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingRole ? t('roles.dialog.editTitle') : t('roles.dialog.newTitle')}</DialogTitle>
