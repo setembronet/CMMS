@@ -246,15 +246,14 @@ export default function ClientsPage() {
     if (!formData || !firestore) return;
     
     try {
+        const { id, ...locationData } = formData;
         if (editingLocation) {
-            const { id, ...locationData } = formData;
             await updateDocument(firestore, 'customerLocations', id, locationData);
              toast({
                 title: "Cliente Final Atualizado!",
                 description: `O cliente "${formData.name}" foi atualizado com sucesso.`,
             });
         } else {
-            const { id, ...locationData } = formData;
             await addDocument(firestore, 'customerLocations', locationData);
             toast({
                 title: "Cliente Final Criado!",
@@ -696,3 +695,5 @@ export default function ClientsPage() {
     </TooltipProvider>
   );
 }
+
+    
