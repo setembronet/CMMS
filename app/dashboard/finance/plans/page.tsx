@@ -36,6 +36,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 const emptyPlan: Omit<Plan, 'id'> = {
@@ -101,7 +102,7 @@ export default function PlansPage() {
 
   const handleSavePlan = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!firestore) return;
+    if (!firestore || !formData) return;
 
     try {
       if (editingPlan) {
@@ -231,20 +232,21 @@ export default function PlansPage() {
                           </div>
                           <Switch name="hasBasicBigQueryAccess" checked={formData.hasBasicBigQueryAccess} onCheckedChange={(checked) => handleSwitchChange('hasBasicBigQueryAccess', checked)} />
                       </div>
-                      
-                      {addonsLoading ? <p>Carregando add-ons...</p> : addons.map(addon => (
-                        <div key={addon.id} className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                                <Label htmlFor={`addon-${addon.id}`}>{addon.name}</Label>
-                                {addon.description && <p className="text-xs text-muted-foreground">{addon.description}</p>}
-                            </div>
-                            <Switch
-                                id={`addon-${addon.id}`}
-                                checked={(formData.allowedAddonIds || []).includes(addon.id)}
-                                onCheckedChange={(checked) => handleAddonPermissionChange(addon.id, checked)}
-                            />
-                        </div>
-                      ))}
+                      <div>
+                        <Label>Add-ons Permitidos</Label>
+                         <div className="grid grid-cols-2 gap-4 rounded-lg border p-4 mt-2">
+                            {addonsLoading ? <p>Carregando...</p> : addons.map(addon => (
+                                <div key={addon.id} className="flex items-center gap-2">
+                                    <Checkbox
+                                        id={`addon-${addon.id}`}
+                                        checked={(formData.allowedAddonIds || []).includes(addon.id)}
+                                        onCheckedChange={(checked) => handleAddonPermissionChange(addon.id, !!checked)}
+                                    />
+                                    <Label htmlFor={`addon-${addon.id}`} className="font-normal">{addon.name}</Label>
+                                </div>
+                            ))}
+                         </div>
+                      </div>
                   </div>
 
                 </div>

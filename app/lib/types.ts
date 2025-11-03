@@ -210,6 +210,7 @@ export type WorkOrder = {
   assinaturaClienteUrl?: string;
   dataAssinaturaTecnico?: number;
   dataAssinaturaCliente?: number;
+  usedIA?: boolean;
 };
 
 export type Product = {

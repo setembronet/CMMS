@@ -50,21 +50,26 @@ export default function DashboardLayout({
   const router = useRouter();
   
   React.useEffect(() => {
-      if (!authLoading) {
-          if (!currentUser) {
-              router.replace('/');
-          } else if (CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
-              router.replace('/dashboard/client-portal');
-          }
+      if (!authLoading && !currentUser) {
+          router.replace('/');
       }
   }, [currentUser, authLoading, router]);
 
-  if (authLoading || !currentUser || (currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || ''))) {
+  if (authLoading || !currentUser) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
+  }
+  
+  if (currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
+      router.replace('/dashboard/client-portal');
+      return (
+         <div className="flex h-screen w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+         </div>
+      );
   }
 
   return <DashboardUI>{children}</DashboardUI>;

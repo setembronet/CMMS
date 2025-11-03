@@ -77,8 +77,7 @@ export function SidebarNav() {
   const isSaaSFinanceActive = pathname.startsWith('/dashboard/finance');
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/saas-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
-  const isClientPortalActive = pathname.startsWith('/dashboard/client-portal');
+  const isCmmsActive = pathname.startsWith('/dashboard') && !isSaaSFinanceActive && !isCompaniesActive && !isSettingsActive;
   const isCmmsBackofficeActive = pathname.startsWith('/dashboard/cmms');
   
   const settingsLinks = [
@@ -223,7 +222,7 @@ export function SidebarNav() {
                     <CollapsibleContent>
                         <SidebarMenuSub>
                             <SidebarMenuSubItem>
-                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard', true)}>
+                                <SidebarMenuSubButton asChild isActive={pathname === '/dashboard'}>
                                     <Link href="/dashboard">
                                         <LayoutGrid />
                                         <span>{t('sidebar.cmmsDashboard')}</span>
@@ -378,47 +377,6 @@ export function SidebarNav() {
                 </div>
             </Collapsible>
            </SidebarMenuItem>
-
-           <SidebarMenuItem>
-            <Collapsible asChild defaultOpen={isClientPortalActive}>
-              <div>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton
-                    isActive={isClientPortalActive}
-                    className="justify-between"
-                    tooltip={{ children: t('sidebar.clientPortal') }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Home />
-                      <span>{t('sidebar.clientPortal')}</span>
-                    </div>
-                    <ChevronDown
-                      className={cn(
-                        'transition-transform duration-200',
-                        isClientPortalActive && 'rotate-180'
-                      )}
-                    />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        asChild
-                        isActive={isActive('/dashboard/client-portal', true)}
-                      >
-                        <Link href="/dashboard/client-portal">
-                          <LayoutGrid />
-                          <span>{t('sidebar.overview')}</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
-          </SidebarMenuItem>
-
         </SidebarMenu>
         <SidebarMenu className="mt-auto">
            <SidebarMenuItem>

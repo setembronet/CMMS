@@ -247,7 +247,7 @@ export default function CompaniesPage() {
                     <TableCell>
                       <Badge variant="outline">{plan?.name || 'N/A'}</Badge>
                     </TableCell>
-                    <TableCell>{company.activeSegments.length}</TableCell>
+                    <TableCell>{(company.activeSegments || []).length}</TableCell>
                     <TableCell>
                         <Switch
                             checked={company.status === 'active'}
@@ -303,7 +303,7 @@ export default function CompaniesPage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="phone">{t('common.phone')}</Label>
-                        <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} required />
+                        <Input id="phone" name="phone" value={formData.phone || ''} onChange={handleInputChange} required />
                     </div>
                 </div>
 
@@ -405,5 +405,3 @@ export default function CompaniesPage() {
     </div>
   );
 }
-
-    

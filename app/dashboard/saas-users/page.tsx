@@ -46,6 +46,7 @@ import { useFirestore, useAuth } from '@/firebase';
 import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { setDoc, doc } from 'firebase/firestore';
 
 const saasRoles: SaaSUserRole[] = ['ADMIN', 'FINANCEIRO', 'SUPORTE'];
 
@@ -165,7 +166,7 @@ export default function SaaSUsersPage() {
             const authUser = userCredential.user;
 
             // Then save user data to Firestore using the Auth UID as the document ID
-            await updateDocument(firestore, 'users', authUser.uid, userToSave);
+            await setDoc(doc(firestore, 'users', authUser.uid), userToSave);
             
             toast({ title: "Usuário Criado!", description: "O novo usuário foi criado com sucesso." });
         }
