@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -36,7 +35,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { users as initialUsers } from '@/lib/data';
 import type { User, SaaSUserRole } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
@@ -44,14 +42,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
+import { useFirestore, useAuth } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 const saasRoles: SaaSUserRole[] = ['ADMIN', 'FINANCEIRO', 'SUPORTE'];
 
-const emptyUser: User & { password?: string, confirmPassword?: string } = {
-    id: '',
+const emptyUser: Omit<User, 'id'> & { password?: string, confirmPassword?: string } = {
     name: '',
     email: '',
-    role: '',
+    role: 'SUPORTE',
     saasRole: 'SUPORTE',
     cmmsRole: null,
     clientId: null,
@@ -70,12 +71,23 @@ type PasswordStrength = {
 
 export default function SaaSUsersPage() {
   const { t } = useI18n();
-  const [users, setUsers] = React.useState<User[]>(initialUsers.filter(u => saasRoles.includes(u.saasRole as SaaSUserRole)));
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const auth = useAuth();
+  
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  const [users, setUsers] = React.useState<User[]>([]);
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
-  const [formData, setFormData] = React.useState(emptyUser);
+  const [formData, setFormData] = React.useState<Omit<User, 'id'> & { password?: string, confirmPassword?: string }>(emptyUser);
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
 
+  React.useEffect(() => {
+    if (!usersLoading) {
+      setUsers(allUsers.filter(u => u.saasRole && saasRoles.includes(u.saasRole)));
+    }
+  }, [allUsers, usersLoading]);
 
   const calculatePasswordStrength = (password: string): PasswordStrength => {
     let score = 0;
@@ -100,8 +112,12 @@ export default function SaaSUsersPage() {
 
   const openDialog = (user: User | null = null) => {
     setEditingUser(user);
-    const userData = user ? { ...user, password: '', confirmPassword: '' } : emptyUser;
-    setFormData(userData);
+    if (user) {
+        const { id, ...userData } = user;
+        setFormData({ ...userData, password: '', confirmPassword: '' });
+    } else {
+        setFormData(emptyUser);
+    }
     setPasswordStrength(null);
     setIsDialogOpen(true);
   };
@@ -127,25 +143,37 @@ export default function SaaSUsersPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!firestore || !auth || isSaveDisabled) return;
 
-    if (isSaveDisabled) {
-        return;
-    }
+    const { password, confirmPassword, ...userData } = formData;
 
-    const newUser: User = {
-      ...formData,
-      id: editingUser?.id || `user-0${users.length + 1}`,
-      role: formData.saasRole, // Role is the saasRole for these users
+    const userToSave: Omit<User, 'id'> = {
+        ...userData,
+        role: formData.saasRole, // Role is the saasRole for these users
     };
 
-    if (editingUser) {
-      setUsers(users.map(u => u.id === newUser.id ? newUser : u));
-    } else {
-      setUsers([newUser, ...users]);
+    try {
+        if (editingUser) {
+            await updateDocument(firestore, 'users', editingUser.id, userToSave);
+            // Password update for existing users would typically be a separate, more secure flow
+            toast({ title: "Usuário Atualizado!", description: "Os dados do usuário foram atualizados." });
+        } else if (password) {
+            // Create user in Firebase Auth first
+            const userCredential = await createUserWithEmailAndPassword(auth, userToSave.email, password);
+            const authUser = userCredential.user;
+
+            // Then save user data to Firestore with the same ID
+            await updateDocument(firestore, 'users', authUser.uid, userToSave);
+            
+            toast({ title: "Usuário Criado!", description: "O novo usuário foi criado com sucesso." });
+        }
+        closeDialog();
+    } catch (error: any) {
+        console.error("Erro ao salvar usuário:", error);
+        toast({ variant: "destructive", title: "Erro ao Salvar", description: error.message || "Não foi possível salvar o usuário." });
     }
-    closeDialog();
   };
 
   const isSaveDisabled = 
@@ -171,38 +199,44 @@ export default function SaaSUsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage asChild src={user.avatarUrl}><Image src={user.avatarUrl} alt={user.name} width={32} height={32} /></AvatarImage>
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <div>{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
+            {usersLoading ? (
+                <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center">Carregando usuários...</TableCell>
+                </TableRow>
+            ) : (
+                users.map((user) => (
+                <TableRow key={user.id}>
+                    <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                        <AvatarImage asChild src={user.avatarUrl}><Image src={user.avatarUrl} alt={user.name} width={32} height={32} /></AvatarImage>
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <div>{user.name}</div>
+                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                        </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell><Badge variant="secondary">{user.saasRole}</Badge></TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">{t('common.openMenu')}</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openDialog(user)}>
-                        {t('common.edit')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+                    </TableCell>
+                    <TableCell><Badge variant="secondary">{user.saasRole}</Badge></TableCell>
+                    <TableCell className="text-right">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">{t('common.openMenu')}</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openDialog(user)}>
+                            {t('common.edit')}
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    </TableCell>
+                </TableRow>
+                ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -291,5 +325,3 @@ export default function SaaSUsersPage() {
     </div>
   );
 }
-
-    
