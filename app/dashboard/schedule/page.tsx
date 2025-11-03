@@ -93,7 +93,7 @@ export default function SchedulePage() {
   const handleSave = async () => {
     if (!formData || !formData.technicianId || !formData.start || !formData.end || !firestore) return;
     
-    const { id, ...scheduleData } = formData as Schedule;
+    const { id, ...scheduleData } = formData as Omit<Schedule, 'id'> & { id?: string };
 
     try {
       if (id && schedules.some(s => s.id === id)) {
@@ -250,5 +250,3 @@ export default function SchedulePage() {
     </div>
   );
 }
-
-    
