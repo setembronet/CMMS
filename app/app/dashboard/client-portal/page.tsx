@@ -36,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirestore } from '@/firebase';
-import { useCollection, addDocument } from '@/firebase/firestore';
+import { addDocument, useCollection } from '@/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const symptoms = [
@@ -115,7 +115,7 @@ export default function ClientPortalPage() {
     setNewWoFormData(prev => ({...prev, [field]: value}));
   };
 
-  const handleNewWoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleNewWoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firestore) return;
     
@@ -124,13 +124,19 @@ export default function ClientPortalPage() {
         return;
     }
 
-    addDocument(firestore, 'workOrders', newWoFormData);
-    toast({
-        title: "Chamado Aberto com Sucesso!",
-        description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
-    });
-    setIsNewWoDialogOpen(false);
-    setNewWoFormData({});
+    addDocument(firestore, 'workOrders', newWoFormData)
+      .then(() => {
+        toast({
+            title: "Chamado Aberto com Sucesso!",
+            description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
+        });
+        setIsNewWoDialogOpen(false);
+        setNewWoFormData({});
+      })
+      .catch((error) => {
+        // Error is handled by the global error emitter in firestore.ts
+        console.error("Failed to create work order:", error);
+      });
   };
 
   const getAssetName = (assetId: string) => allAssets.find(a => a.id === assetId)?.name || 'N/A';
