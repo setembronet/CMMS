@@ -35,8 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { users as initialUsers, companies, cmmsRoles as allRoles, segments, plans } from '@/lib/data';
-import type { User, CMMSRole } from '@/lib/types';
+import type { User, CMMSRole, CompanySegment, Plan } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -45,6 +44,9 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 
 type PasswordStrength = {
@@ -57,6 +59,13 @@ type PasswordStrength = {
 export default function CMMSUsersPage() {
   const { selectedClient } = useClient();
   const { t } = useI18n();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  const { data: allRoles, loading: rolesLoading } = useCollection<CMMSRole>('cmmsRoles');
+  const { data: allSegments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
+  const { data: allPlans, loading: plansLoading } = useCollection<Plan>('plans');
 
   const [users, setUsers] = React.useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -65,7 +74,7 @@ export default function CMMSUsersPage() {
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
   const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>([]);
 
-  const clientPlan = React.useMemo(() => plans.find(p => p.id === selectedClient?.planId), [selectedClient]);
+  const clientPlan = React.useMemo(() => allPlans.find(p => p.id === selectedClient?.planId), [selectedClient, allPlans]);
   const technicianUsersCount = users.filter(u => u.cmmsRole === 'TECNICO').length;
   const technicianLimit = clientPlan?.technicianUserLimit ?? 0;
   const hasReachedTechnicianLimit = technicianLimit !== -1 && technicianUsersCount >= technicianLimit;
@@ -88,13 +97,13 @@ export default function CMMSUsersPage() {
 
   React.useEffect(() => {
     if (selectedClient) {
-      setUsers(initialUsers.filter(u => u.clientId === selectedClient.id));
+      setUsers(allUsers.filter(u => u.clientId === selectedClient.id));
       
       const company = selectedClient;
       if (company.activeSegments.length > 0) {
         const applicableRoleIds = new Set<string>();
         company.activeSegments.forEach(segmentId => {
-          const segment = segments.find(s => s.id === segmentId);
+          const segment = allSegments.find(s => s.id === segmentId);
           (segment?.applicableRoles || []).forEach(roleId => applicableRoleIds.add(roleId));
         });
         const filteredRoles = allRoles.filter(role => applicableRoleIds.has(role.id));
@@ -106,7 +115,7 @@ export default function CMMSUsersPage() {
       setUsers([]);
       setAvailableRoles([]);
     }
-  }, [selectedClient]);
+  }, [selectedClient, allUsers, allRoles, allSegments]);
 
   React.useEffect(() => {
     if (isDialogOpen && !editingUser && formData?.cmmsRole && !availableRoles.some(r => r.id === formData.cmmsRole)) {
@@ -167,30 +176,56 @@ export default function CMMSUsersPage() {
     setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
-  const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData || !selectedClient) return;
+    if (!formData || !selectedClient || !firestore) return;
     if (isSaveDisabled) return;
 
     if (!editingUser && formData.cmmsRole === 'TECNICO' && hasReachedTechnicianLimit) {
-      console.error("Technician limit reached");
+      toast({
+        variant: "destructive",
+        title: "Limite de Técnicos Atingido",
+        description: t('users.limitReached', { limit: technicianLimit, planName: clientPlan?.name }),
+      });
       return;
     }
 
-    const newUser: User = {
-      ...formData,
-      id: editingUser?.id || `user-0${initialUsers.length + 1}`,
-      clientId: selectedClient.id,
-      clientName: selectedClient.name,
-      role: formData.cmmsRole ?? '',
-    };
+    try {
+      const userData = { ...formData };
+      delete userData.password;
+      delete userData.confirmPassword;
+      
+      const userToSave: Omit<User, 'id'> = {
+        ...userData,
+        clientId: selectedClient.id,
+        clientName: selectedClient.name,
+        role: formData.cmmsRole ?? '',
+      };
 
-    if (editingUser) {
-      setUsers(users.map(u => u.id === newUser.id ? newUser : u));
-    } else {
-      setUsers([newUser, ...users]);
+
+      if (editingUser) {
+        await updateDocument(firestore, 'users', editingUser.id, userToSave);
+        toast({
+          title: "Usuário Atualizado!",
+          description: `O usuário ${userToSave.name} foi atualizado com sucesso.`,
+        });
+      } else {
+        // Here you would also create the user in Firebase Auth
+        await addDocument(firestore, 'users', userToSave);
+        toast({
+          title: "Usuário Criado!",
+          description: `O usuário ${userToSave.name} foi criado com sucesso.`,
+        });
+      }
+      closeDialog();
+    } catch(error) {
+       console.error("Erro ao salvar usuário:", error);
+       toast({
+         variant: "destructive",
+         title: "Erro ao Salvar",
+         description: "Ocorreu um erro ao salvar o usuário. Tente novamente.",
+       });
     }
-    closeDialog();
   };
   
   const isSaveDisabled = 
@@ -212,6 +247,8 @@ export default function CMMSUsersPage() {
         {t('users.new')}
     </Button>
   );
+
+  const isLoading = usersLoading || rolesLoading || segmentsLoading || plansLoading;
 
   if (!selectedClient) {
     return (
@@ -251,7 +288,9 @@ export default function CMMSUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {isLoading ? (
+                  <TableRow><TableCell colSpan={4} className="h-24 text-center">Carregando usuários...</TableCell></TableRow>
+              ) : users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
@@ -393,3 +432,5 @@ export default function CMMSUsersPage() {
     </TooltipProvider>
   );
 }
+
+    
