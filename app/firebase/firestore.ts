@@ -50,29 +50,40 @@ export const useCollection = <T extends { id: string }>(collectionName: string) 
 
   useEffect(() => {
     if (!firestore) return;
+    
     const context: SecurityRuleContext = { path: collectionName, operation: 'list' };
     const collectionRef = collection(firestore, collectionName);
     
-    const unsubscribe = onSnapshot(
-      collectionRef,
-      (snapshot) => {
-        const result: T[] = [];
-        snapshot.forEach((doc) => {
-          result.push({ id: doc.id, ...doc.data() } as T);
-        });
-        setData(result);
-        setLoading(false);
-      },
-      (err) => {
-        try {
-          handleError(context, err);
-        } catch (e) {
-          setError(e as Error);
-        }
-        setLoading(false);
-      }
-    );
+    // The unsubscribe function is initialized to a no-op function.
+    let unsubscribe: () => void = () => {};
 
+    try {
+        unsubscribe = onSnapshot(
+          collectionRef,
+          (snapshot) => {
+            const result: T[] = [];
+            snapshot.forEach((doc) => {
+              result.push({ id: doc.id, ...doc.data() } as T);
+            });
+            setData(result);
+            setLoading(false);
+            setError(null);
+          },
+          (err) => {
+            try {
+              handleError(context, err);
+            } catch (e) {
+              setError(e as Error);
+            }
+            setLoading(false);
+          }
+        );
+    } catch(err) {
+        setError(err as Error);
+        setLoading(false);
+    }
+
+    // Cleanup function will call the unsubscribe function returned by onSnapshot.
     return () => unsubscribe();
   }, [collectionName, firestore]);
 
@@ -132,7 +143,7 @@ export const addDocument = (
 ) => {
   const collectionRef = collection(firestore, collectionName);
   
-  addDoc(collectionRef, {
+  return addDoc(collectionRef, {
     ...data,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -144,6 +155,7 @@ export const addDocument = (
     };
     const permissionError = new FirestorePermissionError(context);
     errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
   });
 };
 
@@ -188,4 +200,3 @@ export const deleteDocument = (
     errorEmitter.emit('permission-error', permissionError);
   });
 };
-
