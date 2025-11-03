@@ -2,8 +2,8 @@
 import type { MaintenanceFrequency, RootCause, RecommendedAction, PurchaseOrder, AccountsPayable, Contract, CustomerLocation, AccountsReceivable, WorkOrder, Product, Supplier, Schedule, Company, CMMSRole, Addon, Plan, CompanySegment, ChecklistTemplate, User } from './types';
 import { format } from 'date-fns';
 
-// This file contains only static or helper data that doesn't change.
-// All dynamic application data is now managed in Firestore.
+// This file is now mostly deprecated in favor of Firestore, but some data might still be here for reference.
+// The goal is to move all of these to Firestore collections.
 
 export const maintenanceFrequencies: { value: MaintenanceFrequency, label: string }[] = [
     { value: 'DIARIA', label: 'Diária' },
@@ -29,6 +29,7 @@ export const recommendedActions: { value: string, label: string }[] = [
     { value: 'Nenhuma Ação Necessária', label: 'Nenhuma Ação Necessária' },
 ];
 
+
 export const createAccountPayableFromPO = (po: PurchaseOrder, allSuppliers: Supplier[]): Omit<AccountsPayable, 'id'> => {
   const supplier = allSuppliers.find(s => s.id === po.supplierId);
   return {
@@ -48,8 +49,6 @@ export const createAccountPayableFromPO = (po: PurchaseOrder, allSuppliers: Supp
 
 export const generateReceivablesFromContracts = (clientId: string, contracts: Contract[], existingReceivables: AccountsReceivable[], customerLocations: CustomerLocation[]) => {
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
     const clientContracts = contracts.filter(c => {
         const location = customerLocations.find(l => l.id === c.customerLocationId);
         return location?.clientId === clientId;
@@ -67,12 +66,12 @@ export const generateReceivablesFromContracts = (clientId: string, contracts: Co
                 id: `ar-${Date.now()}-${contract.id}`,
                 description: descriptionPattern,
                 customerLocationId: contract.customerLocationId,
-                dueDate: new Date(currentYear, currentMonth, 10).getTime(), 
+                dueDate: new Date(today.getFullYear(), today.getMonth(), 10).getTime(), 
                 value: contract.monthlyValue,
                 status: 'Pendente',
                 chartOfAccountId: 'coa-3', 
             };
-            newReceivables.push(newReceivable as AccountsReceivable); //Firestore will add ID
+            newReceivables.push(newReceivable as AccountsReceivable);
             generatedCount++;
         }
     });
@@ -80,12 +79,18 @@ export const generateReceivablesFromContracts = (clientId: string, contracts: Co
     return { newReceivables, generatedCount };
 }
 
+// In a real application, this would fetch all collections from Firestore.
+export const getBackupData = (data: any) => {
+  console.log("Backup function called. In a real app, this would fetch from all Firestore collections.");
+  return {
+    ...data
+  };
+};
+
 // In a real application, this would perform batch writes to all collections.
-// This is a simplified version and is destructive.
-export const restoreData = (data: any, setters: any) => {
+export const restoreData = (data: any) => {
   console.log("Restore function called. This is a mock implementation.");
   // The actual logic would involve iterating through collections and using setDoc.
-  // For now, we can't do much without a more complex setup.
 };
 
 
@@ -114,11 +119,6 @@ export const addons: Addon[] = [];
 export const kpis = {};
 
 
-export const getBackupData = () => {
-  console.log("getBackupData is deprecated and will be removed.");
-  return {};
-};
-
 export const setWorkOrders = (newWorkOrders: WorkOrder[]) => {};
 export const setProducts = (newProducts: Product[]) => {};
 export const setContracts = (newContracts: Contract[]) => {};
@@ -137,4 +137,3 @@ export const setAddons = (newAddons: Addon[]) => {};
 export const setSegments = (newSegments: CompanySegment[]) => {};
 export const setChecklistTemplates = (newTemplates: ChecklistTemplate[]) => {};
 export const setCmmsRoles = (newRoles: CMMSRole[]) => {};
-

@@ -158,7 +158,7 @@ export default function ChecklistTemplatesPage() {
   const getSegmentName = (segmentId: string) => {
     return segments.find(s => s.id === segmentId)?.name || 'N/A';
   }
-  
+
   const isLoading = templatesLoading || segmentsLoading;
 
   return (
@@ -296,4 +296,3 @@ export default function ChecklistTemplatesPage() {
     </div>
   );
 }
-

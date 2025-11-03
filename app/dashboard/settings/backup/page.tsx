@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useI18n } from '@/hooks/use-i18n';
 import { useCollection } from '@/firebase/firestore';
-import type { AccountsPayable, AccountsReceivable, Asset, BankAccount, CMMSRole, ChartOfAccount, ChecklistTemplate, Company, CompanySegment, Contract, CostCenter, CustomerLocation, Plan, Product, PurchaseOrder, Schedule, Supplier, User, Addon, WorkOrder } from '@/lib/types';
+import type { AccountsPayable, AccountsReceivable, Asset, BankAccount, CMMSRole, ChartOfAccount, ChecklistTemplate, Company, CompanySegment, Contract, CostCenter, CustomerLocation, Plan, Product, PurchaseOrder, Schedule, Supplier, User, Addon } from '@/lib/types';
 
 
 export default function BackupPage() {
