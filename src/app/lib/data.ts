@@ -29,6 +29,7 @@ export const recommendedActions: { value: string, label: string }[] = [
     { value: 'Nenhuma Ação Necessária', label: 'Nenhuma Ação Necessária' },
 ];
 
+
 export const createAccountPayableFromPO = (po: PurchaseOrder, allSuppliers: Supplier[]): Omit<AccountsPayable, 'id'> => {
   const supplier = allSuppliers.find(s => s.id === po.supplierId);
   return {
@@ -48,8 +49,6 @@ export const createAccountPayableFromPO = (po: PurchaseOrder, allSuppliers: Supp
 
 export const generateReceivablesFromContracts = (clientId: string, contracts: Contract[], existingReceivables: AccountsReceivable[], customerLocations: CustomerLocation[]) => {
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
     const clientContracts = contracts.filter(c => {
         const location = customerLocations.find(l => l.id === c.customerLocationId);
         return location?.clientId === clientId;
@@ -67,18 +66,29 @@ export const generateReceivablesFromContracts = (clientId: string, contracts: Co
                 id: `ar-${Date.now()}-${contract.id}`,
                 description: descriptionPattern,
                 customerLocationId: contract.customerLocationId,
-                dueDate: new Date(currentYear, currentMonth, 10).getTime(), 
+                dueDate: new Date(today.getFullYear(), today.getMonth(), 10).getTime(), 
                 value: contract.monthlyValue,
                 status: 'Pendente',
                 chartOfAccountId: 'coa-3', 
             };
-            newReceivables.push(newReceivable as AccountsReceivable); //Firestore will add ID
+            newReceivables.push(newReceivable);
             generatedCount++;
         }
     });
 
     return { newReceivables, generatedCount };
 }
+
+
+// In a real application, this would fetch all collections from Firestore.
+// For this mock, we are just returning the local data that was used for seeding.
+// This is not a complete backup solution.
+export const getBackupData = (data: any) => {
+  console.log("Backup function called. In a real app, this would fetch from all Firestore collections.");
+  return {
+    ...data
+  };
+};
 
 // In a real application, this would perform batch writes to all collections.
 // This is a simplified version and is destructive.
@@ -88,10 +98,7 @@ export const restoreData = (data: any, setters: any) => {
   // For now, we can't do much without a more complex setup.
 };
 
-
 // These exports are here for reference, but data is now primarily managed via Firestore hooks in components.
-// Note: These empty arrays and functions are being kept to avoid breaking other parts of the app that
-// might still be importing them, even if they are not actively used.
 export const companies: Company[] = [];
 export const segments: CompanySegment[] = [];
 export let cmmsRoles: CMMSRole[] = [];
@@ -112,29 +119,3 @@ export const schedules: Schedule[] = [];
 export const plans: Plan[] = [];
 export const addons: Addon[] = [];
 export const kpis = {};
-
-
-export const getBackupData = () => {
-  console.log("getBackupData is deprecated and will be removed.");
-  return {};
-};
-
-export const setWorkOrders = (newWorkOrders: WorkOrder[]) => {};
-export const setProducts = (newProducts: Product[]) => {};
-export const setContracts = (newContracts: Contract[]) => {};
-export const setSuppliers = (newSuppliers: Supplier[]) => {};
-export const setPurchaseOrders = (newPOs: PurchaseOrder[]) => {};
-export const setSchedules = (newSchedules: Schedule[]) => {};
-export const setAccountsPayable = (newAPs: AccountsPayable[]) => {};
-export const setAccountsReceivable = (newARs: AccountsReceivable[]) => {};
-export const setBankAccounts = (newBAs: BankAccount[]) => {};
-export const setKpis = (newKpis: typeof kpis) => {};
-export const setCompanies = (newCompanies: Company[]) => {};
-export const setCustomerLocations = (newLocations: CustomerLocation[]) => {}
-export const setUsers = (newUsers: User[]) => {};
-export const setPlans = (newPlans: Plan[]) => {};
-export const setAddons = (newAddons: Addon[]) => {};
-export const setSegments = (newSegments: CompanySegment[]) => {};
-export const setChecklistTemplates = (newTemplates: ChecklistTemplate[]) => {};
-export const setCmmsRoles = (newRoles: CMMSRole[]) => {};
-

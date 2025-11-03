@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
-import { getBackupData, restoreData } from '@/lib/data';
 import { Download, Upload, AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
@@ -22,11 +21,59 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useI18n } from '@/hooks/use-i18n';
+import { useCollection } from '@/firebase/firestore';
+import type { AccountsPayable, AccountsReceivable, Asset, BankAccount, CMMSRole, ChartOfAccount, ChecklistTemplate, Company, CompanySegment, Contract, CostCenter, CustomerLocation, Plan, Product, PurchaseOrder, Schedule, Supplier, User, Addon } from '@/lib/types';
+
 
 export default function BackupPage() {
   const { t } = useI18n();
   const { toast } = useToast();
   const [fileToRestore, setFileToRestore] = React.useState<File | null>(null);
+
+  // Fetch all data from firestore
+  const { data: companies } = useCollection<Company>('companies');
+  const { data: segments } = useCollection<CompanySegment>('segments');
+  const { data: cmmsRoles } = useCollection<CMMSRole>('cmmsRoles');
+  const { data: customerLocations } = useCollection<CustomerLocation>('customerLocations');
+  const { data: users } = useCollection<User>('users');
+  const { data: assets } = useCollection<Asset>('assets');
+  const { data: contracts } = useCollection<Contract>('contracts');
+  const { data: products } = useCollection<Product>('products');
+  const { data: suppliers } = useCollection<Supplier>('suppliers');
+  const { data: workOrders } = useCollection<WorkOrder>('workOrders');
+  const { data: costCenters } = useCollection<CostCenter>('costCenters');
+  const { data: chartOfAccounts } = useCollection<ChartOfAccount>('chartOfAccounts');
+  const { data: accountsPayable } = useCollection<AccountsPayable>('accountsPayable');
+  const { data: accountsReceivable } = useCollection<AccountsReceivable>('accountsReceivable');
+  const { data: bankAccounts } = useCollection<BankAccount>('bankAccounts');
+  const { data: checklistTemplates } = useCollection<ChecklistTemplate>('checklistTemplates');
+  const { data: schedules } = useCollection<Schedule>('schedules');
+  const { data: plans } = useCollection<Plan>('plans');
+  const { data: addons } = useCollection<Addon>('addons');
+
+  const getBackupData = () => {
+    return {
+      companies,
+      segments,
+      cmmsRoles,
+      customerLocations,
+      users,
+      assets,
+      contracts,
+      products,
+      suppliers,
+      workOrders,
+      costCenters,
+      chartOfAccounts,
+      accountsPayable,
+      accountsReceivable,
+      bankAccounts,
+      checklistTemplates,
+      schedules,
+      plans,
+      addons,
+    };
+  };
 
   const handleBackup = () => {
     try {
@@ -73,35 +120,21 @@ export default function BackupPage() {
   const handleRestore = () => {
     if (!fileToRestore) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target?.result;
-        if (typeof text !== 'string') {
-          throw new Error(t('backup.fileReadError'));
-        }
-        const data = JSON.parse(text);
-        restoreData(data);
-        toast({
-          title: t('backup.restoreSuccessTitle'),
-          description: t('backup.restoreSuccessDescription'),
-        });
-        setFileToRestore(null);
-        // We clear the input value manually
-        const fileInput = document.getElementById('restore-file') as HTMLInputElement;
-        if (fileInput) {
-            fileInput.value = '';
-        }
-      } catch (error) {
-        console.error(t('backup.restoreErrorLog'), error);
-        toast({
-          variant: 'destructive',
-          title: t('backup.restoreErrorTitle'),
-          description: t('backup.restoreErrorDescription'),
-        });
-      }
-    };
-    reader.readAsText(fileToRestore);
+    // This is a placeholder for a real restore logic which would require
+    // writing to Firestore. For now, it just shows a success message.
+    toast({
+        variant: "destructive",
+        title: "Função não implementada",
+        description: "A restauração de dados a partir de um arquivo ainda não é suportada nesta versão.",
+    });
+
+    // We clear the input value manually
+    const fileInput = document.getElementById('restore-file') as HTMLInputElement;
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    setFileToRestore(null);
+
   };
 
   return (
@@ -164,5 +197,3 @@ export default function BackupPage() {
     </div>
   );
 }
-
-    
