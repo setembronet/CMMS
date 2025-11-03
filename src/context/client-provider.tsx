@@ -1,3 +1,4 @@
+
 'use client';
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { useCollection } from '@/firebase/firestore';
@@ -11,6 +12,7 @@ interface ClientContextType {
   selectedClient: Company | null;
   currentUser: User | null;
   authLoading: boolean;
+  companies: Company[];
 }
 
 export const ClientContext = createContext<ClientContextType | undefined>(undefined);
@@ -79,6 +81,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
     selectedClient,
     currentUser,
     authLoading,
+    companies,
   };
 
   return (

@@ -47,8 +47,19 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { currentUser, authLoading } = useClient();
+  const router = useRouter();
   
-  if (authLoading) {
+  React.useEffect(() => {
+      if (!authLoading) {
+          if (!currentUser) {
+              router.replace('/');
+          } else if (CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
+              router.replace('/dashboard/client-portal');
+          }
+      }
+  }, [currentUser, authLoading, router]);
+
+  if (authLoading || !currentUser || (currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || ''))) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />

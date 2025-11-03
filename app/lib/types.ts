@@ -55,7 +55,7 @@ export type CompanySegment = {
 };
 
 export type CompanyStatus = 'active' | 'inactive';
-export type OrderStatus = 'ABERTO' | 'EM ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
+export type OrderStatus = 'ABERTO' | 'EM ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO' | 'EM_ESPERA_PECAS' | 'AGUARDANDO_APROVACAO' | 'PENDENTE_RETORNO';
 export type OrderPriority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 export type MaintenanceFrequency = 'DIARIA' | 'SEMANAL' | 'QUINZENAL' | 'MENSAL' | 'TRIMESTRAL' | 'SEMESTRAL' | 'ANUAL';
 export type ContractType = 'Integral' | 'Mão de Obra';
@@ -200,6 +200,16 @@ export type WorkOrder = {
   checklist?: Checklist;
   rootCause?: RootCause;
   recommendedAction?: RecommendedAction;
+  mediaObrigatoria?: boolean;
+  fotosAntesDepois?: {
+    antes?: string;
+    depois?: string;
+  };
+  assinaturaTecnicoUrl?: string;
+  assinaturaClienteUrl?: string;
+  dataAssinaturaTecnico?: number;
+  dataAssinaturaCliente?: number;
+  usedIA?: boolean;
 };
 
 export type Product = {

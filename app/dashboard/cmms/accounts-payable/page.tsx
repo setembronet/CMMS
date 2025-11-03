@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -30,7 +29,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, FileUp } from 'lucide-react';
-import { costCenters, chartOfAccounts } from '@/lib/data';
 import type { AccountsPayable, AccountsPayableStatus, CostCenter, ChartOfAccount, BankAccount } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
@@ -67,6 +65,9 @@ export default function AccountsPayablePage() {
   const firestore = useFirestore();
   const { data: accounts, loading: accountsLoading } = useCollection<AccountsPayable>('accountsPayable');
   const { data: availableBankAccounts, loading: bankAccountsLoading } = useCollection<BankAccount>('bankAccounts');
+  const { data: costCenters, loading: costCentersLoading } = useCollection<CostCenter>('costCenters');
+  const { data: chartOfAccounts, loading: chartOfAccountsLoading } = useCollection<ChartOfAccount>('chartOfAccounts');
+
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<AccountsPayable | null>(null);
@@ -76,7 +77,7 @@ export default function AccountsPayablePage() {
   
   React.useEffect(() => {
     setSelectableAccounts(chartOfAccounts.filter(acc => !acc.isGroup));
-  }, []);
+  }, [chartOfAccounts]);
 
   const openDialog = (account: AccountsPayable | null = null) => {
     setEditingAccount(account);
@@ -182,6 +183,8 @@ export default function AccountsPayablePage() {
   };
 
   const sortedAccounts = React.useMemo(() => accounts.sort((a,b) => b.dueDate - a.dueDate), [accounts]);
+  
+  const isLoading = accountsLoading || bankAccountsLoading || costCentersLoading || chartOfAccountsLoading;
 
   return (
     <div className="flex flex-col gap-8">
@@ -207,7 +210,7 @@ export default function AccountsPayablePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {accountsLoading ? (
+            {isLoading ? (
                  <TableRow><TableCell colSpan={8} className="h-24 text-center">Carregando...</TableCell></TableRow>
             ) : sortedAccounts.map(account => (
               <TableRow key={account.id}>
@@ -400,3 +403,5 @@ export default function AccountsPayablePage() {
     </div>
   );
 }
+
+    

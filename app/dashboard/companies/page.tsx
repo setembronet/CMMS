@@ -30,7 +30,6 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { plans } from '@/lib/data';
 import type { Company, CompanySegment, Plan, Addon } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -47,7 +46,7 @@ const emptyCompany: Omit<Company, 'id'> = {
   email: '',
   phone: '',
   status: 'active',
-  planId: plans[0]?.id || '',
+  planId: '',
   activeAddons: [],
   activeSegments: [],
   address: {
@@ -69,6 +68,7 @@ export default function CompaniesPage() {
   const { data: companies, loading: companiesLoading } = useCollection<Company>('companies');
   const { data: segments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
   const { data: addons, loading: addonsLoading } = useCollection<Addon>('addons');
+  const { data: plans, loading: plansLoading } = useCollection<Plan>('plans');
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
@@ -80,7 +80,8 @@ export default function CompaniesPage() {
       const { id, ...companyData } = company;
       setFormData(companyData);
     } else {
-      setFormData(emptyCompany);
+        const defaultPlan = plans.length > 0 ? plans[0].id : '';
+        setFormData({...emptyCompany, planId: defaultPlan});
     }
     setIsDialogOpen(true);
   };
@@ -232,7 +233,7 @@ export default function CompaniesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companiesLoading ? (
+            {companiesLoading || plansLoading ? (
                 <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">Carregando empresas...</TableCell>
                 </TableRow>
@@ -349,7 +350,7 @@ export default function CompaniesPage() {
                         <SelectValue placeholder={t('common.selectPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {plans.map(plan => (
+                        {plansLoading ? <SelectItem value="loading" disabled>Carregando...</SelectItem> : plans.map(plan => (
                           <SelectItem key={plan.id} value={plan.id}>{plan.name} - R$ {plan.price}/mês</SelectItem>
                         ))}
                       </SelectContent>
@@ -402,5 +403,3 @@ export default function CompaniesPage() {
     </div>
   );
 }
-
-    

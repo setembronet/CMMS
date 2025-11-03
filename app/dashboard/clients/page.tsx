@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -31,8 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal, Trash2, UserPlus, AlertTriangle, FileText, BrainCircuit, MessageSquarePlus, Clock, Receipt } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { assets, workOrders, users, products } from '@/lib/data';
-import type { CustomerLocation, Contact, WorkOrder, ContractStatus, Interaction, InteractionType } from '@/lib/types';
+import type { CustomerLocation, Contact, WorkOrder, ContractStatus, Interaction, InteractionType, Asset, Product, User } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -72,7 +70,12 @@ export default function ClientsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  const { data: allLocations, loading } = useCollection<CustomerLocation>('customerLocations');
+  const { data: allLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
+  const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: allWorkOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+
   const [locations, setLocations] = React.useState<CustomerLocation[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingLocation, setEditingLocation] = React.useState<CustomerLocation | null>(null);
@@ -272,15 +275,15 @@ export default function ClientsPage() {
   };
 
   // --- KPI Calculation Functions ---
-  const getAssetCount = (locationId: string) => assets.filter(a => a.customerLocationId === locationId).length;
-  const getOpenWorkOrders = (locationId: string) => workOrders.filter(wo => {
-    const asset = assets.find(a => a.id === wo.assetId);
+  const getAssetCount = (locationId: string) => allAssets.filter(a => a.customerLocationId === locationId).length;
+  const getOpenWorkOrders = (locationId: string) => allWorkOrders.filter(wo => {
+    const asset = allAssets.find(a => a.id === wo.assetId);
     return asset?.customerLocationId === locationId && wo.status === 'ABERTO';
   }).length;
   
   const getCorrectiveRatio = (locationId: string) => {
-    const locationWorkOrders = workOrders.filter(wo => {
-        const asset = assets.find(a => a.id === wo.assetId);
+    const locationWorkOrders = allWorkOrders.filter(wo => {
+        const asset = allAssets.find(a => a.id === wo.assetId);
         return asset?.customerLocationId === locationId;
     });
     if (locationWorkOrders.length === 0) return 0;
@@ -290,8 +293,8 @@ export default function ClientsPage() {
 
   const getPartsCostLast90Days = (locationId: string) => {
     const ninetyDaysAgo = new Date().setDate(new Date().getDate() - 90);
-    const locationAssets = assets.filter(a => a.customerLocationId === locationId).map(a => a.id);
-    const recentWorkOrders = workOrders.filter(wo => 
+    const locationAssets = allAssets.filter(a => a.customerLocationId === locationId).map(a => a.id);
+    const recentWorkOrders = allWorkOrders.filter(wo => 
         locationAssets.includes(wo.assetId) && 
         wo.creationDate >= ninetyDaysAgo &&
         wo.partsUsed && wo.partsUsed.length > 0
@@ -299,7 +302,7 @@ export default function ClientsPage() {
 
     return recentWorkOrders.reduce((totalCost, wo) => {
         const orderCost = (wo.partsUsed || []).reduce((cost, part) => {
-            const product = products.find(p => p.id === part.productId);
+            const product = allProducts.find(p => p.id === part.productId);
             return cost + (product ? product.price * part.quantity : 0);
         }, 0);
         return totalCost + orderCost;
@@ -314,12 +317,12 @@ export default function ClientsPage() {
       }
   }
 
-  const getUserName = (id: string) => users.find(u => u.id === id)?.name || 'Usuário';
+  const getUserName = (id: string) => allUsers.find(u => u.id === id)?.name || 'Usuário';
 
   const getWorkOrdersForInvoice = (locationId: string | null) => {
     if (!locationId) return [];
-    const locationAssets = assets.filter(a => a.customerLocationId === locationId).map(a => a.id);
-    return workOrders.filter(wo => locationAssets.includes(wo.assetId) && wo.partsUsed && wo.partsUsed.length > 0)
+    const locationAssets = allAssets.filter(a => a.customerLocationId === locationId).map(a => a.id);
+    return allWorkOrders.filter(wo => locationAssets.includes(wo.assetId) && wo.partsUsed && wo.partsUsed.length > 0)
         .sort((a,b) => b.creationDate - a.creationDate)
         .slice(0, 10); // get last 10 for simplicity
   };
@@ -331,6 +334,8 @@ export default function ClientsPage() {
       case 'Vencido': return t('clients.status.expired');
     }
   }
+  
+  const isLoading = locationsLoading || assetsLoading || workOrdersLoading || usersLoading || productsLoading;
 
   if (!selectedClient) {
     return (
@@ -366,7 +371,7 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={8} className="h-24 text-center">Carregando clientes...</TableCell>
                 </TableRow>
@@ -640,7 +645,7 @@ export default function ClientsPage() {
                     <div className="py-4 px-1 space-y-4">
                         {getWorkOrdersForInvoice(invoicingLocation?.id || null).map(wo => {
                             const totalCost = (wo.partsUsed || []).reduce((acc, part) => {
-                                const product = products.find(p => p.id === part.productId);
+                                const product = allProducts.find(p => p.id === part.productId);
                                 return acc + (product ? product.price * part.quantity : 0);
                             }, 0);
 
@@ -654,7 +659,7 @@ export default function ClientsPage() {
                                     <Separator className="my-2" />
                                     <ul className="text-sm space-y-1">
                                         {(wo.partsUsed || []).map(part => {
-                                            const product = products.find(p => p.id === part.productId);
+                                            const product = allProducts.find(p => p.id === part.productId);
                                             return (
                                                 <li key={part.productId} className="flex justify-between">
                                                     <span>{product?.name || t('clients.invoiceDialog.unknownPart')} (x{part.quantity})</span>
@@ -677,7 +682,7 @@ export default function ClientsPage() {
                             {t('clients.invoiceDialog.totalToBill')}: R$ {
                                 getWorkOrdersForInvoice(invoicingLocation?.id || null).reduce((total, wo) => {
                                     return total + (wo.partsUsed || []).reduce((acc, part) => {
-                                        const product = products.find(p => p.id === part.productId);
+                                        const product = allProducts.find(p => p.id === part.productId);
                                         return acc + (product ? product.price * part.quantity : 0);
                                     }, 0);
                                 }, 0).toFixed(2)

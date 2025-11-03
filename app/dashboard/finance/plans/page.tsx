@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -29,14 +28,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { plans as initialPlans } from '@/lib/data';
 import type { Plan } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/use-i18n';
+import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
-const emptyPlan: Plan = {
-  id: '',
+
+const emptyPlan: Omit<Plan, 'id'> = {
   name: '',
   price: 0,
   assetLimit: 0,
@@ -49,14 +50,22 @@ const emptyPlan: Plan = {
 
 export default function PlansPage() {
   const { t } = useI18n();
-  const [plans, setPlans] = React.useState<Plan[]>(initialPlans);
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const { data: plans, loading } = useCollection<Plan>('plans');
+
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingPlan, setEditingPlan] = React.useState<Plan | null>(null);
-  const [formData, setFormData] = React.useState<Plan>(emptyPlan);
+  const [formData, setFormData] = React.useState<Omit<Plan, 'id'>>(emptyPlan);
 
   const openDialog = (plan: Plan | null = null) => {
     setEditingPlan(plan);
-    setFormData(plan || emptyPlan);
+    if (plan) {
+        const { id, ...planData } = plan;
+        setFormData(planData);
+    } else {
+        setFormData(emptyPlan);
+    }
     setIsDialogOpen(true);
   };
 
@@ -70,27 +79,41 @@ export default function PlansPage() {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? parseInt(value, 10) : value,
+      [name]: type === 'checkbox' ? checked : type === 'number' ? parseInt(value, 10) || 0 : value,
     }));
   };
   
-  const handleSwitchChange = (name: keyof Plan, checked: boolean) => {
+  const handleSwitchChange = (name: keyof Omit<Plan, 'id'>, checked: boolean) => {
     setFormData(prev => ({...prev, [name]: checked }));
   }
 
-  const handleSavePlan = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSavePlan = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newPlan: Plan = {
-      ...formData,
-      id: editingPlan?.id || `plan_${formData.name.toLowerCase().replace(' ', '_')}`,
-    };
+    if (!firestore) return;
 
-    if (editingPlan) {
-      setPlans(plans.map(p => (p.id === newPlan.id ? newPlan : p)));
-    } else {
-      setPlans([newPlan, ...plans]);
+    try {
+      if (editingPlan) {
+        await updateDocument(firestore, 'plans', editingPlan.id, formData);
+        toast({
+          title: "Plano Atualizado!",
+          description: `O plano "${formData.name}" foi atualizado com sucesso.`,
+        });
+      } else {
+        await addDocument(firestore, 'plans', formData);
+        toast({
+          title: "Plano Criado!",
+          description: `O plano "${formData.name}" foi criado com sucesso.`,
+        });
+      }
+      closeDialog();
+    } catch (error) {
+      console.error("Erro ao salvar plano:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao Salvar",
+        description: "Não foi possível salvar os dados do plano."
+      });
     }
-    closeDialog();
   };
 
   return (
@@ -114,7 +137,11 @@ export default function PlansPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {plans.map(plan => (
+            {loading ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">Carregando planos...</TableCell>
+                  </TableRow>
+            ): plans.map(plan => (
               <TableRow key={plan.id}>
                 <TableCell className="font-medium">{plan.name}</TableCell>
                 <TableCell>R$ {plan.price.toLocaleString('pt-BR')}</TableCell>
@@ -142,7 +169,7 @@ export default function PlansPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-lg flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingPlan ? t('plans.dialog.editTitle') : t('plans.dialog.newTitle')}</DialogTitle>
             <DialogDescription>

@@ -4,20 +4,29 @@
 import {
   collection,
   onSnapshot,
-  addDoc,
   doc,
+  getDoc,
+  getDocs,
+  addDoc,
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  type DocumentData,
-  type Firestore,
-  type DocumentReference,
+  query,
+  where,
+  limit,
+  orderBy,
+  startAt,
+  endAt,
+  Query,
+  DocumentData,
+  Firestore,
   onSnapshot as onSnapshot_
 } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useFirestore } from './provider';
 import { errorEmitter } from './error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from './errors';
+
 
 // Helper function to handle Firestore errors and emit events
 const handleError = (context: SecurityRuleContext, error: Error) => {
@@ -32,7 +41,7 @@ const handleError = (context: SecurityRuleContext, error: Error) => {
   throw error;
 };
 
-// Hook to get a collection
+
 export const useCollection = <T extends { id: string }>(collectionName: string) => {
   const firestore = useFirestore();
   const [data, setData] = useState<T[]>([]);
@@ -41,6 +50,7 @@ export const useCollection = <T extends { id: string }>(collectionName: string) 
 
   useEffect(() => {
     if (!firestore) return;
+    
     const context: SecurityRuleContext = { path: collectionName, operation: 'list' };
     const collectionRef = collection(firestore, collectionName);
     
@@ -53,6 +63,7 @@ export const useCollection = <T extends { id: string }>(collectionName: string) 
         });
         setData(result);
         setLoading(false);
+        setError(null);
       },
       (err) => {
         try {
@@ -63,8 +74,10 @@ export const useCollection = <T extends { id: string }>(collectionName: string) 
         setLoading(false);
       }
     );
-
-    return () => unsubscribe();
+    
+    return () => {
+      unsubscribe();
+    };
   }, [collectionName, firestore]);
 
   return { data, loading, error, setData };
@@ -120,7 +133,7 @@ export const addDocument = (
   firestore: Firestore,
   collectionName: string,
   data: DocumentData
-): Promise<DocumentReference<DocumentData>> => {
+) => {
   const collectionRef = collection(firestore, collectionName);
   
   return addDoc(collectionRef, {
@@ -135,7 +148,7 @@ export const addDocument = (
     };
     const permissionError = new FirestorePermissionError(context);
     errorEmitter.emit('permission-error', permissionError);
-    throw permissionError; 
+    throw permissionError;
   });
 };
 

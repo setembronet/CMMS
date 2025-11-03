@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -12,14 +11,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { costCenters as initialData } from '@/lib/data';
 import type { CostCenter } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { PlusCircle } from 'lucide-react';
+import { useCollection } from '@/firebase/firestore';
 
 export default function CostCentersPage() {
   const { t } = useI18n();
-  const [costCenters, setCostCenters] = React.useState<CostCenter[]>(initialData);
+  const { data: costCenters, loading } = useCollection<CostCenter>('costCenters');
 
   return (
     <div className="flex flex-col gap-8">
@@ -42,7 +41,11 @@ export default function CostCentersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {costCenters.map(center => (
+            {loading ? (
+                <TableRow>
+                    <TableCell colSpan={2} className="h-24 text-center">Carregando centros de custo...</TableCell>
+                </TableRow>
+            ) : costCenters.map(center => (
               <TableRow key={center.id}>
                 <TableCell className="font-medium">{center.name}</TableCell>
                 <TableCell className="text-muted-foreground">{center.description}</TableCell>

@@ -19,16 +19,21 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Wrench, AlertTriangle, Users, Package, CalendarCheck, CheckCircle, Play } from 'lucide-react';
-import { workOrders, assets, users, customerLocations } from '@/lib/data';
 import { useI18n } from '@/hooks/use-i18n';
-import type { WorkOrder, Asset, User, OrderStatus, OrderPriority } from '@/lib/types';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, CustomerLocation } from '@/lib/types';
 import { format, startOfWeek, endOfWeek, isToday } from 'date-fns';
 import { useClient } from '@/context/client-provider';
 import { useRouter } from 'next/navigation';
+import { useCollection } from '@/firebase/firestore';
 
 function ManagerDashboard() {
   const { t } = useI18n();
   const { selectedClient } = useClient();
+
+  const { data: workOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
+  const { data: assets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: users, loading: usersLoading } = useCollection<User>('users');
+
 
   const {
     openWorkOrders,
@@ -37,7 +42,7 @@ function ManagerDashboard() {
     activeTechnicians,
     recentActivities,
   } = React.useMemo(() => {
-    if (!selectedClient) {
+    if (!selectedClient || workOrdersLoading || assetsLoading || usersLoading) {
       return { openWorkOrders: [], urgentWorkOrders: [], assetsInMaintenance: [], activeTechnicians: [], recentActivities: [] };
     }
     const clientWorkOrders = workOrders.filter(wo => wo.clientId === selectedClient.id);
@@ -56,7 +61,7 @@ function ManagerDashboard() {
       .slice(0, 5);
       
     return { openWorkOrders, urgentWorkOrders, assetsInMaintenance, activeTechnicians, recentActivities };
-  }, [selectedClient]);
+  }, [selectedClient, workOrders, assets, users, workOrdersLoading, assetsLoading, usersLoading]);
   
   const getAssetName = (id: string) => assets.find(a => a.id === id)?.name || 'N/A';
 
@@ -169,13 +174,17 @@ function TechnicianDashboard() {
   const { currentUser } = useClient();
   const router = useRouter();
 
+  const { data: workOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
+  const { data: assets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: customerLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
+
   const {
     myOpenWos,
     scheduledForToday,
     completedThisWeek,
     upcomingWos
   } = React.useMemo(() => {
-    if (!currentUser) return { myOpenWos: 0, scheduledForToday: 0, completedThisWeek: 0, upcomingWos: [] };
+    if (!currentUser || workOrdersLoading || assetsLoading || locationsLoading) return { myOpenWos: 0, scheduledForToday: 0, completedThisWeek: 0, upcomingWos: [] };
     
     const myWorkOrders = workOrders.filter(wo => wo.responsibleId === currentUser.id);
     
@@ -199,7 +208,7 @@ function TechnicianDashboard() {
       .slice(0, 10);
 
     return { myOpenWos, scheduledForToday, completedThisWeek, upcomingWos };
-  }, [currentUser]);
+  }, [currentUser, workOrders, assets, customerLocations, workOrdersLoading, assetsLoading, locationsLoading]);
 
   const getAssetName = (id: string) => assets.find(a => a.id === id)?.name || 'N/A';
   const getCustomerLocationName = (assetId: string) => {
@@ -293,3 +302,5 @@ export default function DashboardPage() {
 
   return isTechnician ? <TechnicianDashboard /> : <ManagerDashboard />;
 }
+
+    

@@ -26,10 +26,12 @@ import {
 } from '@/components/ui/select';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import { schedules as initialSchedules, users as allUsers, setSchedules } from '@/lib/data';
 import type { Schedule, User, ShiftType } from '@/lib/types';
 import { EventInput } from '@fullcalendar/core';
 import './page.css';
+import { useCollection, addDocument, updateDocument, deleteDocument } from '@/firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const shiftTypes: { value: ShiftType; label: string, color: string }[] = [
   { value: 'TURNO_NORMAL', label: 'Turno Normal', color: '#3b82f6' },
@@ -40,21 +42,23 @@ const shiftTypes: { value: ShiftType; label: string, color: string }[] = [
 export default function SchedulePage() {
   const { selectedClient } = useClient();
   const { t } = useI18n();
+  const firestore = useFirestore();
+  const { toast } = useToast();
 
-  const [schedules, setLocalSchedules] = React.useState<Schedule[]>([]);
+  const { data: schedules, loading: schedulesLoading } = useCollection<Schedule>('schedules');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  
   const [clientUsers, setClientUsers] = React.useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [formData, setFormData] = React.useState<Partial<Schedule> | null>(null);
 
   React.useEffect(() => {
-    if (selectedClient) {
-      setLocalSchedules(initialSchedules);
+    if (selectedClient && !usersLoading) {
       setClientUsers(allUsers.filter(u => u.clientId === selectedClient.id && u.cmmsRole === 'TECNICO'));
     } else {
-      setLocalSchedules([]);
       setClientUsers([]);
     }
-  }, [selectedClient]);
+  }, [selectedClient, allUsers, usersLoading]);
 
   const calendarEvents = React.useMemo((): EventInput[] => {
     return schedules.map(schedule => {
@@ -74,7 +78,6 @@ export default function SchedulePage() {
 
   const handleDateSelect = (selectInfo: any) => {
     setFormData({
-      id: `sched-${Date.now()}`,
       start: selectInfo.start.getTime(),
       end: selectInfo.end.getTime(),
       type: 'TURNO_NORMAL',
@@ -87,36 +90,34 @@ export default function SchedulePage() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
-    if (!formData || !formData.id || !formData.technicianId || !formData.start || !formData.end) return;
+  const handleSave = async () => {
+    if (!formData || !formData.technicianId || !formData.start || !formData.end || !firestore) return;
     
-    const newSchedule: Schedule = {
-        id: formData.id,
-        technicianId: formData.technicianId,
-        start: formData.start,
-        end: formData.end,
-        type: formData.type || 'TURNO_NORMAL',
-    };
+    const { id, ...scheduleData } = formData as Schedule;
 
-    let updatedSchedules;
-    const existingIndex = schedules.findIndex(s => s.id === newSchedule.id);
-
-    if (existingIndex > -1) {
-        updatedSchedules = schedules.map(s => s.id === newSchedule.id ? newSchedule : s);
-    } else {
-        updatedSchedules = [...schedules, newSchedule];
+    try {
+      if (id && schedules.some(s => s.id === id)) {
+        await updateDocument(firestore, 'schedules', id, scheduleData);
+        toast({ title: 'Sucesso', description: 'Escala atualizada.' });
+      } else {
+        await addDocument(firestore, 'schedules', scheduleData);
+        toast({ title: 'Sucesso', description: 'Nova escala criada.' });
+      }
+      closeDialog();
+    } catch(err) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar a escala.' });
     }
-    setSchedules(updatedSchedules);
-    setLocalSchedules(updatedSchedules);
-    closeDialog();
   };
 
-  const handleDelete = () => {
-    if (!formData || !formData.id) return;
-    const updatedSchedules = schedules.filter(s => s.id !== formData.id);
-    setSchedules(updatedSchedules);
-    setLocalSchedules(updatedSchedules);
-    closeDialog();
+  const handleDelete = async () => {
+    if (!formData || !formData.id || !firestore) return;
+    try {
+      await deleteDocument(firestore, 'schedules', formData.id);
+      toast({ title: 'Sucesso', description: 'Escala removida.' });
+      closeDialog();
+    } catch(err) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível remover a escala.' });
+    }
   };
 
 
@@ -129,6 +130,8 @@ export default function SchedulePage() {
       if (!formData) return;
       setFormData(prev => prev ? ({...prev, [field]: value}) : null);
   }
+  
+  const isLoading = schedulesLoading || usersLoading;
 
   if (!selectedClient) {
     return (
@@ -152,35 +155,37 @@ export default function SchedulePage() {
         </div>
       </div>
       <div className="rounded-lg border shadow-sm p-4 flex-1 min-h-[600px]">
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay',
-          }}
-          initialView="dayGridMonth"
-          weekends={true}
-          events={calendarEvents}
-          selectable={true}
-          selectMirror={true}
-          dayMaxEvents={true}
-          select={handleDateSelect}
-          eventClick={handleEventClick}
-          locale='pt-br'
-          buttonText={{
-              today: 'Hoje',
-              month: 'Mês',
-              week: 'Semana',
-              day: 'Dia',
-          }}
-        />
+        {isLoading ? <p>Carregando agenda...</p> : (
+            <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay',
+            }}
+            initialView="dayGridMonth"
+            weekends={true}
+            events={calendarEvents}
+            selectable={true}
+            selectMirror={true}
+            dayMaxEvents={true}
+            select={handleDateSelect}
+            eventClick={handleEventClick}
+            locale='pt-br'
+            buttonText={{
+                today: 'Hoje',
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+            }}
+            />
+        )}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{formData?.id && schedules.some(s => s.id === formData.id) ? 'Editar Escala' : 'Nova Escala'}</DialogTitle>
+            <DialogTitle>{formData?.id ? 'Editar Escala' : 'Nova Escala'}</DialogTitle>
             <DialogDescription>
               Gerencie a escala do técnico para este período.
             </DialogDescription>
@@ -246,4 +251,4 @@ export default function SchedulePage() {
   );
 }
 
-  
+    

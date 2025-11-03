@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -12,17 +11,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { chartOfAccounts as initialData } from '@/lib/data';
 import type { ChartOfAccount } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { PlusCircle } from 'lucide-react';
+import { useCollection } from '@/firebase/firestore';
 
 
 export default function ChartOfAccountsPage() {
   const { t } = useI18n();
-  const [accounts, setAccounts] = React.useState<ChartOfAccount[]>(initialData);
+  const { data: accounts, loading } = useCollection<ChartOfAccount>('chartOfAccounts');
+
 
   const getAccountTypeBadge = (type: ChartOfAccount['type']) => {
     switch (type) {
@@ -36,7 +36,7 @@ export default function ChartOfAccountsPage() {
   };
 
   const sortedAccounts = React.useMemo(() => {
-    return accounts.sort((a, b) => a.code.localeCompare(b.code));
+    return [...accounts].sort((a, b) => a.code.localeCompare(b.code));
   }, [accounts]);
   
   return (
@@ -61,7 +61,11 @@ export default function ChartOfAccountsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedAccounts.map(account => (
+            {loading ? (
+                <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center">Carregando plano de contas...</TableCell>
+                </TableRow>
+            ) : sortedAccounts.map(account => (
               <TableRow key={account.id} className={cn(account.isGroup && 'bg-muted/50')}>
                 <TableCell className={cn("font-mono", account.isGroup ? 'font-bold' : `pl-${4 + (account.code.split('.').length - 1) * 4}`)}>
                     {account.code}
@@ -82,3 +86,5 @@ export default function ChartOfAccountsPage() {
     </div>
   );
 }
+
+    

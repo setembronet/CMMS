@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -40,8 +39,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, MoreHorizontal, History, Trash2, Camera, QrCode, HardHat, Package, Check, AlertTriangle, FilePlus } from 'lucide-react';
-import { workOrders, plans, products, users } from '@/lib/data';
-import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField } from '@/lib/types';
+import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField, Plan, Product, User } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -67,6 +65,11 @@ export default function AssetsPage() {
   const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
   const { data: allSegments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
   const { data: allLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
+  const { data: allWorkOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
+  const { data: allPlans, loading: plansLoading } = useCollection<Plan>('plans');
+  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+
 
   const [assets, setAssets] = React.useState<Asset[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -76,7 +79,7 @@ export default function AssetsPage() {
   const [availableLocations, setAvailableLocations] = React.useState<CustomerLocation[]>([]);
   const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
   
-  const clientPlan = React.useMemo(() => plans.find(p => p.id === selectedClient?.planId), [selectedClient]);
+  const clientPlan = React.useMemo(() => allPlans.find(p => p.id === selectedClient?.planId), [selectedClient, allPlans]);
   const assetLimit = clientPlan?.assetLimit ?? 0;
   const hasReachedAssetLimit = assetLimit !== -1 && assets.length >= assetLimit;
 
@@ -131,14 +134,14 @@ export default function AssetsPage() {
   const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
 
   const getAssetStatus = (assetId: string): AssetStatus => {
-    const hasOpenWorkOrder = workOrders.some(
+    const hasOpenWorkOrder = allWorkOrders.some(
         wo => wo.assetId === assetId && (wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO')
     );
     return hasOpenWorkOrder ? 'Em Manutenção' : 'Operacional';
   };
   
   const getWorkOrderCount = (assetId: string) => {
-      return workOrders.filter(wo => wo.assetId === assetId).length;
+      return allWorkOrders.filter(wo => wo.assetId === assetId).length;
   }
   
   const getStatusBadgeVariant = (status: AssetStatus) => {
@@ -266,7 +269,7 @@ export default function AssetsPage() {
   const getAssetTimeline = (asset: Asset | null) => {
     if (!asset) return [];
     
-    const assetWorkOrders = workOrders.filter(wo => wo.assetId === asset.id);
+    const assetWorkOrders = allWorkOrders.filter(wo => wo.assetId === asset.id);
     const events = [];
 
     // Asset Creation
@@ -287,7 +290,7 @@ export default function AssetsPage() {
         icon: FilePlus,
         color: "text-gray-500",
         title: `OS Aberta: ${wo.title}`,
-        description: `Criada por ${users.find(u=>u.id === wo.createdByUserId)?.name || 'Sistema'}`
+        description: `Criada por ${allUsers.find(u=>u.id === wo.createdByUserId)?.name || 'Sistema'}`
       });
 
       if (wo.partsUsed && wo.partsUsed.length > 0) {
@@ -297,7 +300,7 @@ export default function AssetsPage() {
           icon: HardHat,
           color: "text-orange-500",
           title: 'Troca de Peças',
-          description: `Peças: ${wo.partsUsed.map(p => `${p.quantity}x ${products.find(prod => prod.id === p.productId)?.name || '?'}`).join(', ')}`
+          description: `Peças: ${wo.partsUsed.map(p => `${p.quantity}x ${allProducts.find(prod => prod.id === p.productId)?.name || '?'}`).join(', ')}`
         });
       }
       
@@ -325,7 +328,7 @@ export default function AssetsPage() {
           icon: Check,
           color: "text-green-500",
           title: `OS Concluída: ${wo.title}`,
-          description: `Finalizada por ${users.find(u=>u.id === wo.responsibleId)?.name || 'Não atribuído'}`
+          description: `Finalizada por ${allUsers.find(u=>u.id === wo.responsibleId)?.name || 'Não atribuído'}`
         });
       }
     });
@@ -340,7 +343,7 @@ export default function AssetsPage() {
       </Button>
   );
 
-  const isLoading = assetsLoading || segmentsLoading || locationsLoading;
+  const isLoading = assetsLoading || segmentsLoading || locationsLoading || workOrdersLoading || plansLoading || productsLoading || usersLoading;
 
   if (!selectedClient) {
     return (
@@ -592,12 +595,12 @@ export default function AssetsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {workOrders.filter(wo => wo.assetId === editingAsset?.id).map(wo => (
+                                    {allWorkOrders.filter(wo => wo.assetId === editingAsset?.id).map(wo => (
                                         <TableRow key={wo.id}>
                                             <TableCell>{wo.title}</TableCell>
                                             <TableCell><Badge variant="outline">{wo.status}</Badge></TableCell>
                                             <TableCell>{format(new Date(wo.creationDate), "dd/MM/yyyy")}</TableCell>
-                                            <TableCell>{users.find(u => u.id === wo.responsibleId)?.name || 'N/A'}</TableCell>
+                                            <TableCell>{allUsers.find(u => u.id === wo.responsibleId)?.name || 'N/A'}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -638,3 +641,5 @@ export default function AssetsPage() {
     </TooltipProvider>
   );
 }
+
+    

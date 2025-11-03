@@ -13,11 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Languages, ChevronsUpDown } from 'lucide-react';
 import { useI18n } from '@/hooks/use-i18n';
 import { useClient } from '@/context/client-provider';
-import { companies } from '@/lib/data';
 
 export function Header() {
   const { setLocale, t } = useI18n();
-  const { selectedClient, setSelectedClientId, currentUser } = useClient();
+  const { selectedClient, setSelectedClientId, currentUser, companies } = useClient();
 
   const isTechnician = currentUser?.cmmsRole === 'TECNICO';
 
@@ -71,5 +70,3 @@ export function Header() {
     </header>
   );
 }
-
-    
