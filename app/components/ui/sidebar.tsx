@@ -704,7 +704,12 @@ const SidebarMenuSubItem = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} data-sidebar="menu-sub-item" className={cn("relative", className)} {...props} />
+  <div
+    ref={ref}
+    data-sidebar="menu-sub-item"
+    className={cn('relative', className)}
+    {...props}
+  />
 ));
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 

@@ -96,8 +96,9 @@ export function SidebarNav() {
       <SidebarContent className="flex flex-col p-2">
          <SidebarMenu>
           {/* Manager/Admin Menus */}
-          <Collapsible asChild defaultOpen={isSaaSFinanceActive}>
-              <SidebarMenuItem>
+          <SidebarMenuItem>
+            <Collapsible asChild defaultOpen={isSaaSFinanceActive}>
+              <>
                 <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         isActive={isSaaSFinanceActive}
@@ -158,11 +159,13 @@ export function SidebarNav() {
                           </SidebarMenuSubItem>
                     </SidebarMenuSub>
                 </CollapsibleContent>
-              </SidebarMenuItem>
+              </>
             </Collapsible>
+          </SidebarMenuItem>
 
-          <Collapsible asChild defaultOpen={isCompaniesActive}>
-            <SidebarMenuItem>
+          <SidebarMenuItem>
+            <Collapsible asChild defaultOpen={isCompaniesActive}>
+              <>
                 <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         isActive={isCompaniesActive}
@@ -196,223 +199,227 @@ export function SidebarNav() {
                           </SidebarMenuSubItem>
                     </SidebarMenuSub>
                 </CollapsibleContent>
-              </SidebarMenuItem>
+              </>
             </Collapsible>
+          </SidebarMenuItem>
           
+          <SidebarMenuItem>
             <Collapsible asChild defaultOpen={isCmmsActive}>
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        isActive={isCmmsActive}
-                        className="justify-between"
-                        tooltip={{ children: t('sidebar.cmms') }}
-                      >
-                        <div className="flex items-center gap-2">
-                            <Wrench />
-                            <span>{t('sidebar.cmms')}</span>
-                        </div>
-                        <ChevronDown className={cn("transition-transform duration-200", isCmmsActive && "rotate-180")} />
-                    </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                    <SidebarMenuSub>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard', true)}>
-                                <Link href="/dashboard">
-                                    <LayoutGrid />
-                                    <span>{t('sidebar.cmmsDashboard')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/clients', true)}>
-                                <Link href="/dashboard/clients">
-                                    <MapPin />
-                                    <span>{t('sidebar.clients')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/client-portal', true)}>
-                                <Link href="/dashboard/client-portal">
-                                    <Home />
-                                    <span>{t('sidebar.clientPortal')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/assets', true)}>
-                                <Link href="/dashboard/assets">
-                                    <Package />
-                                    <span>{t('sidebar.assets')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/contracts', true)}>
-                                <Link href="/dashboard/contracts">
-                                    <FileText />
-                                    <span>{t('sidebar.contracts')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/orders', true)}>
-                                <Link href="/dashboard/orders">
-                                    <ClipboardList />
-                                    <span>{t('sidebar.workOrders')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/users', true)}>
-                                <Link href="/dashboard/users">
-                                    <Users />
-                                    <span>{t('sidebar.users')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/schedule', true)}>
-                                <Link href="/dashboard/schedule">
-                                    <CalendarDays />
-                                    <span>{t('sidebar.schedule')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/products', true)}>
-                                <Link href="/dashboard/products">
-                                    <PackageSearch />
-                                    <span>{t('products.title')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/suppliers', true)}>
-                                <Link href="/dashboard/suppliers">
-                                    <Truck />
-                                    <span>{t('sidebar.suppliers')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/purchase-suggestion', true)}>
-                                <Link href="/dashboard/purchase-suggestion">
-                                    <Lightbulb />
-                                    <span>{t('sidebar.purchaseSuggestion')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={isActive('/dashboard/purchase-orders', true)}>
-                                <Link href="/dashboard/purchase-orders">
-                                    <ShoppingCart />
-                                    <span>{t('sidebar.purchaseOrders')}</span>
-                                </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                    
-                    <Collapsible asChild defaultOpen={isCmmsBackofficeActive}>
-                        <SidebarMenuItem>
-                            <CollapsibleTrigger asChild>
-                                <div className="flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 px-4 py-2 cursor-pointer hover:text-sidebar-foreground">
-                                    <span>{t('sidebar.backoffice')} (CMMS)</span>
-                                    <ChevronDown className={cn("transition-transform duration-200", isCmmsBackofficeActive && "rotate-180")} />
-                                </div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <SidebarMenuSub>
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/finance', true)}>
-                                            <Link href="/dashboard/cmms/finance">
-                                                <DollarSign />
-                                                <span>{t('cmms.finance.dashboardTitle')}</span>
-                                            </Link>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/bank-accounts', true)}>
-                                            <Link href="/dashboard/cmms/bank-accounts">
-                                                <Landmark />
-                                                <span>{t('sidebar.bankAccounts')}</span>
-                                            </Link>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/chart-of-accounts', true)}>
-                                            <Link href="/dashboard/cmms/chart-of-accounts">
-                                                <Library />
-                                                <span>{t('sidebar.chartOfAccounts')}</span>
-                                            </Link>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/cost-centers', true)}>
-                                            <Link href="/dashboard/cmms/cost-centers">
-                                                <Target />
-                                                <span>{t('sidebar.costCenters')}</span>
-                                            </Link>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-payable', true)}>
-                                            <Link href="/dashboard/cmms/accounts-payable">
-                                                <ArrowRightLeft />
-                                                <span>{t('sidebar.accountsPayable')}</span>
-                                            </Link>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-receivable', true)}>
-                                            <Link href="/dashboard/cmms/accounts-receivable">
-                                                <Receipt />
-                                                <span>{t('sidebar.accountsReceivable')}</span>
-                                            </Link>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                </SidebarMenuSub>
-                            </CollapsibleContent>
-                        </SidebarMenuItem>
-                    </Collapsible>
-
-                </CollapsibleContent>
-              </SidebarMenuItem>
-           </Collapsible>
+                <>
+                    <CollapsibleTrigger asChild>
+                        <SidebarMenuButton
+                            isActive={isCmmsActive}
+                            className="justify-between"
+                            tooltip={{ children: t('sidebar.cmms') }}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Wrench />
+                                <span>{t('sidebar.cmms')}</span>
+                            </div>
+                            <ChevronDown className={cn("transition-transform duration-200", isCmmsActive && "rotate-180")} />
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard', true)}>
+                                    <Link href="/dashboard">
+                                        <LayoutGrid />
+                                        <span>{t('sidebar.cmmsDashboard')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/clients', true)}>
+                                    <Link href="/dashboard/clients">
+                                        <MapPin />
+                                        <span>{t('sidebar.clients')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/client-portal', true)}>
+                                    <Link href="/dashboard/client-portal">
+                                        <Home />
+                                        <span>{t('sidebar.clientPortal')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/assets', true)}>
+                                    <Link href="/dashboard/assets">
+                                        <Package />
+                                        <span>{t('sidebar.assets')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/contracts', true)}>
+                                    <Link href="/dashboard/contracts">
+                                        <FileText />
+                                        <span>{t('sidebar.contracts')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/orders', true)}>
+                                    <Link href="/dashboard/orders">
+                                        <ClipboardList />
+                                        <span>{t('sidebar.workOrders')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/users', true)}>
+                                    <Link href="/dashboard/users">
+                                        <Users />
+                                        <span>{t('sidebar.users')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/schedule', true)}>
+                                    <Link href="/dashboard/schedule">
+                                        <CalendarDays />
+                                        <span>{t('sidebar.schedule')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/products', true)}>
+                                    <Link href="/dashboard/products">
+                                        <PackageSearch />
+                                        <span>{t('products.title')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/suppliers', true)}>
+                                    <Link href="/dashboard/suppliers">
+                                        <Truck />
+                                        <span>{t('sidebar.suppliers')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/purchase-suggestion', true)}>
+                                    <Link href="/dashboard/purchase-suggestion">
+                                        <Lightbulb />
+                                        <span>{t('sidebar.purchaseSuggestion')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/purchase-orders', true)}>
+                                    <Link href="/dashboard/purchase-orders">
+                                        <ShoppingCart />
+                                        <span>{t('sidebar.purchaseOrders')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                        
+                        <Collapsible asChild defaultOpen={isCmmsBackofficeActive}>
+                            <>
+                                <CollapsibleTrigger className="w-full">
+                                    <div className="flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 px-4 py-2 cursor-pointer hover:text-sidebar-foreground">
+                                        <span>{t('sidebar.backoffice')} (CMMS)</span>
+                                        <ChevronDown className={cn("transition-transform duration-200", isCmmsBackofficeActive && "rotate-180")} />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <SidebarMenuSub>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/finance', true)}>
+                                                <Link href="/dashboard/cmms/finance">
+                                                    <DollarSign />
+                                                    <span>{t('cmms.finance.dashboardTitle')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/bank-accounts', true)}>
+                                                <Link href="/dashboard/cmms/bank-accounts">
+                                                    <Landmark />
+                                                    <span>{t('sidebar.bankAccounts')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/chart-of-accounts', true)}>
+                                                <Link href="/dashboard/cmms/chart-of-accounts">
+                                                    <Library />
+                                                    <span>{t('sidebar.chartOfAccounts')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/cost-centers', true)}>
+                                                <Link href="/dashboard/cmms/cost-centers">
+                                                    <Target />
+                                                    <span>{t('sidebar.costCenters')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-payable', true)}>
+                                                <Link href="/dashboard/cmms/accounts-payable">
+                                                    <ArrowRightLeft />
+                                                    <span>{t('sidebar.accountsPayable')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/accounts-receivable', true)}>
+                                                <Link href="/dashboard/cmms/accounts-receivable">
+                                                    <Receipt />
+                                                    <span>{t('sidebar.accountsReceivable')}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    </SidebarMenuSub>
+                                </CollapsibleContent>
+                            </>
+                        </Collapsible>
+                    </CollapsibleContent>
+                </>
+            </Collapsible>
+           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu className="mt-auto">
-          <Collapsible asChild defaultOpen={isSettingsActive}>
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                  <SidebarMenuButton
-                      isActive={isSettingsActive}
-                      className="justify-between"
-                      tooltip={{ children: t('sidebar.settings') }}
-                  >
-                      <div className="flex items-center gap-2">
-                          <Settings />
-                          <span>{t('sidebar.settings')}</span>
-                      </div>
-                      <ChevronDown className={cn("transition-transform duration-200", isSettingsActive && "rotate-180")} />
-                  </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                  <SidebarMenuSub>
-                      {settingsLinks.map(link => (
-                           <SidebarMenuSubItem key={link.href}>
-                               <SidebarMenuSubButton asChild isActive={isActive(link.href, true)}>
-                                  <Link href={link.href}>
-                                      <link.icon />
-                                      <span>{link.label}</span>
-                                  </Link>
-                              </SidebarMenuSubButton>
-                           </SidebarMenuSubItem>
-                      ))}
-                  </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-           </Collapsible>
+           <SidebarMenuItem>
+                <Collapsible asChild defaultOpen={isSettingsActive}>
+                    <>
+                        <CollapsibleTrigger asChild>
+                            <SidebarMenuButton
+                                isActive={isSettingsActive}
+                                className="justify-between"
+                                tooltip={{ children: t('sidebar.settings') }}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Settings />
+                                    <span>{t('sidebar.settings')}</span>
+                                </div>
+                                <ChevronDown className={cn("transition-transform duration-200", isSettingsActive && "rotate-180")} />
+                            </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                            <SidebarMenuSub>
+                                {settingsLinks.map(link => (
+                                    <SidebarMenuSubItem key={link.href}>
+                                        <SidebarMenuSubButton asChild isActive={isActive(link.href, true)}>
+                                            <Link href={link.href}>
+                                                <link.icon />
+                                                <span>{link.label}</span>
+                                            </Link>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                ))}
+                            </SidebarMenuSub>
+                        </CollapsibleContent>
+                    </>
+                </Collapsible>
+           </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleLogout} tooltip={{ children: t('sidebar.logout') }}>
                     <LogOut />
