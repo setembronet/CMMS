@@ -212,6 +212,8 @@ export default function CompaniesPage() {
     }
   };
   
+  const isLoading = companiesLoading || segmentsLoading || addonsLoading || plansLoading;
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -233,7 +235,7 @@ export default function CompaniesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companiesLoading || plansLoading ? (
+            {isLoading ? (
                 <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">Carregando empresas...</TableCell>
                 </TableRow>
@@ -403,3 +405,5 @@ export default function CompaniesPage() {
     </div>
   );
 }
+
+    
