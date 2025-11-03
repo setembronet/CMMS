@@ -30,7 +30,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { plans, addons } from '@/lib/data';
+import { plans } from '@/lib/data';
 import type { Company, CompanySegment, Plan, Addon } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -68,6 +68,7 @@ export default function CompaniesPage() {
 
   const { data: companies, loading: companiesLoading } = useCollection<Company>('companies');
   const { data: segments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
+  const { data: addons, loading: addonsLoading } = useCollection<Addon>('addons');
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
@@ -162,24 +163,33 @@ export default function CompaniesPage() {
     }
   };
 
-  const handleSaveCompany = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveCompany = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firestore) return;
     
-    if (editingCompany) {
-        updateDocument(firestore, 'companies', editingCompany.id, formData);
+    try {
+        if (editingCompany) {
+            await updateDocument(firestore, 'companies', editingCompany.id, formData);
+            toast({
+                title: "Empresa Atualizada!",
+                description: `A empresa "${formData.name}" foi atualizada com sucesso.`,
+            });
+        } else {
+            await addDocument(firestore, 'companies', formData);
+            toast({
+                title: "Empresa Criada!",
+                description: `A empresa "${formData.name}" foi criada com sucesso.`,
+            });
+        }
+        closeDialog();
+    } catch (error) {
+        console.error("Erro ao salvar empresa:", error);
         toast({
-            title: "Empresa Atualizada!",
-            description: `A empresa "${formData.name}" foi atualizada com sucesso.`,
-        });
-    } else {
-        addDocument(firestore, 'companies', formData);
-        toast({
-            title: "Empresa Criada!",
-            description: `A empresa "${formData.name}" foi criada com sucesso.`,
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar os dados da empresa. Tente novamente."
         });
     }
-    closeDialog();
   };
 
   const toggleCompanyStatus = async (company: Company) => {
@@ -365,7 +375,7 @@ export default function CompaniesPage() {
                    <div>
                     <Label>{t('companies.contractedAddons')}</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg border p-4 mt-2">
-                        {addons.map(addon => (
+                        {addonsLoading ? <p>Carregando add-ons...</p> : addons.map(addon => (
                           <div key={addon.id} className="flex items-center gap-2">
                               <Checkbox 
                                 id={`addon-${addon.id}`}
@@ -392,3 +402,5 @@ export default function CompaniesPage() {
     </div>
   );
 }
+
+    
