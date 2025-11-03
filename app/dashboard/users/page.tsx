@@ -35,8 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { plans } from '@/lib/data';
-import type { User, CMMSRole, CompanySegment } from '@/lib/types';
+import type { User, CMMSRole, CompanySegment, Plan } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -66,6 +65,7 @@ export default function CMMSUsersPage() {
   const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
   const { data: allRoles, loading: rolesLoading } = useCollection<CMMSRole>('cmmsRoles');
   const { data: allSegments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
+  const { data: allPlans, loading: plansLoading } = useCollection<Plan>('plans');
 
   const [users, setUsers] = React.useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -74,7 +74,7 @@ export default function CMMSUsersPage() {
   const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength | null>(null);
   const [availableRoles, setAvailableRoles] = React.useState<CMMSRole[]>([]);
 
-  const clientPlan = React.useMemo(() => plans.find(p => p.id === selectedClient?.planId), [selectedClient]);
+  const clientPlan = React.useMemo(() => allPlans.find(p => p.id === selectedClient?.planId), [selectedClient, allPlans]);
   const technicianUsersCount = users.filter(u => u.cmmsRole === 'TECNICO').length;
   const technicianLimit = clientPlan?.technicianUserLimit ?? 0;
   const hasReachedTechnicianLimit = technicianLimit !== -1 && technicianUsersCount >= technicianLimit;
@@ -248,6 +248,8 @@ export default function CMMSUsersPage() {
     </Button>
   );
 
+  const isLoading = usersLoading || rolesLoading || segmentsLoading || plansLoading;
+
   if (!selectedClient) {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
@@ -286,7 +288,7 @@ export default function CMMSUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {usersLoading ? (
+              {isLoading ? (
                   <TableRow><TableCell colSpan={4} className="h-24 text-center">Carregando usuários...</TableCell></TableRow>
               ) : users.map((user) => (
                 <TableRow key={user.id}>
