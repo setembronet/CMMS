@@ -11,18 +11,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { companies, plans, addons } from '@/lib/data';
-import type { Company } from '@/lib/types';
+import type { Company, Plan, Addon } from '@/lib/types';
 import { useI18n } from '@/hooks/use-i18n';
+import { useCollection } from '@/firebase/firestore';
 
 export default function SubscriptionsPage() {
   const { t } = useI18n();
+  const { data: companies, loading: companiesLoading } = useCollection<Company>('companies');
+  const { data: plans, loading: plansLoading } = useCollection<Plan>('plans');
+  const { data: addons, loading: addonsLoading } = useCollection<Addon>('addons');
 
   const calculateMrr = (company: Company): number => {
     const plan = plans.find(p => p.id === company.planId);
     const planPrice = plan?.price || 0;
 
-    const addonsPrice = company.activeAddons.reduce((addonTotal, addonId) => {
+    const addonsPrice = (company.activeAddons || []).reduce((addonTotal, addonId) => {
         const addon = addons.find(a => a.id === addonId);
         return addonTotal + (addon?.price || 0);
     }, 0);
@@ -30,6 +33,8 @@ export default function SubscriptionsPage() {
     return planPrice + addonsPrice;
   };
   
+  const isLoading = companiesLoading || plansLoading || addonsLoading;
+
   return (
     <div className="flex flex-col gap-8">
        <div className="flex items-center justify-between">
@@ -46,7 +51,13 @@ export default function SubscriptionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companies.map(company => {
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">
+                  Carregando assinaturas...
+                </TableCell>
+              </TableRow>
+            ) : companies.map(company => {
               const plan = plans.find(p => p.id === company.planId);
               const mrr = calculateMrr(company);
 
@@ -57,7 +68,7 @@ export default function SubscriptionsPage() {
                     <Badge variant="outline">{plan?.name || 'N/A'}</Badge>
                   </TableCell>
                   <TableCell>
-                    {company.activeAddons.length > 0 ? (
+                    {(company.activeAddons || []).length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {company.activeAddons.map(addonId => {
                           const addon = addons.find(a => a.id === addonId);
