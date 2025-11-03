@@ -149,69 +149,68 @@ export default function PlansPage() {
               {editingPlan ? t('plans.dialog.editDescription') : t('plans.dialog.newDescription')}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSavePlan} id="plan-form" className="flex-1 overflow-y-auto -mx-6 px-6">
-            <ScrollArea className="h-full pr-6">
-              <div className="space-y-6 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                      <Label htmlFor="name">{t('plans.dialog.name')}</Label>
-                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+            <form onSubmit={handleSavePlan} id="plan-form" className="flex-1 overflow-y-auto -mx-6 px-6">
+              <ScrollArea className="h-full pr-6">
+                <div className="space-y-6 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">{t('plans.dialog.name')}</Label>
+                        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="price">{t('plans.dialog.monthlyValue')}</Label>
+                        <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} required />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="price">{t('plans.dialog.monthlyValue')}</Label>
-                      <Input id="price" name="price" type="number" value={formData.price} onChange={handleInputChange} required />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="assetLimit">{t('plans.dialog.assetLimit')}</Label>
+                      <Input id="assetLimit" name="assetLimit" type="number" value={formData.assetLimit} onChange={handleInputChange} required placeholder={t('plans.dialog.limitPlaceholder')}/>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="technicianUserLimit">{t('plans.dialog.technicianLimit')}</Label>
+                      <Input id="technicianUserLimit" name="technicianUserLimit" type="number" value={formData.technicianUserLimit} onChange={handleInputChange} required placeholder={t('plans.dialog.limitPlaceholder')}/>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <h3 className="text-lg font-medium">{t('plans.dialog.permissions')}</h3>
+                  <div className="space-y-4">
+                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div className="space-y-0.5">
+                              <Label>{t('plans.dialog.multiModule')}</Label>
+                              <p className="text-xs text-muted-foreground">{t('plans.dialog.multiModuleDescription')}</p>
+                          </div>
+                          <Switch name="hasMultiModuleAccess" checked={formData.hasMultiModuleAccess} onCheckedChange={(checked) => handleSwitchChange('hasMultiModuleAccess', checked)} />
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div className="space-y-0.5">
+                              <Label>{t('plans.dialog.bigQuery')}</Label>
+                              <p className="text-xs text-muted-foreground">{t('plans.dialog.bigQueryDescription')}</p>
+                          </div>
+                          <Switch name="hasBasicBigQueryAccess" checked={formData.hasBasicBigQueryAccess} onCheckedChange={(checked) => handleSwitchChange('hasBasicBigQueryAccess', checked)} />
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div className="space-y-0.5">
+                              <Label>{t('plans.dialog.iaAddon')}</Label>
+                              <p className="text-xs text-muted-foreground">{t('plans.dialog.iaAddonDescription')}</p>
+                          </div>
+                          <Switch name="hasIaAddonAccess" checked={formData.hasIaAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIaAddonAccess', checked)} />
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div className="space-y-0.5">
+                              <Label>{t('plans.dialog.iotAddon')}</Label>
+                              <p className="text-xs text-muted-foreground">{t('plans.dialog.iotAddonDescription')}</p>
+                          </div>
+                          <Switch name="hasIotAddonAccess" checked={formData.hasIotAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIotAddonAccess', checked)} />
+                      </div>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="assetLimit">{t('plans.dialog.assetLimit')}</Label>
-                    <Input id="assetLimit" name="assetLimit" type="number" value={formData.assetLimit} onChange={handleInputChange} required placeholder={t('plans.dialog.limitPlaceholder')}/>
-                  </div>
-                   <div className="space-y-2">
-                    <Label htmlFor="technicianUserLimit">{t('plans.dialog.technicianLimit')}</Label>
-                    <Input id="technicianUserLimit" name="technicianUserLimit" type="number" value={formData.technicianUserLimit} onChange={handleInputChange} required placeholder={t('plans.dialog.limitPlaceholder')}/>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <h3 className="text-lg font-medium">{t('plans.dialog.permissions')}</h3>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <Label>{t('plans.dialog.multiModule')}</Label>
-                            <p className="text-xs text-muted-foreground">{t('plans.dialog.multiModuleDescription')}</p>
-                        </div>
-                        <Switch name="hasMultiModuleAccess" checked={formData.hasMultiModuleAccess} onCheckedChange={(checked) => handleSwitchChange('hasMultiModuleAccess', checked)} />
-                    </div>
-                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <Label>{t('plans.dialog.bigQuery')}</Label>
-                            <p className="text-xs text-muted-foreground">{t('plans.dialog.bigQueryDescription')}</p>
-                        </div>
-                        <Switch name="hasBasicBigQueryAccess" checked={formData.hasBasicBigQueryAccess} onCheckedChange={(checked) => handleSwitchChange('hasBasicBigQueryAccess', checked)} />
-                    </div>
-                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <Label>{t('plans.dialog.iaAddon')}</Label>
-                            <p className="text-xs text-muted-foreground">{t('plans.dialog.iaAddonDescription')}</p>
-                        </div>
-                        <Switch name="hasIaAddonAccess" checked={formData.hasIaAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIaAddonAccess', checked)} />
-                    </div>
-                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <Label>{t('plans.dialog.iotAddon')}</Label>
-                            <p className="text-xs text-muted-foreground">{t('plans.dialog.iotAddonDescription')}</p>
-                        </div>
-                        <Switch name="hasIotAddonAccess" checked={formData.hasIotAddonAccess} onCheckedChange={(checked) => handleSwitchChange('hasIotAddonAccess', checked)} />
-                    </div>
-                </div>
-
-              </div>
-            </ScrollArea>
-          </form>
-          <DialogFooter className="pt-4 mt-auto border-t -mx-6 px-6 pb-6 sticky bottom-0 bg-background">
+              </ScrollArea>
+            </form>
+          <DialogFooter className="mt-auto pt-4 border-t">
             <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" form="plan-form">{t('common.save')}</Button>
           </DialogFooter>
