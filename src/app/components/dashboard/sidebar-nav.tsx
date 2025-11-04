@@ -33,7 +33,6 @@ import {
   Landmark,
   CalendarDays,
   LineChart,
-  TrendingDown,
 } from 'lucide-react';
 import {
   SidebarContent,
