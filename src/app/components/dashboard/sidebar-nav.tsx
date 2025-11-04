@@ -31,7 +31,7 @@ import {
   ArrowRightLeft,
   Landmark,
   CalendarDays,
-  LineChart
+  LineChart,
 } from 'lucide-react';
 import {
   SidebarContent,
