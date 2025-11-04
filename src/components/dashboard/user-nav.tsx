@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useI18n } from '@/hooks/use-i18n';
 import { useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -45,12 +46,14 @@ export function UserNav() {
     return name.substring(0, 2);
   }
 
+  const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            {currentUser?.avatarUrl && (
+            {currentUser?.avatarUrl ? (
                <AvatarImage asChild src={currentUser.avatarUrl}>
                 <Image 
                     src={currentUser.avatarUrl} 
@@ -59,8 +62,19 @@ export function UserNav() {
                     height={36} 
                 />
                </AvatarImage>
+            ) : userAvatar ? (
+               <AvatarImage asChild src={userAvatar.imageUrl}>
+                <Image 
+                    src={userAvatar.imageUrl} 
+                    alt="User Avatar" 
+                    width={36} 
+                    height={36} 
+                    data-ai-hint={userAvatar.imageHint} 
+                />
+               </AvatarImage>
+            ) : (
+              <AvatarFallback>{currentUser ? getInitials(currentUser.name) : '...'}</AvatarFallback>
             )}
-            <AvatarFallback>{currentUser ? getInitials(currentUser.name) : '...'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
