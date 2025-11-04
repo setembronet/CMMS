@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter
 } from '@/components/ui/card';
 import {
   Table,
@@ -27,17 +28,23 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Building, Wrench, AlertTriangle, CheckCircle } from 'lucide-react';
+import { PlusCircle, Building, Wrench, AlertTriangle, CheckCircle, Package, HardHat, FilePlus, Check, X } from 'lucide-react';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import type { Asset, WorkOrder, OrderStatus, OrderPriority, CustomerLocation } from '@/lib/types';
+import type { Asset, WorkOrder, OrderStatus, OrderPriority, CustomerLocation, User, Product } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirestore } from '@/firebase';
-import { useCollection, addDocument } from '@/firebase/firestore';
+import { addDocument, useCollection } from '@/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 
 const symptoms = [
     { value: 'Ruído Anormal', label: 'Ruído Anormal' },
@@ -60,13 +67,17 @@ export default function ClientPortalPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [isNewWoDialogOpen, setIsNewWoDialogOpen] = React.useState(false);
+  const [isNewWoFormVisible, setIsNewWoFormVisible] = React.useState(false);
   const [newWoFormData, setNewWoFormData] = React.useState<Partial<WorkOrder>>({});
+  const [isAssetDetailOpen, setIsAssetDetailOpen] = React.useState(false);
+  const [selectedAsset, setSelectedAsset] = React.useState<Asset | null>(null);
+
 
   const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
   const { data: allWorkOrders, loading: workOrdersLoading } = useCollection<WorkOrder>('workOrders');
   const { data: allCustomerLocations, loading: locationsLoading } = useCollection<CustomerLocation>('customerLocations');
-  const { data: allUsers, loading: usersLoading } = useCollection<any>('users');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
 
 
   const {
@@ -99,23 +110,30 @@ export default function ClientPortalPage() {
 
   }, [currentUser, allAssets, allWorkOrders, allCustomerLocations, assetsLoading, workOrdersLoading, locationsLoading]);
 
-  const openNewWoDialog = () => {
+  const toggleNewWoForm = () => {
     if (!userLocation || !currentUser) return;
-    setNewWoFormData({
-        clientId: userLocation.clientId,
-        status: 'ABERTO',
-        priority: 'Média',
-        createdByUserId: currentUser.id,
-        creationDate: new Date().getTime(),
-    });
-    setIsNewWoDialogOpen(true);
+    if (!isNewWoFormVisible) {
+        setNewWoFormData({
+            clientId: userLocation.clientId,
+            status: 'ABERTO',
+            priority: 'Média',
+            createdByUserId: currentUser.id,
+            creationDate: new Date().getTime(),
+        });
+    }
+    setIsNewWoFormVisible(prev => !prev);
+  };
+
+  const openAssetDetailDialog = (asset: Asset) => {
+    setSelectedAsset(asset);
+    setIsAssetDetailOpen(true);
   };
   
   const handleNewWoFormChange = (field: keyof WorkOrder, value: any) => {
     setNewWoFormData(prev => ({...prev, [field]: value}));
   };
 
-  const handleNewWoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleNewWoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firestore) return;
     
@@ -124,13 +142,18 @@ export default function ClientPortalPage() {
         return;
     }
 
-    addDocument(firestore, 'workOrders', newWoFormData);
-    toast({
-        title: "Chamado Aberto com Sucesso!",
-        description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
-    });
-    setIsNewWoDialogOpen(false);
-    setNewWoFormData({});
+    addDocument(firestore, 'workOrders', newWoFormData)
+      .then(() => {
+        toast({
+            title: "Chamado Aberto com Sucesso!",
+            description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
+        });
+        setIsNewWoFormVisible(false);
+        setNewWoFormData({});
+      })
+      .catch((error) => {
+        console.error("Failed to create work order:", error);
+      });
   };
 
   const getAssetName = (assetId: string) => allAssets.find(a => a.id === assetId)?.name || 'N/A';
@@ -144,8 +167,68 @@ export default function ClientPortalPage() {
       default: return <Badge variant="destructive">{status.replace(/_/g, ' ')}</Badge>;
     }
   };
+
+  const getAssetStatus = (assetId: string) => {
+    const hasOpenWorkOrder = allWorkOrders.some(
+        wo => wo.assetId === assetId && (wo.status === 'ABERTO' || wo.status === 'EM ANDAMENTO')
+    );
+    return hasOpenWorkOrder ? 'Em Manutenção' : 'Operacional';
+  };
   
-  const isLoading = assetsLoading || workOrdersLoading || locationsLoading || usersLoading;
+  const getAssetTimeline = (asset: Asset | null) => {
+    if (!asset || productsLoading || usersLoading || workOrdersLoading) return [];
+    
+    const assetWorkOrders = allWorkOrders.filter(wo => wo.assetId === asset.id);
+    const events = [];
+
+    // Asset Creation
+    events.push({
+      id: `evt-creation-${asset.id}`,
+      date: asset.creationDate,
+      icon: Package,
+      color: "text-blue-500",
+      title: "Ativo Instalado",
+      description: `O ativo '${asset.name}' foi cadastrado no nosso sistema.`
+    });
+
+    // Work Orders
+    assetWorkOrders.forEach(wo => {
+      events.push({
+        id: `evt-wo-open-${wo.id}`,
+        date: wo.creationDate,
+        icon: FilePlus,
+        color: "text-gray-500",
+        title: `Chamado Aberto: ${wo.title}`,
+        description: `Solicitado por ${allUsers.find(u=>u.id === wo.createdByUserId)?.name || 'Usuário do sistema'}`
+      });
+
+      if (wo.partsUsed && wo.partsUsed.length > 0) {
+        events.push({
+          id: `evt-wo-parts-${wo.id}`,
+          date: wo.endDate ? wo.endDate - 1000 : new Date().getTime(), // just before closing
+          icon: HardHat,
+          color: "text-orange-500",
+          title: 'Troca de Peças',
+          description: `Peças: ${wo.partsUsed.map(p => `${p.quantity}x ${allProducts.find(prod => prod.id === p.productId)?.name || '?'}`).join(', ')}`
+        });
+      }
+
+      if (wo.status === 'CONCLUIDO' && wo.endDate) {
+        events.push({
+          id: `evt-wo-close-${wo.id}`,
+          date: wo.endDate,
+          icon: Check,
+          color: "text-green-500",
+          title: `Serviço Concluído: ${wo.title}`,
+          description: `Finalizado por ${allUsers.find(u=>u.id === wo.responsibleId)?.name || 'Técnico'}`
+        });
+      }
+    });
+
+    return events.sort((a,b) => b.date - a.date);
+  }
+  
+  const isLoading = assetsLoading || workOrdersLoading || locationsLoading || usersLoading || productsLoading;
 
   return (
     <>
@@ -155,11 +238,70 @@ export default function ClientPortalPage() {
                   <h1 className="text-3xl font-bold font-headline">Portal do Cliente</h1>
                   <p className="text-muted-foreground">Bem-vindo, {currentUser?.name}. Aqui você acompanha tudo sobre seus ativos.</p>
               </div>
-              <Button size="lg" onClick={openNewWoDialog}>
+              <Button size="lg" onClick={toggleNewWoForm}>
                   <PlusCircle className="mr-2 h-5 w-5" />
                   Solicitar Serviço
               </Button>
           </div>
+
+          {isNewWoFormVisible && (
+              <Card className="mb-8">
+                  <CardHeader>
+                      <div className="flex items-center justify-between">
+                          <div>
+                              <CardTitle>Solicitar Novo Serviço</CardTitle>
+                              <CardDescription>Descreva o problema que você está enfrentando. Nossa equipe responderá em breve.</CardDescription>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => setIsNewWoFormVisible(false)}>
+                              <X className="h-4 w-4" />
+                          </Button>
+                      </div>
+                  </CardHeader>
+                  <form id="new-wo-form" onSubmit={handleNewWoSubmit}>
+                      <CardContent className="space-y-4">
+                          <div className="space-y-2">
+                              <Label htmlFor="assetId">Ativo</Label>
+                              <Select name="assetId" onValueChange={(v) => handleNewWoFormChange('assetId', v)} required>
+                                  <SelectTrigger><SelectValue placeholder="Selecione o equipamento com problema" /></SelectTrigger>
+                                  <SelectContent>{locationAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}</SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="symptom">Sintoma Observado</Label>
+                              <Select name="symptom" onValueChange={(v) => handleNewWoFormChange('description', v)} required>
+                                  <SelectTrigger><SelectValue placeholder="O que está acontecendo?" /></SelectTrigger>
+                                  <SelectContent>{symptoms.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="priority">Nível de Urgência</Label>
+                              <Select name="priority" onValueChange={(v) => handleNewWoFormChange('priority', v as OrderPriority)} defaultValue="Média" required>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>{urgencyLevels.map(ul => <SelectItem key={ul.value} value={ul.value}>{ul.label}</SelectItem>)}</SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="title">Título do Chamado</Label>
+                              <Input id="title" name="title" onChange={(e) => handleNewWoFormChange('title', e.target.value)} placeholder="Título curto do problema" required />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="description_details">Descrição Detalhada</Label>
+                              <Textarea id="description_details" name="description_details" onChange={(e) => handleNewWoFormChange('description', e.target.value)} placeholder="Forneça mais detalhes sobre o problema, se necessário." />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="media">Fotos ou Vídeos</Label>
+                              <Input id="media" type="file" />
+                              <p className="text-xs text-muted-foreground">Anexar uma foto ou vídeo pode nos ajudar a entender melhor o problema.</p>
+                          </div>
+                      </CardContent>
+                      <CardFooter className="justify-end gap-2">
+                          <Button type="button" variant="outline" onClick={() => setIsNewWoFormVisible(false)}>Cancelar</Button>
+                          <Button type="submit">Abrir Chamado</Button>
+                      </CardFooter>
+                  </form>
+              </Card>
+          )}
+
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
@@ -203,116 +345,108 @@ export default function ClientPortalPage() {
                   </CardContent>
               </Card>
           </div>
-
-          <Card>
-              <CardHeader>
-                  <CardTitle>Acompanhamento de Ordens de Serviço</CardTitle>
-                  <CardDescription>Veja o andamento dos chamados abertos e os últimos concluídos.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <Table>
-                      <TableHeader>
-                          <TableRow>
-                              <TableHead>Ativo</TableHead>
-                              <TableHead>Serviço</TableHead>
-                              <TableHead>Técnico</TableHead>
-                              <TableHead>Status</TableHead>
-                          </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                          {isLoading ? (
-                            <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">Carregando...</TableCell>
-                            </TableRow>
-                          ) : (
-                            <>
-                            {openWorkOrders.map(wo => (
-                                <TableRow key={`open-${wo.id}`}>
-                                    <TableCell className="font-medium">{getAssetName(wo.assetId)}</TableCell>
-                                    <TableCell>{wo.title}</TableCell>
-                                    <TableCell>{getTechnicianName(wo.responsibleId)}</TableCell>
-                                    <TableCell>{getStatusBadge(wo.status)}</TableCell>
+          
+          <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Acompanhamento de Ordens de Serviço</CardTitle>
+                      <CardDescription>Veja o andamento dos chamados abertos e os últimos concluídos.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <Table>
+                          <TableHeader>
+                              <TableRow>
+                                  <TableHead>Ativo</TableHead>
+                                  <TableHead>Serviço</TableHead>
+                                  <TableHead>Técnico</TableHead>
+                                  <TableHead>Status</TableHead>
+                              </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                              {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">Carregando...</TableCell>
                                 </TableRow>
-                            ))}
-                            {recentWorkOrders.map(wo => (
-                                <TableRow key={`recent-${wo.id}`} className="bg-muted/30">
-                                    <TableCell className="font-medium text-muted-foreground">{getAssetName(wo.assetId)}</TableCell>
-                                    <TableCell className="text-muted-foreground">{wo.title}</TableCell>
-                                    <TableCell className="text-muted-foreground">{getTechnicianName(wo.responsibleId)}</TableCell>
-                                    <TableCell>{getStatusBadge(wo.status)}</TableCell>
-                                </TableRow>
-                            ))}
-                            </>
-                          )}
-                      </TableBody>
-                  </Table>
-              </CardContent>
-          </Card>
-
+                              ) : (
+                                <>
+                                {openWorkOrders.map(wo => (
+                                    <TableRow key={`open-${wo.id}`}>
+                                        <TableCell className="font-medium">{getAssetName(wo.assetId)}</TableCell>
+                                        <TableCell>{wo.title}</TableCell>
+                                        <TableCell>{getTechnicianName(wo.responsibleId)}</TableCell>
+                                        <TableCell>{getStatusBadge(wo.status)}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {recentWorkOrders.map(wo => (
+                                    <TableRow key={`recent-${wo.id}`} className="bg-muted/30">
+                                        <TableCell className="font-medium text-muted-foreground">{getAssetName(wo.assetId)}</TableCell>
+                                        <TableCell className="text-muted-foreground">{wo.title}</TableCell>
+                                        <TableCell className="text-muted-foreground">{getTechnicianName(wo.responsibleId)}</TableCell>
+                                        <TableCell>{getStatusBadge(wo.status)}</TableCell>
+                                    </TableRow>
+                                ))}
+                                </>
+                              )}
+                          </TableBody>
+                      </Table>
+                  </CardContent>
+              </Card>
+               <Card>
+                <CardHeader>
+                    <CardTitle>Meus Ativos</CardTitle>
+                    <CardDescription>Clique em um ativo para ver seu histórico de manutenções.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        {locationAssets.map(asset => (
+                            <button key={asset.id} onClick={() => openAssetDetailDialog(asset)} className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-medium">{asset.name}</span>
+                                    <Badge variant={getAssetStatus(asset.id) === 'Operacional' ? 'default' : 'destructive'} className={getAssetStatus(asset.id) === 'Operacional' ? 'bg-green-600' : ''}>
+                                        {getAssetStatus(asset.id)}
+                                    </Badge>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </CardContent>
+              </Card>
+          </div>
       </div>
-
-      <Dialog open={isNewWoDialogOpen} onOpenChange={setIsNewWoDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                  <DialogTitle>Solicitar Novo Serviço</DialogTitle>
-                  <DialogDescription>
-                      Descreva o problema que você está enfrentando. Nossa equipe responderá em breve.
-                  </DialogDescription>
-              </DialogHeader>
-              <form id="new-wo-form" onSubmit={handleNewWoSubmit} className="space-y-4 py-4">
-                  <div className="space-y-2">
-                      <Label htmlFor="assetId">Ativo</Label>
-                      <Select name="assetId" onValueChange={(v) => handleNewWoFormChange('assetId', v)} required>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Selecione o equipamento com problema" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {locationAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                   <div className="space-y-2">
-                      <Label htmlFor="symptom">Sintoma Observado</Label>
-                      <Select name="symptom" onValueChange={(v) => handleNewWoFormChange('description', v)} required>
-                          <SelectTrigger>
-                              <SelectValue placeholder="O que está acontecendo?" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {symptoms.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                   <div className="space-y-2">
-                      <Label htmlFor="priority">Nível de Urgência</Label>
-                      <Select name="priority" onValueChange={(v) => handleNewWoFormChange('priority', v as OrderPriority)} defaultValue="Média" required>
-                          <SelectTrigger>
-                              <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {urgencyLevels.map(ul => <SelectItem key={ul.value} value={ul.value}>{ul.label}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="title">Título do Chamado</Label>
-                      <Input id="title" name="title" onChange={(e) => handleNewWoFormChange('title', e.target.value)} placeholder="Título curto do problema" required />
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="description_details">Descrição Detalhada</Label>
-                      <Textarea id="description_details" name="description_details" onChange={(e) => handleNewWoFormChange('description', e.target.value)} placeholder="Forneça mais detalhes sobre o problema, se necessário." />
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="media">Fotos ou Vídeos</Label>
-                      <Input id="media" type="file" />
-                      <p className="text-xs text-muted-foreground">Anexar uma foto ou vídeo pode nos ajudar a entender melhor o problema.</p>
-                  </div>
-              </form>
-              <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsNewWoDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" form="new-wo-form">Abrir Chamado</Button>
-              </DialogFooter>
-          </DialogContent>
+      
+      <Dialog open={isAssetDetailOpen} onOpenChange={setIsAssetDetailOpen}>
+        <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+                <DialogTitle>Dossiê do Ativo: {selectedAsset?.name}</DialogTitle>
+                <DialogDescription>
+                    Histórico de manutenções e intervenções realizadas neste equipamento.
+                </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+                <Timeline className="py-4">
+                    {getAssetTimeline(selectedAsset).map((event) => (
+                        <TimelineItem key={event.id}>
+                            <TimelineConnector />
+                            <TimelineHeader>
+                                <TimelineTime>{format(new Date(event.date), 'dd/MM/yy')}</TimelineTime>
+                                <TimelineIcon>
+                                    <event.icon className={cn("h-4 w-4", event.color)} />
+                                </TimelineIcon>
+                                <TimelineTitle>{event.title}</TimelineTitle>
+                            </TimelineHeader>
+                            <TimelineContent>
+                                <TimelineDescription>{event.description}</TimelineDescription>
+                            </TimelineContent>
+                        </TimelineItem>
+                    ))}
+                </Timeline>
+            </ScrollArea>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAssetDetailOpen(false)}>Fechar</Button>
+            </DialogFooter>
+        </DialogContent>
       </Dialog>
+
     </>
   );
 }

@@ -18,8 +18,9 @@ const CLIENT_ROLES = ['SINDICO', 'ZELADOR', 'PORTEIRO', 'GERENTE_PREDIAL'];
 function DashboardUI({ children }: { children: React.ReactNode }) {
     const { currentUser } = useClient();
     const isTechnician = currentUser?.cmmsRole === 'TECNICO';
+    const isClientUser = CLIENT_ROLES.includes(currentUser?.cmmsRole || '');
 
-    if (isTechnician) {
+    if (isTechnician || isClientUser) {
       return (
          <div className="flex flex-col h-screen">
             <Header />
@@ -63,14 +64,5 @@ export default function DashboardLayout({
     );
   }
   
-  if (currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
-      router.replace('/dashboard/client-portal');
-      return (
-         <div className="flex h-screen w-full items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
-         </div>
-      );
-  }
-
   return <DashboardUI>{children}</DashboardUI>;
 }
