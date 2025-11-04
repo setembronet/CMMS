@@ -27,9 +27,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, MoreHorizontal, Trash2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, Lightbulb } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { ChecklistTemplate, ChecklistGroup, ChecklistItem, CompanySegment, CustomFieldType } from '@/lib/types';
+import type { ChecklistTemplate, ChecklistGroup, ChecklistItem, CompanySegment, ChecklistItemResponseType } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useI18n } from '@/hooks/use-i18n';
@@ -37,6 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
+import { Textarea } from '@/components/ui/textarea';
 
 const emptyTemplate: Omit<ChecklistTemplate, 'id'> = {
   name: '',
@@ -51,15 +53,21 @@ const emptyGroup: Omit<ChecklistGroup, 'id'> = {
 
 const emptyItem: Omit<ChecklistItem, 'id'> = {
   text: '',
-  status: 'OK',
-  comment: '',
+  responseType: 'OK_NAO_OK',
+  technicalInstruction: '',
 };
+
+const responseTypes: { value: ChecklistItemResponseType, label: string }[] = [
+    { value: 'OK_NAO_OK', label: 'OK / Não OK' },
+    { value: 'NUMERICO', label: 'Numérico' },
+    { value: 'TEXTO', label: 'Texto Livre' },
+];
 
 export default function ChecklistTemplatesPage() {
   const { t } = useI18n();
   const { toast } = useToast();
   const firestore = useFirestore();
-
+  
   const { data: templates, loading: templatesLoading } = useCollection<ChecklistTemplate>('checklistTemplates');
   const { data: segments, loading: segmentsLoading } = useCollection<CompanySegment>('segments');
 
@@ -99,14 +107,15 @@ export default function ChecklistTemplatesPage() {
     setFormData(prev => ({ ...prev, checklistData: newChecklistData }));
   };
   
-  const handleItemChange = (groupIdx: number, itemIdx: number, value: string) => {
+  const handleItemChange = (groupIdx: number, itemIdx: number, field: keyof ChecklistItem, value: string) => {
       const newChecklistData = [...(formData.checklistData || [])];
-      newChecklistData[groupIdx].items[itemIdx].text = value;
+      // @ts-ignore
+      newChecklistData[groupIdx].items[itemIdx][field] = value;
       setFormData(prev => ({...prev, checklistData: newChecklistData}));
   };
   
   const addGroup = () => {
-      const newGroup = { ...emptyGroup, id: `group_${Date.now()}` };
+      const newGroup: ChecklistGroup = { ...emptyGroup, id: `group_${Date.now()}` };
       setFormData(prev => ({ ...prev, checklistData: [...(prev.checklistData || []), newGroup] }));
   }
 
@@ -133,20 +142,20 @@ export default function ChecklistTemplatesPage() {
     try {
         if (editingTemplate) {
             await updateDocument(firestore, 'checklistTemplates', editingTemplate.id, formData);
-            toast({
+             toast({
                 title: "Modelo Atualizado!",
                 description: `O modelo "${formData.name}" foi atualizado com sucesso.`,
             });
         } else {
             await addDocument(firestore, 'checklistTemplates', formData);
-            toast({
+             toast({
                 title: "Modelo Criado!",
                 description: `O modelo "${formData.name}" foi criado com sucesso.`,
             });
         }
         closeDialog();
     } catch (error) {
-        console.error("Erro ao salvar modelo:", error);
+         console.error("Erro ao salvar modelo:", error);
         toast({
             variant: "destructive",
             title: "Erro ao Salvar",
@@ -158,8 +167,6 @@ export default function ChecklistTemplatesPage() {
   const getSegmentName = (segmentId: string) => {
     return segments.find(s => s.id === segmentId)?.name || 'N/A';
   }
-
-  const isLoading = templatesLoading || segmentsLoading;
 
   return (
     <div className="flex flex-col gap-8">
@@ -181,10 +188,8 @@ export default function ChecklistTemplatesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">Carregando modelos...</TableCell>
-              </TableRow>
+            {templatesLoading ? (
+                <TableRow><TableCell colSpan={4} className="h-24 text-center">Carregando modelos...</TableCell></TableRow>
             ) : templates.map(template => (
               <TableRow key={template.id}>
                 <TableCell className="font-medium">{template.name}</TableCell>
@@ -215,8 +220,8 @@ export default function ChecklistTemplatesPage() {
         </Table>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editingTemplate ? 'Editar Modelo' : 'Novo Modelo de Checklist'}</DialogTitle>
             <DialogDescription>
@@ -224,7 +229,7 @@ export default function ChecklistTemplatesPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveTemplate} id="template-form">
-            <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+            <ScrollArea className="max-h-[70vh] -mx-6 px-6">
                 <div className="space-y-6 py-4 px-1">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -248,7 +253,7 @@ export default function ChecklistTemplatesPage() {
 
                     <div className="space-y-4">
                         {(formData.checklistData || []).map((group, groupIdx) => (
-                            <div key={group.id} className="p-4 border rounded-lg space-y-4">
+                            <div key={group.id || groupIdx} className="p-4 border rounded-lg space-y-4 bg-muted/20">
                                 <div className="flex items-center gap-2">
                                     <Input 
                                         value={group.title} 
@@ -260,17 +265,45 @@ export default function ChecklistTemplatesPage() {
                                         <Trash2 className="h-4 w-4 text-destructive"/>
                                     </Button>
                                 </div>
-                                <div className="pl-4 space-y-2">
+                                <div className="pl-4 space-y-3">
                                     {(group.items || []).map((item, itemIdx) => (
-                                        <div key={item.id} className="flex items-center gap-2">
-                                            <Input 
-                                                value={item.text} 
-                                                onChange={(e) => handleItemChange(groupIdx, itemIdx, e.target.value)} 
-                                                placeholder="Descrição do item do checklist"
-                                            />
-                                            <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(groupIdx, itemIdx)}>
-                                                <Trash2 className="h-4 w-4 text-destructive"/>
-                                            </Button>
+                                        <div key={item.id || itemIdx} className="p-4 border rounded-md bg-background space-y-4">
+                                            <div className="flex items-start gap-2">
+                                                <div className='flex-1 space-y-2'>
+                                                  <Label htmlFor={`item-text-${groupIdx}-${itemIdx}`}>Item de Verificação</Label>
+                                                  <Input 
+                                                      id={`item-text-${groupIdx}-${itemIdx}`}
+                                                      value={item.text} 
+                                                      onChange={(e) => handleItemChange(groupIdx, itemIdx, 'text', e.target.value)} 
+                                                      placeholder="Descrição do item do checklist"
+                                                  />
+                                                </div>
+                                                <Button type="button" variant="ghost" size="icon" className="mt-1" onClick={() => removeItem(groupIdx, itemIdx)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive"/>
+                                                </Button>
+                                            </div>
+                                             <div className="space-y-2">
+                                                <Label htmlFor={`item-instruction-${groupIdx}-${itemIdx}`}>Instrução Técnica (Opcional)</Label>
+                                                <Textarea 
+                                                    id={`item-instruction-${groupIdx}-${itemIdx}`}
+                                                    value={item.technicalInstruction || ''} 
+                                                    onChange={(e) => handleItemChange(groupIdx, itemIdx, 'technicalInstruction', e.target.value)} 
+                                                    placeholder="Detalhes técnicos, valores de referência, etc."
+                                                    className="text-xs"
+                                                    rows={2}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`item-response-${groupIdx}-${itemIdx}`}>Tipo de Resposta</Label>
+                                                <Select value={item.responseType} onValueChange={(v) => handleItemChange(groupIdx, itemIdx, 'responseType', v as ChecklistItemResponseType)}>
+                                                    <SelectTrigger id={`item-response-${groupIdx}-${itemIdx}`}>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {responseTypes.map(rt => <SelectItem key={rt.value} value={rt.value}>{rt.label}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
                                         </div>
                                     ))}
                                     <Button type="button" variant="outline" size="sm" onClick={() => addItem(groupIdx)}>

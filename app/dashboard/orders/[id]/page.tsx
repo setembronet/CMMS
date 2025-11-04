@@ -1,17 +1,18 @@
+
 'use client';
 
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { workOrders as initialWorkOrders, assets as allAssets, users as allUsers, products as initialProducts, setWorkOrders as setGlobalWorkOrders, checklistTemplates, rootCauses, recommendedActions } from '@/lib/data';
-import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Checklist, ChecklistItem, ChecklistItemStatus, WorkOrderPart, Product, RootCause, RecommendedAction } from '@/lib/types';
+import SignatureCanvas from 'react-signature-canvas';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Checklist, ChecklistItem, ChecklistItemStatus, WorkOrderPart, Product, RootCause, RecommendedAction, ChecklistItemResponseType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, CheckSquare, Info, ListChecks, Wrench, ShieldAlert, BadgeInfo, Trash2, PlusCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Play, Pause, CheckSquare, Info, ListChecks, Wrench, ShieldAlert, BadgeInfo, Trash2, PlusCircle, AlertTriangle, Camera, Edit, HelpCircle } from 'lucide-react';
 import { useI18n } from '@/hooks/use-i18n';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { format, differenceInMilliseconds } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +20,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useFirestore } from '@/firebase';
+import { useDocument, useCollection } from '@/firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const checklistStatuses: ChecklistItemStatus[] = ['OK', 'NÃO OK', 'N/A'];
 
@@ -26,38 +33,52 @@ export default function WorkOrderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { t } = useI18n();
+  const firestore = useFirestore();
+  const { toast } = useToast();
   
   const orderId = params.id as string;
   
-  const [workOrder, setWorkOrder] = React.useState<WorkOrder | null>(null);
+  const { data: workOrder, setData: setWorkOrder, loading: woLoading, error } = useDocument<WorkOrder>('workOrders', orderId);
+  const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
+  const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  const { data: initialProducts, loading: productsLoading } = useCollection<Product>('products');
+  const { data: checklistTemplates, loading: checklistsLoading } = useCollection<any>('checklistTemplates');
+  const { data: rootCauses, loading: rootCausesLoading } = useCollection<any>('rootCauses');
+  const { data: recommendedActions, loading: recommendedActionsLoading } = useCollection<any>('recommendedActions');
+
+
   const [asset, setAsset] = React.useState<Asset | null>(null);
   const [creator, setCreator] = React.useState<User | null>(null);
   const [technician, setTechnician] = React.useState<User | null>(null);
+  
+  const techSigCanvas = React.useRef<SignatureCanvas>(null);
+  const clientSigCanvas = React.useRef<SignatureCanvas>(null);
 
   React.useEffect(() => {
-    const order = initialWorkOrders.find(wo => wo.id === orderId);
-    if (order) {
-      const orderData = JSON.parse(JSON.stringify(order));
-       if (!orderData.checklist && orderData.checklistTemplateId) {
-        const template = checklistTemplates.find(t => t.id === orderData.checklistTemplateId);
+    if (workOrder && !assetsLoading && !usersLoading) {
+      const orderData = JSON.parse(JSON.stringify(workOrder));
+       if (!orderData.checklist && orderData.checklistTemplateId && !checklistsLoading) {
+        const template = checklistTemplates.find((t:any) => t.id === orderData.checklistTemplateId);
         if (template) {
           orderData.checklist = JSON.parse(JSON.stringify(template.checklistData));
         }
       }
-      setWorkOrder(orderData);
+      if(JSON.stringify(orderData) !== JSON.stringify(workOrder)) {
+        setWorkOrder(orderData);
+      }
       
-      const foundAsset = allAssets.find(a => a.id === order.assetId);
+      const foundAsset = allAssets.find(a => a.id === workOrder.assetId);
       setAsset(foundAsset || null);
       
-      const foundCreator = allUsers.find(u => u.id === order.createdByUserId);
+      const foundCreator = allUsers.find(u => u.id === workOrder.createdByUserId);
       setCreator(foundCreator || null);
       
-      const foundTechnician = allUsers.find(u => u.id === order.responsibleId);
+      const foundTechnician = allUsers.find(u => u.id === workOrder.responsibleId);
       setTechnician(foundTechnician || null);
     }
-  }, [orderId]);
+  }, [workOrder, allAssets, allUsers, checklistTemplates, setWorkOrder, assetsLoading, usersLoading, checklistsLoading]);
   
-  const handleChecklistItemChange = (groupIndex: number, itemIndex: number, field: keyof ChecklistItem, value: string) => {
+  const handleChecklistItemChange = (groupIndex: number, itemIndex: number, field: keyof ChecklistItem, value: any) => {
     if (!workOrder || !workOrder.checklist) return;
     const newChecklist = JSON.parse(JSON.stringify(workOrder.checklist)) as Checklist;
     // @ts-ignore
@@ -84,13 +105,18 @@ export default function WorkOrderDetailPage() {
     setWorkOrder(prev => prev ? ({ ...prev, partsUsed: (prev.partsUsed || []).filter((_, i) => i !== index) }) : null);
   };
 
-  const handleFieldChange = (field: keyof WorkOrder, value: string) => {
+  const handleFieldChange = (field: keyof WorkOrder, value: any) => {
     if (!workOrder) return;
     setWorkOrder(prev => prev ? { ...prev, [field]: value } : null);
   }
 
   const handleStatusChange = (newStatus: OrderStatus) => {
     if (!workOrder) return;
+    
+    if (newStatus === 'CONCLUIDO' && isCompletionBlocked) {
+        return; // Block completion if conditions are not met
+    }
+
     const updatedOrder = { ...workOrder, status: newStatus };
     if (newStatus === 'EM ANDAMENTO' && !workOrder.startDate) {
       updatedOrder.startDate = new Date().getTime();
@@ -100,12 +126,37 @@ export default function WorkOrderDetailPage() {
     setWorkOrder(updatedOrder);
   };
 
-  const handleSave = () => {
-    if (!workOrder) return;
-    const updatedWorkOrders = initialWorkOrders.map(wo => wo.id === workOrder.id ? workOrder : wo);
-    setGlobalWorkOrders(updatedWorkOrders);
-    // In a real app, you'd show a toast or confirmation
-    router.push('/dashboard/orders');
+  const handleSave = async () => {
+    if (!workOrder || !firestore) return;
+    try {
+        const { id, ...orderData } = workOrder;
+        await updateDoc(doc(firestore, 'workOrders', id), orderData);
+        toast({ title: "Sucesso!", description: "Ordem de serviço atualizada." });
+        router.push('/dashboard/orders');
+    } catch(error) {
+        console.error("Error saving work order:", error);
+        toast({ variant: 'destructive', title: "Erro", description: "Não foi possível salvar a ordem de serviço." });
+    }
+  };
+  
+  const handleSaveSignature = (type: 'tecnico' | 'cliente') => {
+      const canvas = type === 'tecnico' ? techSigCanvas.current : clientSigCanvas.current;
+      if (!canvas || !workOrder) return;
+
+      const signature = canvas.toDataURL(); // In a real app, upload this to Firebase Storage
+      const urlField = type === 'tecnico' ? 'assinaturaTecnicoUrl' : 'assinaturaClienteUrl';
+      const dateField = type === 'tecnico' ? 'dataAssinaturaTecnico' : 'dataAssinaturaCliente';
+      
+      setWorkOrder({
+          ...workOrder,
+          [urlField]: signature,
+          [dateField]: new Date().getTime(),
+      });
+  };
+
+  const clearSignature = (type: 'tecnico' | 'cliente') => {
+      const canvas = type === 'tecnico' ? techSigCanvas.current : clientSigCanvas.current;
+      if (canvas) canvas.clear();
   };
 
   const getPriorityBadgeClass = (priority: WorkOrder['priority']) => {
@@ -124,6 +175,9 @@ export default function WorkOrderDetailPage() {
       case 'EM ANDAMENTO': return 'bg-blue-500 text-white';
       case 'CONCLUIDO': return 'bg-green-500 text-white';
       case 'CANCELADO': return 'bg-red-500 text-white';
+      case 'EM_ESPERA_PECAS': return 'bg-amber-500 text-white';
+      case 'AGUARDANDO_APROVACAO': return 'bg-cyan-500 text-white';
+      case 'PENDENTE_RETORNO': return 'bg-purple-500 text-white';
       default: return 'bg-gray-200';
     }
   };
@@ -131,7 +185,13 @@ export default function WorkOrderDetailPage() {
   const getProduct = (id: string) => initialProducts.find(p => p.id === id);
   const getProductStock = (id: string) => getProduct(id)?.stock || 0;
 
-  if (!workOrder) {
+  const loading = woLoading || assetsLoading || usersLoading || productsLoading || checklistsLoading || rootCausesLoading || recommendedActionsLoading;
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-full"><p>Carregando Ordem de Serviço...</p></div>;
+  }
+  
+  if (error || !workOrder) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">Ordem de Serviço não encontrada.</p>
@@ -140,9 +200,12 @@ export default function WorkOrderDetailPage() {
   }
   
   const isConcluded = workOrder.status === 'CONCLUIDO' || workOrder.status === 'CANCELADO';
+  const isCompletionBlocked = workOrder.mediaObrigatoria && 
+                              (!workOrder.fotosAntesDepois?.antes || !workOrder.fotosAntesDepois?.depois);
 
 
   return (
+    <TooltipProvider>
     <div className="flex flex-col h-full bg-muted/20">
       {/* Header */}
       <header className="flex items-center gap-4 p-4 border-b bg-background sticky top-0 z-10">
@@ -155,7 +218,7 @@ export default function WorkOrderDetailPage() {
         </div>
         <div className="flex items-center gap-2">
             <Badge className={cn("hidden sm:flex", getPriorityBadgeClass(workOrder.priority))}>{workOrder.priority}</Badge>
-            <Badge className={getStatusBadgeClass(workOrder.status)}>{workOrder.status}</Badge>
+            <Badge className={getStatusBadgeClass(workOrder.status)}>{workOrder.status.replace(/_/g, ' ')}</Badge>
         </div>
       </header>
 
@@ -192,6 +255,43 @@ export default function WorkOrderDetailPage() {
             </CardContent>
         </Card>
 
+        {workOrder.mediaObrigatoria && (
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                         <CardTitle className="flex items-center gap-2 text-lg"><Camera /> Anexo de Mídia Obrigatório</CardTitle>
+                         <Badge variant="destructive">Requerido</Badge>
+                    </div>
+                    <CardDescription>Para concluir esta OS, é obrigatório anexar as fotos de "Antes" e "Depois" do serviço.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="foto-antes">Foto "Antes"</Label>
+                        <Input 
+                            id="foto-antes" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleFieldChange('fotosAntesDepois', {...workOrder.fotosAntesDepois, antes: e.target.value})}
+                            disabled={isConcluded}
+                        />
+                         {workOrder.fotosAntesDepois?.antes && <p className="text-xs text-muted-foreground">Arquivo selecionado.</p>}
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="foto-depois">Foto "Depois"</Label>
+                        <Input 
+                            id="foto-depois" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleFieldChange('fotosAntesDepois', {...workOrder.fotosAntesDepois, depois: e.target.value})}
+                             disabled={isConcluded}
+                        />
+                        {workOrder.fotosAntesDepois?.depois && <p className="text-xs text-muted-foreground">Arquivo selecionado.</p>}
+                    </div>
+                </CardContent>
+            </Card>
+        )}
+
+
         {workOrder.checklist && (
             <Card>
                 <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><ListChecks /> Checklist de Execução</CardTitle></CardHeader>
@@ -203,29 +303,44 @@ export default function WorkOrderDetailPage() {
                             <AccordionContent className="space-y-4 pt-4">
                                 {group.items.map((item, itemIndex) => (
                                     <div key={item.id} className="grid grid-cols-1 gap-4 rounded-md border p-4">
-                                        <Label className="font-medium">{item.text}</Label>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">{t('workOrders.dialog.checklistStatus')}</Label>
-                                                <Select value={item.status} onValueChange={(value) => handleChecklistItemChange(groupIndex, itemIndex, 'status', value)} disabled={isConcluded}>
-                                                    <SelectTrigger id={`checklist-status-${groupIndex}-${itemIndex}`}><SelectValue/></SelectTrigger>
-                                                    <SelectContent>
-                                                        {checklistStatuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">{t('workOrders.dialog.checklistComment')}</Label>
-                                                <Input 
-                                                    id={`checklist-comment-${groupIndex}-${itemIndex}`}
-                                                    value={item.comment || ''}
-                                                    onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'comment', e.target.value)}
-                                                    placeholder={t('workOrders.dialog.checklistCommentPlaceholder')}
-                                                    required={item.status === 'NÃO OK'}
-                                                    disabled={isConcluded}
-                                                />
-                                            </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label className="font-medium">{item.text}</Label>
+                                            {item.technicalInstruction && (
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild><HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" /></TooltipTrigger>
+                                                    <TooltipContent><p>{item.technicalInstruction}</p></TooltipContent>
+                                                </Tooltip>
+                                            )}
                                         </div>
+                                        {item.responseType === 'OK_NAO_OK' && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor={`checklist-status-${groupIndex}-${itemIndex}`} className="text-xs">Status</Label>
+                                                    <Select value={item.status} onValueChange={(value) => handleChecklistItemChange(groupIndex, itemIndex, 'status', value)} disabled={isConcluded}>
+                                                        <SelectTrigger id={`checklist-status-${groupIndex}-${itemIndex}`}><SelectValue/></SelectTrigger>
+                                                        <SelectContent>
+                                                            {checklistStatuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor={`checklist-comment-${groupIndex}-${itemIndex}`} className="text-xs">Comentário</Label>
+                                                    <Input id={`checklist-comment-${groupIndex}-${itemIndex}`} value={item.comment || ''} onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'comment', e.target.value)} placeholder="Se 'NÃO OK', detalhe aqui..." required={item.status === 'NÃO OK'} disabled={isConcluded} />
+                                                </div>
+                                            </div>
+                                        )}
+                                        {item.responseType === 'NUMERICO' && (
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`checklist-value-${groupIndex}-${itemIndex}`} className="text-xs">Valor Medido</Label>
+                                                <Input id={`checklist-value-${groupIndex}-${itemIndex}`} type="number" value={item.responseValue as number || ''} onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'responseValue', e.target.value)} placeholder="Insira o valor numérico" disabled={isConcluded} />
+                                            </div>
+                                        )}
+                                        {item.responseType === 'TEXTO' && (
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`checklist-text-${groupIndex}-${itemIndex}`} className="text-xs">Observação</Label>
+                                                <Textarea id={`checklist-text-${groupIndex}-${itemIndex}`} value={item.responseValue as string || ''} onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, 'responseValue', e.target.value)} placeholder="Descreva a observação" disabled={isConcluded} />
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </AccordionContent>
@@ -304,7 +419,7 @@ export default function WorkOrderDetailPage() {
                         <Select name="rootCause" value={workOrder.rootCause || ''} onValueChange={(value) => handleFieldChange('rootCause', value as RootCause)} disabled={isConcluded}>
                             <SelectTrigger><SelectValue placeholder={t('workOrders.dialog.failureCausePlaceholder')} /></SelectTrigger>
                             <SelectContent>
-                                {rootCauses.map(cause => <SelectItem key={cause.value} value={cause.value}>{cause.label}</SelectItem>)}
+                                {rootCauses.map((cause: any) => <SelectItem key={cause.value} value={cause.value}>{cause.label}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -313,7 +428,7 @@ export default function WorkOrderDetailPage() {
                         <Select name="recommendedAction" value={workOrder.recommendedAction || ''} onValueChange={(value) => handleFieldChange('recommendedAction', value as RecommendedAction)} disabled={isConcluded}>
                             <SelectTrigger><SelectValue placeholder={t('workOrders.dialog.recommendedActionPlaceholder')} /></SelectTrigger>
                             <SelectContent>
-                                {recommendedActions.map(action => <SelectItem key={action.value} value={action.value}>{action.label}</SelectItem>)}
+                                {recommendedActions.map((action:any) => <SelectItem key={action.value} value={action.value}>{action.label}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -324,35 +439,86 @@ export default function WorkOrderDetailPage() {
                 </div>
             </CardContent>
         </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg"><Edit /> Assinaturas</CardTitle>
+                <CardDescription>Coleta de assinaturas para validação do serviço.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label>Assinatura do Técnico: {technician?.name}</Label>
+                    {workOrder.assinaturaTecnicoUrl ? (
+                        <img src={workOrder.assinaturaTecnicoUrl} alt="Assinatura do Técnico" className="border rounded-md bg-white"/>
+                    ) : (
+                        <>
+                         <div className="border rounded-md bg-white">
+                           <SignatureCanvas ref={techSigCanvas} canvasProps={{ className: 'w-full h-40' }} />
+                         </div>
+                         <div className="flex gap-2">
+                           <Button size="sm" onClick={() => handleSaveSignature('tecnico')} disabled={isConcluded}>Salvar Assinatura</Button>
+                           <Button size="sm" variant="outline" onClick={() => clearSignature('tecnico')}>Limpar</Button>
+                         </div>
+                        </>
+                    )}
+                </div>
+                 <div className="space-y-2">
+                    <Label>Assinatura do Cliente/Responsável</Label>
+                     {workOrder.assinaturaClienteUrl ? (
+                        <img src={workOrder.assinaturaClienteUrl} alt="Assinatura do Cliente" className="border rounded-md bg-white"/>
+                    ) : (
+                        <>
+                         <div className="border rounded-md bg-white">
+                           <SignatureCanvas ref={clientSigCanvas} canvasProps={{ className: 'w-full h-40' }} />
+                         </div>
+                         <div className="flex gap-2">
+                           <Button size="sm" onClick={() => handleSaveSignature('cliente')} disabled={isConcluded}>Salvar Assinatura</Button>
+                           <Button size="sm" variant="outline" onClick={() => clearSignature('cliente')}>Limpar</Button>
+                         </div>
+                        </>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
 
       </main>
 
       {/* Footer Actions */}
-      {!isConcluded && (
-        <footer className="p-4 border-t bg-background sticky bottom-0 z-10">
-            {workOrder.status === 'ABERTO' && (
-                <Button className="w-full" size="lg" onClick={() => handleStatusChange('EM ANDAMENTO')}>
-                    <Play className="mr-2 h-4 w-4" />
-                    Iniciar Serviço
-                </Button>
-            )}
-            {workOrder.status === 'EM ANDAMENTO' && (
-                 <div className="grid grid-cols-2 gap-2">
-                    <Button className="w-full" variant="outline" onClick={() => handleStatusChange('ABERTO')}>
-                        <Pause className="mr-2 h-4 w-4" />
-                        Pausar
-                    </Button>
-                    <Button className="w-full" onClick={() => handleStatusChange('CONCLUIDO')}>
-                        <CheckSquare className="mr-2 h-4 w-4" />
-                        Finalizar Serviço
-                    </Button>
-                </div>
-            )}
-            {(workOrder.status === 'CONCLUIDO' || workOrder.status === 'CANCELADO') && (
-                <Button className="w-full" onClick={handleSave}>Salvar Alterações</Button>
-            )}
-        </footer>
-      )}
+      <footer className="p-4 border-t bg-background sticky bottom-0 z-10 space-y-2">
+          {isCompletionBlocked && workOrder.status === 'EM ANDAMENTO' && (
+              <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Finalização Bloqueada</AlertTitle>
+                  <AlertDescription>
+                      É necessário anexar as fotos de "Antes" e "Depois" para concluir esta Ordem de Serviço.
+                  </AlertDescription>
+              </Alert>
+          )}
+           {!isConcluded && (
+            <>
+              {workOrder.status === 'ABERTO' && (
+                  <Button className="w-full" size="lg" onClick={() => handleStatusChange('EM ANDAMENTO')}>
+                      <Play className="mr-2 h-4 w-4" />
+                      Iniciar Serviço
+                  </Button>
+              )}
+              {workOrder.status === 'EM ANDAMENTO' && (
+                   <div className="grid grid-cols-2 gap-2">
+                      <Button className="w-full" variant="outline" onClick={() => handleStatusChange('ABERTO')}>
+                          <Pause className="mr-2 h-4 w-4" />
+                          Pausar
+                      </Button>
+                      <Button className="w-full" onClick={() => handleStatusChange('CONCLUIDO')} disabled={isCompletionBlocked || !workOrder.assinaturaTecnicoUrl || !workOrder.assinaturaClienteUrl}>
+                          <CheckSquare className="mr-2 h-4 w-4" />
+                          Finalizar Serviço
+                      </Button>
+                  </div>
+              )}
+            </>
+           )}
+            <Button className="w-full" onClick={handleSave}>Salvar e Fechar</Button>
+      </footer>
     </div>
+    </TooltipProvider>
   );
 }

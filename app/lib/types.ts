@@ -1,4 +1,5 @@
 
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -61,6 +62,7 @@ export type OrderPriority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 export type MaintenanceFrequency = 'DIARIA' | 'SEMANAL' | 'QUINZENAL' | 'MENSAL' | 'TRIMESTRAL' | 'SEMESTRAL' | 'ANUAL';
 export type ContractType = 'Integral' | 'Mão de Obra';
 export type ChecklistItemStatus = 'OK' | 'NÃO OK' | 'N/A';
+export type ChecklistItemResponseType = 'OK_NAO_OK' | 'NUMERICO' | 'TEXTO';
 export type RootCause = 'Desgaste Natural' | 'Falha Humana' | 'Falha Elétrica' | 'Vandalismo' | 'Outro';
 export type RecommendedAction = 'Criar OS de Follow-up' | 'Monitorar' | 'Nenhuma Ação Necessária';
 export type PurchaseOrderStatus = 'Pendente' | 'Aprovada' | 'Recebida' | 'Cancelada';
@@ -158,9 +160,11 @@ export type WorkOrderPart = {
 export type ChecklistItem = {
   id: string;
   text: string;
-  status: ChecklistItemStatus;
+  status?: ChecklistItemStatus; // Becomes optional
   comment?: string;
-  photoUrl?: string; // For future use
+  responseType: ChecklistItemResponseType;
+  responseValue?: string | number; // For numeric or text responses
+  technicalInstruction?: string;
 };
 
 export type ChecklistGroup = {
