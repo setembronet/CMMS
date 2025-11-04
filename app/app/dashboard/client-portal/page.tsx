@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter
 } from '@/components/ui/card';
 import {
   Table,
@@ -27,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Building, Wrench, AlertTriangle, CheckCircle, Package, HardHat, FilePlus, Check } from 'lucide-react';
+import { PlusCircle, Building, Wrench, AlertTriangle, CheckCircle, Package, HardHat, FilePlus, Check, X } from 'lucide-react';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
 import type { Asset, WorkOrder, OrderStatus, OrderPriority, CustomerLocation, Product, User } from '@/lib/types';
@@ -42,6 +43,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 
 const symptoms = [
@@ -65,7 +67,7 @@ export default function ClientPortalPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [isNewWoDialogOpen, setIsNewWoDialogOpen] = React.useState(false);
+  const [isNewWoFormVisible, setIsNewWoFormVisible] = React.useState(false);
   const [newWoFormData, setNewWoFormData] = React.useState<Partial<WorkOrder>>({});
   const [isAssetDetailOpen, setIsAssetDetailOpen] = React.useState(false);
   const [selectedAsset, setSelectedAsset] = React.useState<Asset | null>(null);
@@ -108,7 +110,7 @@ export default function ClientPortalPage() {
 
   }, [currentUser, allAssets, allWorkOrders, allCustomerLocations, assetsLoading, workOrdersLoading, locationsLoading]);
 
-  const openNewWoDialog = () => {
+  const toggleNewWoForm = () => {
     if (!userLocation || !currentUser) return;
     setNewWoFormData({
         clientId: userLocation.clientId,
@@ -117,7 +119,7 @@ export default function ClientPortalPage() {
         createdByUserId: currentUser.id,
         creationDate: new Date().getTime(),
     });
-    setIsNewWoDialogOpen(true);
+    setIsNewWoFormVisible(prev => !prev);
   };
 
   const openAssetDetailDialog = (asset: Asset) => {
@@ -144,7 +146,7 @@ export default function ClientPortalPage() {
             title: "Chamado Aberto com Sucesso!",
             description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
         });
-        setIsNewWoDialogOpen(false);
+        setIsNewWoFormVisible(false);
         setNewWoFormData({});
       })
       .catch((error) => {
@@ -235,11 +237,72 @@ export default function ClientPortalPage() {
                   <h1 className="text-3xl font-bold font-headline">Portal do Cliente</h1>
                   <p className="text-muted-foreground">Bem-vindo, {currentUser?.name}. Aqui você acompanha tudo sobre seus ativos.</p>
               </div>
-              <Button size="lg" onClick={openNewWoDialog}>
+              <Button size="lg" onClick={toggleNewWoForm}>
                   <PlusCircle className="mr-2 h-5 w-5" />
                   Solicitar Serviço
               </Button>
           </div>
+
+          <Collapsible open={isNewWoFormVisible} onOpenChange={setIsNewWoFormVisible}>
+            <CollapsibleContent>
+              <Card className="mb-8">
+                  <CardHeader>
+                      <div className="flex items-center justify-between">
+                          <div>
+                              <CardTitle>Solicitar Novo Serviço</CardTitle>
+                              <CardDescription>Descreva o problema que você está enfrentando. Nossa equipe responderá em breve.</CardDescription>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => setIsNewWoFormVisible(false)}>
+                              <X className="h-4 w-4" />
+                          </Button>
+                      </div>
+                  </CardHeader>
+                  <form id="new-wo-form" onSubmit={handleNewWoSubmit}>
+                      <CardContent className="space-y-4">
+                          <div className="space-y-2">
+                              <Label htmlFor="assetId">Ativo</Label>
+                              <Select name="assetId" onValueChange={(v) => handleNewWoFormChange('assetId', v)} required>
+                                  <SelectTrigger><SelectValue placeholder="Selecione o equipamento com problema" /></SelectTrigger>
+                                  <SelectContent>{locationAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}</SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="symptom">Sintoma Observado</Label>
+                              <Select name="symptom" onValueChange={(v) => handleNewWoFormChange('description', v)} required>
+                                  <SelectTrigger><SelectValue placeholder="O que está acontecendo?" /></SelectTrigger>
+                                  <SelectContent>{symptoms.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="priority">Nível de Urgência</Label>
+                              <Select name="priority" onValueChange={(v) => handleNewWoFormChange('priority', v as OrderPriority)} defaultValue="Média" required>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>{urgencyLevels.map(ul => <SelectItem key={ul.value} value={ul.value}>{ul.label}</SelectItem>)}</SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="title">Título do Chamado</Label>
+                              <Input id="title" name="title" onChange={(e) => handleNewWoFormChange('title', e.target.value)} placeholder="Título curto do problema" required />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="description_details">Descrição Detalhada</Label>
+                              <Textarea id="description_details" name="description_details" onChange={(e) => handleNewWoFormChange('description', e.target.value)} placeholder="Forneça mais detalhes sobre o problema, se necessário." />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="media">Fotos ou Vídeos</Label>
+                              <Input id="media" type="file" />
+                              <p className="text-xs text-muted-foreground">Anexar uma foto ou vídeo pode nos ajudar a entender melhor o problema.</p>
+                          </div>
+                      </CardContent>
+                      <CardFooter className="justify-end gap-2">
+                          <Button type="button" variant="outline" onClick={() => setIsNewWoFormVisible(false)}>Cancelar</Button>
+                          <Button type="submit">Abrir Chamado</Button>
+                      </CardFooter>
+                  </form>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
+
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
@@ -351,69 +414,6 @@ export default function ClientPortalPage() {
               </Card>
           </div>
       </div>
-
-      <Dialog open={isNewWoDialogOpen} onOpenChange={setIsNewWoDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                  <DialogTitle>Solicitar Novo Serviço</DialogTitle>
-                  <DialogDescription>
-                      Descreva o problema que você está enfrentando. Nossa equipe responderá em breve.
-                  </DialogDescription>
-              </DialogHeader>
-              <form id="new-wo-form" onSubmit={handleNewWoSubmit} className="space-y-4 py-4">
-                  <div className="space-y-2">
-                      <Label htmlFor="assetId">Ativo</Label>
-                      <Select name="assetId" onValueChange={(v) => handleNewWoFormChange('assetId', v)} required>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Selecione o equipamento com problema" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {locationAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                   <div className="space-y-2">
-                      <Label htmlFor="symptom">Sintoma Observado</Label>
-                      <Select name="symptom" onValueChange={(v) => handleNewWoFormChange('description', v)} required>
-                          <SelectTrigger>
-                              <SelectValue placeholder="O que está acontecendo?" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {symptoms.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                   <div className="space-y-2">
-                      <Label htmlFor="priority">Nível de Urgência</Label>
-                      <Select name="priority" onValueChange={(v) => handleNewWoFormChange('priority', v as OrderPriority)} defaultValue="Média" required>
-                          <SelectTrigger>
-                              <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {urgencyLevels.map(ul => <SelectItem key={ul.value} value={ul.value}>{ul.label}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="title">Título do Chamado</Label>
-                      <Input id="title" name="title" onChange={(e) => handleNewWoFormChange('title', e.target.value)} placeholder="Título curto do problema" required />
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="description_details">Descrição Detalhada</Label>
-                      <Textarea id="description_details" name="description_details" onChange={(e) => handleNewWoFormChange('description', e.target.value)} placeholder="Forneça mais detalhes sobre o problema, se necessário." />
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="media">Fotos ou Vídeos</Label>
-                      <Input id="media" type="file" />
-                      <p className="text-xs text-muted-foreground">Anexar uma foto ou vídeo pode nos ajudar a entender melhor o problema.</p>
-                  </div>
-              </form>
-              <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsNewWoDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" form="new-wo-form">Abrir Chamado</Button>
-              </DialogFooter>
-          </DialogContent>
-      </Dialog>
       
       <Dialog open={isAssetDetailOpen} onOpenChange={setIsAssetDetailOpen}>
         <DialogContent className="sm:max-w-2xl">
@@ -451,4 +451,3 @@ export default function ClientPortalPage() {
     </>
   );
 }
-
