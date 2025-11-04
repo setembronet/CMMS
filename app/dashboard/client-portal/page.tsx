@@ -151,8 +151,8 @@ export default function ClientPortalPage() {
         setIsNewWoFormVisible(false);
         setNewWoFormData({});
       })
-      .catch((error) => {
-        console.error("Failed to create work order:", error);
+      .catch((serverError) => {
+         console.error("Failed to create work order:", serverError);
       });
   };
 
@@ -232,7 +232,7 @@ export default function ClientPortalPage() {
 
   return (
     <>
-      <div className="p-4 md:p-8 lg:p-10 space-y-8">
+      <div className="space-y-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                   <h1 className="text-3xl font-bold font-headline">Portal do Cliente</h1>
@@ -244,7 +244,8 @@ export default function ClientPortalPage() {
               </Button>
           </div>
 
-          {isNewWoFormVisible && (
+          <Collapsible open={isNewWoFormVisible} onOpenChange={setIsNewWoFormVisible}>
+            <CollapsibleContent>
               <Card className="mb-8">
                   <CardHeader>
                       <div className="flex items-center justify-between">
@@ -300,7 +301,8 @@ export default function ClientPortalPage() {
                       </CardFooter>
                   </form>
               </Card>
-          )}
+            </CollapsibleContent>
+          </Collapsible>
 
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -15,33 +15,6 @@ import { Loader2 } from 'lucide-react';
 
 const CLIENT_ROLES = ['SINDICO', 'ZELADOR', 'PORTEIRO', 'GERENTE_PREDIAL'];
 
-function DashboardUI({ children }: { children: React.ReactNode }) {
-    const { currentUser } = useClient();
-    const isTechnician = currentUser?.cmmsRole === 'TECNICO';
-    const isClientUser = CLIENT_ROLES.includes(currentUser?.cmmsRole || '');
-
-    if (isTechnician || isClientUser) {
-      return (
-         <div className="flex flex-col h-screen">
-            <Header />
-            <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
-         </div>
-      )
-    }
-  
-    return (
-        <SidebarProvider>
-            <Sidebar>
-                <SidebarNav />
-            </Sidebar>
-            <SidebarInset>
-                <Header />
-                <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
-            </SidebarInset>
-        </SidebarProvider>
-    );
-}
-
 export default function DashboardLayout({
   children,
 }: {
@@ -64,5 +37,26 @@ export default function DashboardLayout({
     );
   }
   
-  return <DashboardUI>{children}</DashboardUI>;
+  const isClientUser = CLIENT_ROLES.includes(currentUser?.cmmsRole || '');
+  if (isClientUser) {
+    return (
+       <div className="flex flex-col min-h-screen bg-muted/30">
+          <Header />
+          <main className="p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
+       </div>
+    )
+  }
+
+  // Layout for Admins, Technicians, etc.
+  return (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarNav />
+      </Sidebar>
+      <SidebarInset>
+        <Header />
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }

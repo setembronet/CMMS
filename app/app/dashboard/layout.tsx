@@ -18,6 +18,7 @@ const CLIENT_ROLES = ['SINDICO', 'ZELADOR', 'PORTEIRO', 'GERENTE_PREDIAL'];
 function DashboardUI({ children }: { children: React.ReactNode }) {
     const { currentUser } = useClient();
     const isTechnician = currentUser?.cmmsRole === 'TECNICO';
+    const isClientUser = CLIENT_ROLES.includes(currentUser?.cmmsRole || '');
 
     if (isTechnician) {
       return (
@@ -26,6 +27,14 @@ function DashboardUI({ children }: { children: React.ReactNode }) {
             <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
          </div>
       )
+    }
+    
+    if (isClientUser) {
+        return (
+            <div className="flex flex-col min-h-screen bg-muted/30">
+                <main className="flex-1">{children}</main>
+            </div>
+        );
     }
   
     return (
@@ -50,24 +59,18 @@ export default function DashboardLayout({
   const router = useRouter();
   
   React.useEffect(() => {
-      if (!authLoading) {
-          if (!currentUser) {
-              router.replace('/');
-          } else if (CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
-              // Client users don't have a specific portal anymore,
-              // log them out or redirect to login.
-              router.replace('/');
-          }
+      if (!authLoading && !currentUser) {
+          router.replace('/');
       }
   }, [currentUser, authLoading, router]);
 
-  if (authLoading || !currentUser || (currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || ''))) {
+  if (authLoading || !currentUser) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
-
+  
   return <DashboardUI>{children}</DashboardUI>;
 }

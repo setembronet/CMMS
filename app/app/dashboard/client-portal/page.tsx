@@ -31,7 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Building, Wrench, AlertTriangle, CheckCircle, Package, HardHat, FilePlus, Check, X } from 'lucide-react';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import type { Asset, WorkOrder, OrderStatus, OrderPriority, CustomerLocation, Product, User } from '@/lib/types';
+import type { Asset, WorkOrder, OrderStatus, OrderPriority, CustomerLocation, User, Product } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -112,13 +112,15 @@ export default function ClientPortalPage() {
 
   const toggleNewWoForm = () => {
     if (!userLocation || !currentUser) return;
-    setNewWoFormData({
-        clientId: userLocation.clientId,
-        status: 'ABERTO',
-        priority: 'Média',
-        createdByUserId: currentUser.id,
-        creationDate: new Date().getTime(),
-    });
+    if (!isNewWoFormVisible) {
+        setNewWoFormData({
+            clientId: userLocation.clientId,
+            status: 'ABERTO',
+            priority: 'Média',
+            createdByUserId: currentUser.id,
+            creationDate: new Date().getTime(),
+        });
+    }
     setIsNewWoFormVisible(prev => !prev);
   };
 
@@ -150,7 +152,6 @@ export default function ClientPortalPage() {
         setNewWoFormData({});
       })
       .catch((error) => {
-        // Error is handled by the global error emitter in firestore.ts
         console.error("Failed to create work order:", error);
       });
   };
