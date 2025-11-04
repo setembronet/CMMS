@@ -79,6 +79,11 @@ export type CMMSRole = {
 
 export type UserRole = SaaSUserRole | CMMSRole['name'] | string;
 
+export type LocalStockItem = {
+  productId: string;
+  quantity: number;
+}
+
 export type User = {
   id: string;
   name: string;
@@ -92,6 +97,7 @@ export type User = {
   avatarUrl: string;
   password?: string;
   costPerHour?: number;
+  estoqueLocal?: LocalStockItem[];
 };
 
 export type Plan = {

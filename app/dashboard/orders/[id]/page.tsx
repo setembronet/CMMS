@@ -22,7 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useFirestore } from '@/firebase';
-import { useDocument, useCollection } from '@/firebase/firestore';
+import { useDocument, useCollection, updateDocument as updateFirestoreDoc } from '@/firebase/firestore';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -130,7 +130,37 @@ export default function WorkOrderDetailPage() {
     if (!workOrder || !firestore) return;
     try {
         const { id, ...orderData } = workOrder;
-        await updateDoc(doc(firestore, 'workOrders', id), orderData);
+
+        if (orderData.status === 'CONCLUIDO' && orderData.responsibleId && orderData.partsUsed) {
+            const tech = allUsers.find(u => u.id === orderData.responsibleId);
+            if (tech) {
+                const techStock = tech.estoqueLocal ? [...tech.estoqueLocal] : [];
+                const centralStockUpdates: { [productId: string]: number } = {};
+
+                for (const part of orderData.partsUsed) {
+                    const techStockItem = techStock.find(item => item.productId === part.productId);
+                    if (techStockItem && techStockItem.quantity >= part.quantity) {
+                        techStockItem.quantity -= part.quantity;
+                    } else {
+                        const centralQty = techStockItem ? part.quantity - techStockItem.quantity : part.quantity;
+                        if(techStockItem) techStockItem.quantity = 0;
+                        centralStockUpdates[part.productId] = (centralStockUpdates[part.productId] || 0) + centralQty;
+                    }
+                }
+                const updatedTechStock = techStock.filter(item => item.quantity > 0);
+                await updateFirestoreDoc(firestore, 'users', tech.id, { estoqueLocal: updatedTechStock });
+
+                for (const productId in centralStockUpdates) {
+                     const product = initialProducts.find(p => p.id === productId);
+                     if(product) {
+                        const newStock = product.stock - centralStockUpdates[productId];
+                        await updateFirestoreDoc(firestore, 'products', productId, { stock: newStock });
+                     }
+                }
+            }
+        }
+        
+        await updateFirestoreDoc(firestore, 'workOrders', id, orderData);
         toast({ title: "Sucesso!", description: "Ordem de serviço atualizada." });
         router.push('/dashboard/orders');
     } catch(error) {
