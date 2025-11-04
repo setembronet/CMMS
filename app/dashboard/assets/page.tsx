@@ -38,8 +38,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, History, Trash2, Camera, QrCode, HardHat, Package, Check, AlertTriangle, FilePlus } from 'lucide-react';
-import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField, Plan, Product, User } from '@/lib/types';
+import { PlusCircle, MoreHorizontal, History, Trash2, Camera, QrCode, HardHat, Package, Check, AlertTriangle, FilePlus, Signal, Calendar } from 'lucide-react';
+import type { Asset, CompanySegment, CustomerLocation, WorkOrder, CustomField, Plan, Product, User, Contract, MaintenanceFrequency } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -47,7 +47,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
-import { format } from 'date-fns';
+import { format, addDays, addWeeks, addMonths, addQuarters, addYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
 import { useToast } from '@/hooks/use-toast';
@@ -55,6 +55,18 @@ import { useFirestore } from '@/firebase';
 import { useCollection, addDocument, updateDocument } from '@/firebase/firestore';
 
 type AssetStatus = 'Operacional' | 'Em Manutenção';
+
+const getNextDueDate = (last: number, frequency: MaintenanceFrequency): Date => {
+    switch (frequency) {
+        case 'DIARIA': return addDays(last, 1);
+        case 'SEMANAL': return addWeeks(last, 1);
+        case 'QUINZENAL': return addDays(last, 15);
+        case 'MENSAL': return addMonths(last, 1);
+        case 'TRIMESTRAL': return addQuarters(last, 1);
+        case 'SEMESTRAL': return addMonths(last, 6);
+        case 'ANUAL': return addYears(last, 1);
+    }
+};
 
 export default function AssetsPage() {
   const { selectedClient } = useClient();
@@ -69,6 +81,7 @@ export default function AssetsPage() {
   const { data: allPlans, loading: plansLoading } = useCollection<Plan>('plans');
   const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
   const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
+  const { data: allContracts, loading: contractsLoading } = useCollection<Contract>('contracts');
 
 
   const [assets, setAssets] = React.useState<Asset[]>([]);
@@ -103,7 +116,7 @@ export default function AssetsPage() {
     if (selectedClient && !assetsLoading && !segmentsLoading && !locationsLoading) {
       setAssets(allAssets.filter(a => a.clientId === selectedClient.id));
       
-      const companySegments = allSegments.filter(s => selectedClient.activeSegments.includes(s.id));
+      const companySegments = allSegments.filter(s => (selectedClient.activeSegments || []).includes(s.id));
       setAvailableSegments(companySegments);
       
       const clientLocations = allLocations.filter(l => l.clientId === selectedClient.id);
@@ -269,8 +282,7 @@ export default function AssetsPage() {
   const getAssetTimeline = (asset: Asset | null) => {
     if (!asset) return [];
     
-    const assetWorkOrders = allWorkOrders.filter(wo => wo.assetId === asset.id);
-    const events = [];
+    const events: any[] = [];
 
     // Asset Creation
     events.push({
@@ -282,7 +294,36 @@ export default function AssetsPage() {
       description: `O ativo '${asset.name}' foi cadastrado no sistema.`
     });
 
+    // IoT Alert (Simulated)
+    events.push({
+        id: `evt-iot-alert-${asset.id}`,
+        date: addDays(new Date(), -Math.floor(Math.random() * 30)).getTime(), // random date in last 30 days
+        icon: Signal,
+        color: "text-purple-500",
+        title: "Alerta de Telemetria (IoT)",
+        description: `Vibração acima do normal detectada (${(Math.random() * 5 + 2).toFixed(2)} m/s²).`
+    });
+
+    // Preventive Maintenance Schedule
+    const coveringContract = allContracts.find(c => c.coveredAssetIds.includes(asset.id));
+    if (coveringContract) {
+        const assetPlan = coveringContract.plans.find(p => p.assetId === asset.id);
+        if(assetPlan) {
+            const nextDueDate = getNextDueDate(assetPlan.lastGenerated, assetPlan.frequency);
+             events.push({
+                id: `evt-preventive-${asset.id}`,
+                date: nextDueDate.getTime(),
+                icon: Calendar,
+                color: "text-teal-500",
+                title: `Próxima Preventiva`,
+                description: `Plano: ${assetPlan.description} (${assetPlan.frequency})`
+            });
+        }
+    }
+
+
     // Work Orders
+    const assetWorkOrders = allWorkOrders.filter(wo => wo.assetId === asset.id);
     assetWorkOrders.forEach(wo => {
       events.push({
         id: `evt-wo-open-${wo.id}`,
@@ -343,7 +384,7 @@ export default function AssetsPage() {
       </Button>
   );
 
-  const isLoading = assetsLoading || segmentsLoading || locationsLoading || workOrdersLoading || plansLoading || productsLoading || usersLoading;
+  const isLoading = assetsLoading || segmentsLoading || locationsLoading || workOrdersLoading || plansLoading || productsLoading || usersLoading || contractsLoading;
 
   if (!selectedClient) {
     return (
@@ -641,5 +682,6 @@ export default function AssetsPage() {
     </TooltipProvider>
   );
 }
+
 
     
