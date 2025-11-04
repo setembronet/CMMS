@@ -2,8 +2,8 @@
 import type { MaintenanceFrequency, RootCause, RecommendedAction, PurchaseOrder, AccountsPayable, Contract, CustomerLocation, AccountsReceivable, WorkOrder, Product, Supplier, Schedule, Company, CMMSRole, Addon, Plan, CompanySegment, ChecklistTemplate, User } from './types';
 import { format } from 'date-fns';
 
-// This file is now mostly deprecated in favor of Firestore, but some data might still be here for reference.
-// The goal is to move all of these to Firestore collections.
+// This file contains only static or helper data that doesn't change.
+// All dynamic application data is now managed in Firestore.
 
 export const maintenanceFrequencies: { value: MaintenanceFrequency, label: string }[] = [
     { value: 'DIARIA', label: 'Diária' },
