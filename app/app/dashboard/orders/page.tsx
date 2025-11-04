@@ -39,8 +39,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, MoreHorizontal, RotateCcw, Calendar as CalendarIcon, Trash2, AlertTriangle, FileWarning, ShoppingCart, User, Play, Check, FilePlus, ChevronDown, ChevronRight, Link as LinkIcon, BrainCircuit, Sparkles, Loader2 } from 'lucide-react';
-import { contracts, rootCauses, recommendedActions, checklistTemplates } from '@/lib/data';
-import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist } from '@/lib/types';
+import { rootCauses, recommendedActions, maintenanceFrequencies } from '@/lib/data';
+import type { WorkOrder, Asset, User, OrderStatus, OrderPriority, Product, WorkOrderPart, MaintenanceFrequency, ChecklistItem, ChecklistItemStatus, ChecklistGroup, RootCause, RecommendedAction, Checklist, Contract, ChecklistTemplate } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format, addDays, addMonths, addWeeks, addQuarters, addYears, differenceInMilliseconds } from 'date-fns';
@@ -85,6 +85,8 @@ export default function WorkOrdersPage() {
   const { data: allAssets, loading: assetsLoading } = useCollection<Asset>('assets');
   const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
   const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+  const { data: allContracts, loading: contractsLoading } = useCollection<Contract>('contracts');
+  const { data: allChecklistTemplates, loading: checklistsLoading } = useCollection<ChecklistTemplate>('checklistTemplates');
   
   const [workOrders, setWorkOrders] = React.useState<WorkOrder[]>([]);
   const [clientAssets, setClientAssets] = React.useState<Asset[]>([]);
@@ -92,7 +94,7 @@ export default function WorkOrdersPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingOrder, setEditingOrder] = React.useState<WorkOrder | null>(null);
   const [formData, setFormData] = React.useState<WorkOrder | null>(null);
-  const [availableChecklists, setAvailableChecklists] = React.useState<typeof checklistTemplates>([]);
+  const [availableChecklists, setAvailableChecklists] = React.useState<ChecklistTemplate[]>([]);
   const [isDiagnosing, setIsDiagnosing] = React.useState(false);
 
 
@@ -109,20 +111,23 @@ export default function WorkOrdersPage() {
     squad: '',
     partsUsed: [],
     mediaObrigatoria: false,
+    historicoResponsavel: [],
+    usedIA: false,
   }), [selectedClient]);
 
-  const generatePreventiveWorkOrders = React.useCallback((existingWorkOrders: WorkOrder[], clientId: string): WorkOrder[] => {
+  const generatePreventiveWorkOrders = React.useCallback((existingWorkOrders: WorkOrder[], clientId: string, contracts: Contract[], assets: Asset[]): WorkOrder[] => {
+      if (!contracts.length || !assets.length) return [];
       const newWorkOrders: WorkOrder[] = [];
       const today = new Date();
       const lookaheadDate = addDays(today, 7);
       
       const clientContracts = contracts.filter(c => {
-          const asset = allAssets.find(a => a.id === c.coveredAssetIds[0]);
+          const asset = assets.find(a => c.coveredAssetIds.includes(a.id));
           return asset?.clientId === clientId;
       });
 
       clientContracts.forEach(contract => {
-          contract.plans.forEach(plan => {
+          (contract.plans || []).forEach(plan => {
               let nextDueDate = getNextDueDate(plan.lastGenerated, plan.frequency);
               
               while (nextDueDate <= lookaheadDate) {
@@ -154,12 +159,13 @@ export default function WorkOrdersPage() {
       });
 
       return newWorkOrders;
-  }, [emptyWorkOrder, allAssets]);
+  }, [emptyWorkOrder]);
 
 
   React.useEffect(() => {
-    if (selectedClient && !workOrdersLoading && !assetsLoading && !usersLoading) {
-      const newPreventiveOrders = generatePreventiveWorkOrders(allWorkOrders, selectedClient.id);
+    const isLoading = workOrdersLoading || assetsLoading || usersLoading || contractsLoading;
+    if (selectedClient && !isLoading) {
+      const newPreventiveOrders = generatePreventiveWorkOrders(allWorkOrders, selectedClient.id, allContracts, allAssets);
       let allClientOrders = allWorkOrders.filter(wo => wo.clientId === selectedClient.id);
 
       if (newPreventiveOrders.length > 0) {
@@ -170,12 +176,12 @@ export default function WorkOrdersPage() {
       setWorkOrders(allClientOrders);
       setClientAssets(allAssets.filter(a => a.clientId === selectedClient.id));
       setClientUsers(allUsers.filter(u => u.clientId === selectedClient.id && u.cmmsRole === 'TECNICO'));
-    } else {
+    } else if (!selectedClient) {
       setWorkOrders([]);
       setClientAssets([]);
       setClientUsers([]);
     }
-  }, [selectedClient, allWorkOrders, allAssets, allUsers, workOrdersLoading, assetsLoading, usersLoading, generatePreventiveWorkOrders]);
+  }, [selectedClient, allWorkOrders, allAssets, allUsers, allContracts, workOrdersLoading, assetsLoading, usersLoading, contractsLoading, generatePreventiveWorkOrders]);
 
 
   React.useEffect(() => {
@@ -188,17 +194,17 @@ export default function WorkOrdersPage() {
   }, [formData, clientUsers]);
 
   React.useEffect(() => {
-    if (formData?.assetId) {
+    if (formData?.assetId && !checklistsLoading) {
         const asset = clientAssets.find(a => a.id === formData.assetId);
         if (asset) {
-            setAvailableChecklists(checklistTemplates.filter(t => t.segmentId === asset.activeSegment));
+            setAvailableChecklists(allChecklistTemplates.filter(t => t.segmentId === asset.activeSegment));
         } else {
             setAvailableChecklists([]);
         }
     } else {
         setAvailableChecklists([]);
     }
-  }, [formData?.assetId, clientAssets]);
+  }, [formData?.assetId, clientAssets, allChecklistTemplates, checklistsLoading]);
 
 
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
@@ -213,10 +219,10 @@ export default function WorkOrdersPage() {
 
   const openDialog = (order: WorkOrder | null = null) => {
     setEditingOrder(order);
-    let orderData = order ? JSON.parse(JSON.stringify(order)) : { ...emptyWorkOrder };
+    let orderData = order ? JSON.parse(JSON.stringify(order)) : JSON.parse(JSON.stringify({ ...emptyWorkOrder, id: '' }));
 
     if (!orderData.checklist && orderData.checklistTemplateId) {
-      const template = checklistTemplates.find(t => t.id === orderData.checklistTemplateId);
+      const template = allChecklistTemplates.find(t => t.id === orderData.checklistTemplateId);
       if(template) {
         orderData.checklist = JSON.parse(JSON.stringify(template.checklistData));
       }
@@ -257,7 +263,7 @@ export default function WorkOrdersPage() {
         }
 
         if (name === 'checklistTemplateId') {
-            const template = checklistTemplates.find(t => t.id === value);
+            const template = allChecklistTemplates.find(t => t.id === value);
             if (template) {
                 newChecklist = JSON.parse(JSON.stringify(template.checklistData));
                 newChecklistTemplateId = value as string;
@@ -355,7 +361,7 @@ export default function WorkOrdersPage() {
 
     try {
         const { id, ...orderData } = formData;
-        if (editingOrder) {
+        if (editingOrder && editingOrder.id) {
             await updateDocument(firestore, 'workOrders', editingOrder.id, orderData);
         } else {
             await addDocument(firestore, 'workOrders', orderData);
@@ -377,7 +383,7 @@ export default function WorkOrdersPage() {
             if (quantityChange !== 0) {
                 const product = allProducts.find(p => p.id === productId);
                 if (product) {
-                    const newStock = product.stock - quantityChange;
+                    const newStock = product.stock + quantityChange; // add back old, subtract new
                     await updateDocument(firestore, 'products', productId, { stock: newStock });
                 }
             }
@@ -429,6 +435,7 @@ export default function WorkOrdersPage() {
         title: suggestion.title,
         priority: suggestion.priority,
         responsibleId: suggestion.recommendedTechnicianId,
+        usedIA: true,
       }) : null);
 
       toast({
@@ -558,7 +565,7 @@ export default function WorkOrdersPage() {
     )
   }
 
-  const isLoading = workOrdersLoading || assetsLoading || usersLoading || productsLoading;
+  const isLoading = workOrdersLoading || assetsLoading || usersLoading || productsLoading || contractsLoading || checklistsLoading;
 
 
   return (

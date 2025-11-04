@@ -1,4 +1,5 @@
 
+
 export type ContractStatus = 'Vigente' | 'Próximo a Vencer' | 'Vencido';
 
 export type InteractionType = 'LIGAÇÃO' | 'EMAIL' | 'REUNIÃO' | 'VISITA' | 'OUTRO';
@@ -61,6 +62,7 @@ export type OrderPriority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 export type MaintenanceFrequency = 'DIARIA' | 'SEMANAL' | 'QUINZENAL' | 'MENSAL' | 'TRIMESTRAL' | 'SEMESTRAL' | 'ANUAL';
 export type ContractType = 'Integral' | 'Mão de Obra';
 export type ChecklistItemStatus = 'OK' | 'NÃO OK' | 'N/A';
+export type ChecklistItemResponseType = 'OK_NAO_OK' | 'NUMERICO' | 'TEXTO';
 export type RootCause = 'Desgaste Natural' | 'Falha Humana' | 'Falha Elétrica' | 'Vandalismo' | 'Outro';
 export type RecommendedAction = 'Criar OS de Follow-up' | 'Monitorar' | 'Nenhuma Ação Necessária';
 export type PurchaseOrderStatus = 'Pendente' | 'Aprovada' | 'Recebida' | 'Cancelada';
@@ -100,14 +102,14 @@ export type Plan = {
   technicianUserLimit: number; // -1 for unlimited
   hasMultiModuleAccess: boolean;
   hasBasicBigQueryAccess: boolean;
-  hasIaAddonAccess: boolean;
-  hasIotAddonAccess: boolean;
+  allowedAddonIds?: string[];
 };
 
 export type Addon = {
   id: string;
   name: string;
   price: number;
+  description?: string;
 };
 
 export type Company = {
@@ -158,9 +160,11 @@ export type WorkOrderPart = {
 export type ChecklistItem = {
   id: string;
   text: string;
-  status: ChecklistItemStatus;
+  status?: ChecklistItemStatus;
   comment?: string;
-  photoUrl?: string; // For future use
+  responseType: ChecklistItemResponseType;
+  responseValue?: string | number;
+  technicalInstruction?: string;
 };
 
 export type ChecklistGroup = {
@@ -178,6 +182,10 @@ export type ChecklistTemplate = {
   checklistData: Checklist;
 };
 
+export type ResponsibleHistory = {
+  technicianId: string;
+  assignedAt: number;
+}
 
 export type WorkOrder = {
   id:string;
@@ -193,6 +201,7 @@ export type WorkOrder = {
   startDate?: number;
   endDate?: number;
   responsibleId?: string;
+  historicoResponsavel?: ResponsibleHistory[]; // For tracking reassignments
   internalObservation?: string;
   squad?: string;
   partsUsed?: WorkOrderPart[];
@@ -210,6 +219,7 @@ export type WorkOrder = {
   assinaturaClienteUrl?: string;
   dataAssinaturaTecnico?: number;
   dataAssinaturaCliente?: number;
+  usedIA?: boolean; // To track if AI was used for this WO
 };
 
 export type Product = {
