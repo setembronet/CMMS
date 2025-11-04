@@ -63,7 +63,7 @@ const urgencyLevels: { value: OrderPriority, label: string }[] = [
 ];
 
 export default function ClientPortalPage() {
-  const { currentUser } = useClient();
+  const { currentUser, selectedClient } = useClient();
   const { t } = useI18n();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -81,24 +81,21 @@ export default function ClientPortalPage() {
 
 
   const {
-      userLocation,
+      clientLocations,
       locationAssets,
       openWorkOrders,
       recentWorkOrders,
       criticalAssets,
+      totalAssets,
   } = React.useMemo(() => {
-    if (!currentUser || assetsLoading || workOrdersLoading || locationsLoading) {
-        return { userLocation: null, locationAssets: [], openWorkOrders: [], recentWorkOrders: [], criticalAssets: 0 };
-    }
-
-    const userLoc = allCustomerLocations.find(loc => (loc.contacts || []).some(c => c.email === currentUser.email));
-    const finalUserLocation = userLoc || allCustomerLocations.find(loc => loc.clientId === currentUser.clientId);
-
-    if (!finalUserLocation) {
-        return { userLocation: null, locationAssets: [], openWorkOrders: [], recentWorkOrders: [], criticalAssets: 0 };
+    if (!selectedClient || assetsLoading || workOrdersLoading || locationsLoading) {
+        return { clientLocations: [], locationAssets: [], openWorkOrders: [], recentWorkOrders: [], criticalAssets: 0, totalAssets: 0 };
     }
     
-    const locAssets = allAssets.filter(a => a.customerLocationId === finalUserLocation.id);
+    const clientLocs = allCustomerLocations.filter(loc => loc.clientId === selectedClient.id);
+    const clientLocIds = clientLocs.map(l => l.id);
+
+    const locAssets = allAssets.filter(a => clientLocIds.includes(a.customerLocationId));
     const assetIds = locAssets.map(a => a.id);
     const locWorkOrders = allWorkOrders.filter(wo => assetIds.includes(wo.assetId));
     
@@ -106,22 +103,29 @@ export default function ClientPortalPage() {
     const recentWos = locWorkOrders.filter(wo => wo.status === 'CONCLUIDO').sort((a,b) => (b.endDate || 0) - (a.endDate || 0)).slice(0, 5);
     const critAssets = locAssets.filter(asset => openWos.some(wo => wo.assetId === asset.id && wo.priority === 'Urgente')).length;
 
-    return { userLocation: finalUserLocation, locationAssets: locAssets, openWorkOrders: openWos, recentWorkOrders: recentWos, criticalAssets: critAssets };
+    return { 
+        clientLocations: clientLocs,
+        locationAssets: locAssets, 
+        openWorkOrders: openWos, 
+        recentWorkOrders: recentWos, 
+        criticalAssets: critAssets,
+        totalAssets: locAssets.length
+    };
 
-  }, [currentUser, allAssets, allWorkOrders, allCustomerLocations, assetsLoading, workOrdersLoading, locationsLoading]);
+  }, [selectedClient, allAssets, allWorkOrders, allCustomerLocations, assetsLoading, workOrdersLoading, locationsLoading]);
 
   
   React.useEffect(() => {
-    if (userLocation && currentUser) {
+    if (selectedClient && currentUser) {
       setNewWoFormData({
-        clientId: userLocation.clientId,
+        clientId: selectedClient.id,
         status: 'ABERTO',
         priority: 'Média',
         createdByUserId: currentUser.id,
         creationDate: new Date().getTime(),
       });
     }
-  }, [userLocation, currentUser]);
+  }, [selectedClient, currentUser]);
 
 
   const openAssetDetailDialog = (asset: Asset) => {
@@ -151,7 +155,7 @@ export default function ClientPortalPage() {
             description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
         });
         setNewWoFormData({
-            clientId: userLocation?.clientId,
+            clientId: selectedClient?.id,
             status: 'ABERTO',
             priority: 'Média',
             createdByUserId: currentUser.id,
@@ -241,12 +245,20 @@ export default function ClientPortalPage() {
   }
   
   const isLoading = assetsLoading || workOrdersLoading || locationsLoading || usersLoading || productsLoading;
+  
+  if (!selectedClient) {
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <p className="text-muted-foreground">{t('clients.selectClientPrompt')}</p>
+        </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-8 lg:p-10 space-y-8">
         <div>
-            <h1 className="text-3xl font-bold font-headline">Portal do Cliente</h1>
-            <p className="text-muted-foreground">Bem-vindo, {currentUser?.name}. Aqui você acompanha tudo sobre seus ativos.</p>
+            <h1 className="text-3xl font-bold font-headline">Portal do Cliente: {selectedClient.name}</h1>
+            <p className="text-muted-foreground">Bem-vindo. Aqui você acompanha tudo sobre os ativos de seu cliente.</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -256,7 +268,7 @@ export default function ClientPortalPage() {
                     <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{locationAssets.length}</div>
+                    <div className="text-2xl font-bold">{totalAssets}</div>
                     <p className="text-xs text-muted-foreground">Equipamentos sob nosso cuidado.</p>
                 </CardContent>
             </Card>
@@ -286,8 +298,8 @@ export default function ClientPortalPage() {
                       <CheckCircle className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{userLocation?.contractStatus || 'N/A'}</div>
-                    <p className="text-xs text-muted-foreground">Status do seu contrato de manutenção.</p>
+                    <div className="text-2xl font-bold">{clientLocations[0]?.contractStatus || 'N/A'}</div>
+                    <p className="text-xs text-muted-foreground">Status do contrato de manutenção.</p>
                 </CardContent>
             </Card>
         </div>
@@ -436,5 +448,4 @@ export default function ClientPortalPage() {
     </Dialog>
 </>
   );
-
     
