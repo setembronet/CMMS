@@ -34,6 +34,7 @@ import {
   CalendarDays,
   LineChart,
   TrendingDown,
+  Warehouse,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -346,6 +347,14 @@ export function SidebarNav() {
                                                 <Link href="/dashboard/cmms/reports/recurrent-failures">
                                                     <TrendingDown />
                                                     <span>Falhas Recorrentes</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/reports/stock-consumption', true)}>
+                                                <Link href="/dashboard/cmms/reports/stock-consumption">
+                                                    <Warehouse />
+                                                    <span>Consumo de Estoque</span>
                                                 </Link>
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
