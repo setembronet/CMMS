@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -78,13 +77,14 @@ export function SidebarNav() {
   const isSaaSFinanceActive = pathname.startsWith('/dashboard/finance');
   const isCompaniesActive = pathname.startsWith('/dashboard/companies');
   const isSettingsActive = ['/dashboard/settings', '/dashboard/cmms-users', '/dashboard/settings/roles', '/dashboard/settings/checklists', '/dashboard/settings/backup'].some(p => pathname.startsWith(p));
-  const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms'].some(p => pathname.startsWith(p));
+  const isCmmsActive = pathname === '/dashboard' || ['/dashboard/clients', '/dashboard/assets', '/dashboard/orders', '/dashboard/users', '/dashboard/contracts', '/dashboard/products', '/dashboard/suppliers', '/dashboard/purchase-orders', '/dashboard/purchase-suggestion', '/dashboard/schedule', '/dashboard/cmms', '/dashboard/client-portal'].some(p => pathname.startsWith(p));
   const isClientPortalActive = pathname.startsWith('/dashboard/client-portal');
   const isCmmsBackofficeActive = pathname.startsWith('/dashboard/cmms');
+  const isReportsActive = pathname.startsWith('/dashboard/cmms/reports');
   
   const settingsLinks = [
       { href: '/dashboard/settings', label: t('sidebar.general'), icon: Settings },
-      { href: '/dashboard/cmms-users', label: t('sidebar.saasUsers'), icon: UserSquare },
+      { href: '/dashboard/saas-users', label: t('sidebar.saasUsers'), icon: UserSquare },
       { href: '/dashboard/settings/roles', label: t('sidebar.roles'), icon: Briefcase },
       { href: '/dashboard/settings/checklists', label: t('sidebar.checklistTemplates'), icon: ClipboardList },
       { href: '/dashboard/settings/backup', label: t('sidebar.backupRestore'), icon: History },
@@ -231,19 +231,19 @@ export function SidebarNav() {
                                     </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
+                             <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isClientPortalActive}>
+                                    <Link href="/dashboard/client-portal">
+                                        <Home />
+                                        <span>{t('sidebar.clientPortal')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
                             <SidebarMenuSubItem>
                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/clients', true)}>
                                     <Link href="/dashboard/clients">
                                         <MapPin />
                                         <span>{t('sidebar.clients')}</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                            <SidebarMenuSubItem>
-                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/client-portal', true)}>
-                                    <Link href="/dashboard/client-portal">
-                                        <Home />
-                                        <span>{t('sidebar.clientPortal')}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -321,12 +321,12 @@ export function SidebarNav() {
                             </SidebarMenuSubItem>
                         </SidebarMenuSub>
 
-                         <Collapsible asChild defaultOpen={pathname.startsWith('/dashboard/cmms/reports')}>
+                         <Collapsible asChild defaultOpen={isReportsActive}>
                             <div>
                                 <CollapsibleTrigger className="w-full">
                                     <div className="flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 px-4 py-2 cursor-pointer hover:text-sidebar-foreground">
                                         <span>Relatórios</span>
-                                        <ChevronDown className={cn("transition-transform duration-200", pathname.startsWith('/dashboard/cmms/reports') && "rotate-180")} />
+                                        <ChevronDown className={cn("transition-transform duration-200", isReportsActive && "rotate-180")} />
                                     </div>
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
