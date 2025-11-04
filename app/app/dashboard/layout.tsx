@@ -15,41 +15,6 @@ import { Loader2 } from 'lucide-react';
 
 const CLIENT_ROLES = ['SINDICO', 'ZELADOR', 'PORTEIRO', 'GERENTE_PREDIAL'];
 
-function DashboardUI({ children }: { children: React.ReactNode }) {
-    const { currentUser } = useClient();
-    const isTechnician = currentUser?.cmmsRole === 'TECNICO';
-    const isClientUser = CLIENT_ROLES.includes(currentUser?.cmmsRole || '');
-
-    if (isTechnician) {
-      return (
-         <div className="flex flex-col h-screen">
-            <Header />
-            <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
-         </div>
-      )
-    }
-    
-    if (isClientUser) {
-        return (
-            <div className="flex flex-col min-h-screen bg-muted/30">
-                <main className="flex-1">{children}</main>
-            </div>
-        );
-    }
-  
-    return (
-        <SidebarProvider>
-            <Sidebar>
-                <SidebarNav />
-            </Sidebar>
-            <SidebarInset>
-                <Header />
-                <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
-            </SidebarInset>
-        </SidebarProvider>
-    );
-}
-
 export default function DashboardLayout({
   children,
 }: {
@@ -61,6 +26,11 @@ export default function DashboardLayout({
   React.useEffect(() => {
       if (!authLoading && !currentUser) {
           router.replace('/');
+      } else if (!authLoading && currentUser && CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
+        // Allow client users to access their portal, which has its own layout
+        if (!router.pathname?.startsWith('/dashboard/client-portal')) {
+           router.replace('/dashboard/client-portal');
+        }
       }
   }, [currentUser, authLoading, router]);
 
@@ -72,5 +42,29 @@ export default function DashboardLayout({
     );
   }
   
-  return <DashboardUI>{children}</DashboardUI>;
+  // If it's a client user, their specific layout will handle the UI
+  if (CLIENT_ROLES.includes(currentUser.cmmsRole || '')) {
+      if (router.pathname?.startsWith('/dashboard/client-portal')) {
+        return <>{children}</>;
+      }
+      // Render loading while redirecting
+      return (
+        <div className="flex h-screen w-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      );
+  }
+
+  // Layout for Admins, Technicians, etc.
+  return (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarNav />
+      </Sidebar>
+      <SidebarInset>
+        <Header />
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }

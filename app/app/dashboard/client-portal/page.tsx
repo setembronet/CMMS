@@ -43,7 +43,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineTime, TimelineContent, TimelineDescription } from '@/components/ui/timeline';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 
 const symptoms = [
@@ -67,7 +68,6 @@ export default function ClientPortalPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [isNewWoFormVisible, setIsNewWoFormVisible] = React.useState(false);
   const [newWoFormData, setNewWoFormData] = React.useState<Partial<WorkOrder>>({});
   const [isAssetDetailOpen, setIsAssetDetailOpen] = React.useState(false);
   const [selectedAsset, setSelectedAsset] = React.useState<Asset | null>(null);
@@ -110,19 +110,19 @@ export default function ClientPortalPage() {
 
   }, [currentUser, allAssets, allWorkOrders, allCustomerLocations, assetsLoading, workOrdersLoading, locationsLoading]);
 
-  const toggleNewWoForm = () => {
-    if (!userLocation || !currentUser) return;
-    if (!isNewWoFormVisible) {
-        setNewWoFormData({
-            clientId: userLocation.clientId,
-            status: 'ABERTO',
-            priority: 'Média',
-            createdByUserId: currentUser.id,
-            creationDate: new Date().getTime(),
-        });
+  
+  React.useEffect(() => {
+    if (userLocation && currentUser) {
+      setNewWoFormData({
+        clientId: userLocation.clientId,
+        status: 'ABERTO',
+        priority: 'Média',
+        createdByUserId: currentUser.id,
+        creationDate: new Date().getTime(),
+      });
     }
-    setIsNewWoFormVisible(prev => !prev);
-  };
+  }, [userLocation, currentUser]);
+
 
   const openAssetDetailDialog = (asset: Asset) => {
     setSelectedAsset(asset);
@@ -135,24 +135,36 @@ export default function ClientPortalPage() {
 
   const handleNewWoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!firestore) return;
+    if (!firestore || !currentUser) return;
     
     if (!newWoFormData.assetId || !newWoFormData.title || !newWoFormData.description) {
         toast({ variant: 'destructive', title: "Campos Obrigatórios", description: "Por favor, preencha todos os campos obrigatórios." });
         return;
     }
+    
+    const woDataToSave = { ...newWoFormData };
 
-    addDocument(firestore, 'workOrders', newWoFormData)
+    addDocument(firestore, 'workOrders', woDataToSave)
       .then(() => {
         toast({
             title: "Chamado Aberto com Sucesso!",
             description: "Sua solicitação foi registrada e nossa equipe já foi notificada.",
         });
-        setIsNewWoFormVisible(false);
-        setNewWoFormData({});
+        setNewWoFormData({
+            clientId: userLocation?.clientId,
+            status: 'ABERTO',
+            priority: 'Média',
+            createdByUserId: currentUser.id,
+            creationDate: new Date().getTime(),
+        });
       })
-      .catch((error) => {
-        console.error("Failed to create work order:", error);
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'workOrders',
+          operation: 'create',
+          requestResourceData: woDataToSave,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
   };
 
@@ -231,224 +243,197 @@ export default function ClientPortalPage() {
   const isLoading = assetsLoading || workOrdersLoading || locationsLoading || usersLoading || productsLoading;
 
   return (
-    <>
-      <div className="p-4 md:p-8 lg:p-10 space-y-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                  <h1 className="text-3xl font-bold font-headline">Portal do Cliente</h1>
-                  <p className="text-muted-foreground">Bem-vindo, {currentUser?.name}. Aqui você acompanha tudo sobre seus ativos.</p>
-              </div>
-              <Button size="lg" onClick={toggleNewWoForm}>
-                  <PlusCircle className="mr-2 h-5 w-5" />
-                  Solicitar Serviço
-              </Button>
-          </div>
+    <div className="p-4 md:p-8 lg:p-10 space-y-8">
+        <div>
+            <h1 className="text-3xl font-bold font-headline">Portal do Cliente</h1>
+            <p className="text-muted-foreground">Bem-vindo, {currentUser?.name}. Aqui você acompanha tudo sobre seus ativos.</p>
+        </div>
 
-          <Collapsible open={isNewWoFormVisible} onOpenChange={setIsNewWoFormVisible}>
-            <CollapsibleContent>
-              <Card className="mb-8">
-                  <CardHeader>
-                      <div className="flex items-center justify-between">
-                          <div>
-                              <CardTitle>Solicitar Novo Serviço</CardTitle>
-                              <CardDescription>Descreva o problema que você está enfrentando. Nossa equipe responderá em breve.</CardDescription>
-                          </div>
-                          <Button variant="ghost" size="icon" onClick={() => setIsNewWoFormVisible(false)}>
-                              <X className="h-4 w-4" />
-                          </Button>
-                      </div>
-                  </CardHeader>
-                  <form id="new-wo-form" onSubmit={handleNewWoSubmit}>
-                      <CardContent className="space-y-4">
-                          <div className="space-y-2">
-                              <Label htmlFor="assetId">Ativo</Label>
-                              <Select name="assetId" onValueChange={(v) => handleNewWoFormChange('assetId', v)} required>
-                                  <SelectTrigger><SelectValue placeholder="Selecione o equipamento com problema" /></SelectTrigger>
-                                  <SelectContent>{locationAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}</SelectContent>
-                              </Select>
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="symptom">Sintoma Observado</Label>
-                              <Select name="symptom" onValueChange={(v) => handleNewWoFormChange('description', v)} required>
-                                  <SelectTrigger><SelectValue placeholder="O que está acontecendo?" /></SelectTrigger>
-                                  <SelectContent>{symptoms.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-                              </Select>
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="priority">Nível de Urgência</Label>
-                              <Select name="priority" onValueChange={(v) => handleNewWoFormChange('priority', v as OrderPriority)} defaultValue="Média" required>
-                                  <SelectTrigger><SelectValue /></SelectTrigger>
-                                  <SelectContent>{urgencyLevels.map(ul => <SelectItem key={ul.value} value={ul.value}>{ul.label}</SelectItem>)}</SelectContent>
-                              </Select>
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="title">Título do Chamado</Label>
-                              <Input id="title" name="title" onChange={(e) => handleNewWoFormChange('title', e.target.value)} placeholder="Título curto do problema" required />
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="description_details">Descrição Detalhada</Label>
-                              <Textarea id="description_details" name="description_details" onChange={(e) => handleNewWoFormChange('description', e.target.value)} placeholder="Forneça mais detalhes sobre o problema, se necessário." />
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="media">Fotos ou Vídeos</Label>
-                              <Input id="media" type="file" />
-                              <p className="text-xs text-muted-foreground">Anexar uma foto ou vídeo pode nos ajudar a entender melhor o problema.</p>
-                          </div>
-                      </CardContent>
-                      <CardFooter className="justify-end gap-2">
-                          <Button type="button" variant="outline" onClick={() => setIsNewWoFormVisible(false)}>Cancelar</Button>
-                          <Button type="submit">Abrir Chamado</Button>
-                      </CardFooter>
-                  </form>
-              </Card>
-            </CollapsibleContent>
-          </Collapsible>
-
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total de Ativos</CardTitle>
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{locationAssets.length}</div>
-                      <p className="text-xs text-muted-foreground">Equipamentos sob nosso cuidado.</p>
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Chamados Abertos</CardTitle>
-                      <Wrench className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{openWorkOrders.length}</div>
-                      <p className="text-xs text-muted-foreground">Serviços em andamento ou aguardando.</p>
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Ativos em Alerta</CardTitle>
-                      <AlertTriangle className="h-4 w-4 text-destructive" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold text-destructive">{criticalAssets}</div>
-                      <p className="text-xs text-muted-foreground">Equipamentos com chamados urgentes.</p>
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Contrato</CardTitle>
-                       <CheckCircle className="h-4 w-4 text-green-500" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{userLocation?.contractStatus || 'N/A'}</div>
-                      <p className="text-xs text-muted-foreground">Status do seu contrato de manutenção.</p>
-                  </CardContent>
-              </Card>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Acompanhamento de Ordens de Serviço</CardTitle>
-                      <CardDescription>Veja o andamento dos chamados abertos e os últimos concluídos.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <Table>
-                          <TableHeader>
-                              <TableRow>
-                                  <TableHead>Ativo</TableHead>
-                                  <TableHead>Serviço</TableHead>
-                                  <TableHead>Técnico</TableHead>
-                                  <TableHead>Status</TableHead>
-                              </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                              {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">Carregando...</TableCell>
-                                </TableRow>
-                              ) : (
-                                <>
-                                {openWorkOrders.map(wo => (
-                                    <TableRow key={`open-${wo.id}`}>
-                                        <TableCell className="font-medium">{getAssetName(wo.assetId)}</TableCell>
-                                        <TableCell>{wo.title}</TableCell>
-                                        <TableCell>{getTechnicianName(wo.responsibleId)}</TableCell>
-                                        <TableCell>{getStatusBadge(wo.status)}</TableCell>
-                                    </TableRow>
-                                ))}
-                                {recentWorkOrders.map(wo => (
-                                    <TableRow key={`recent-${wo.id}`} className="bg-muted/30">
-                                        <TableCell className="font-medium text-muted-foreground">{getAssetName(wo.assetId)}</TableCell>
-                                        <TableCell className="text-muted-foreground">{wo.title}</TableCell>
-                                        <TableCell className="text-muted-foreground">{getTechnicianName(wo.responsibleId)}</TableCell>
-                                        <TableCell>{getStatusBadge(wo.status)}</TableCell>
-                                    </TableRow>
-                                ))}
-                                </>
-                              )}
-                          </TableBody>
-                      </Table>
-                  </CardContent>
-              </Card>
-               <Card>
-                <CardHeader>
-                    <CardTitle>Meus Ativos</CardTitle>
-                    <CardDescription>Clique em um ativo para ver seu histórico de manutenções.</CardDescription>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total de Ativos</CardTitle>
+                    <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-2">
-                        {locationAssets.map(asset => (
-                            <button key={asset.id} onClick={() => openAssetDetailDialog(asset)} className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                                <div className="flex justify-between items-center">
-                                    <span className="font-medium">{asset.name}</span>
-                                    <Badge variant={getAssetStatus(asset.id) === 'Operacional' ? 'default' : 'destructive'} className={getAssetStatus(asset.id) === 'Operacional' ? 'bg-green-600' : ''}>
-                                        {getAssetStatus(asset.id)}
-                                    </Badge>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
+                    <div className="text-2xl font-bold">{locationAssets.length}</div>
+                    <p className="text-xs text-muted-foreground">Equipamentos sob nosso cuidado.</p>
                 </CardContent>
-              </Card>
-          </div>
-      </div>
-      
-      <Dialog open={isAssetDetailOpen} onOpenChange={setIsAssetDetailOpen}>
-        <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-                <DialogTitle>Dossiê do Ativo: {selectedAsset?.name}</DialogTitle>
-                <DialogDescription>
-                    Histórico de manutenções e intervenções realizadas neste equipamento.
-                </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="max-h-[60vh] -mx-6 px-6">
-                <Timeline className="py-4">
-                    {getAssetTimeline(selectedAsset).map((event) => (
-                        <TimelineItem key={event.id}>
-                            <TimelineConnector />
-                            <TimelineHeader>
-                                <TimelineTime>{format(new Date(event.date), 'dd/MM/yy')}</TimelineTime>
-                                <TimelineIcon>
-                                    <event.icon className={cn("h-4 w-4", event.color)} />
-                                </TimelineIcon>
-                                <TimelineTitle>{event.title}</TimelineTitle>
-                            </TimelineHeader>
-                            <TimelineContent>
-                                <TimelineDescription>{event.description}</TimelineDescription>
-                            </TimelineContent>
-                        </TimelineItem>
-                    ))}
-                </Timeline>
-            </ScrollArea>
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAssetDetailOpen(false)}>Fechar</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Chamados Abertos</CardTitle>
+                    <Wrench className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{openWorkOrders.length}</div>
+                    <p className="text-xs text-muted-foreground">Serviços em andamento ou aguardando.</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Ativos em Alerta</CardTitle>
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold text-destructive">{criticalAssets}</div>
+                    <p className="text-xs text-muted-foreground">Equipamentos com chamados urgentes.</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Contrato</CardTitle>
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{userLocation?.contractStatus || 'N/A'}</div>
+                    <p className="text-xs text-muted-foreground">Status do seu contrato de manutenção.</p>
+                </CardContent>
+            </Card>
+        </div>
 
-    </>
+        <div className="grid gap-6 md:grid-cols-5">
+            <Card className="md:col-span-2">
+                <CardHeader>
+                    <CardTitle>Solicitar Novo Serviço</CardTitle>
+                    <CardDescription>Descreva o problema que você está enfrentando. Nossa equipe responderá em breve.</CardDescription>
+                </CardHeader>
+                <form id="new-wo-form" onSubmit={handleNewWoSubmit}>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="assetId">Ativo</Label>
+                            <Select name="assetId" value={newWoFormData.assetId || ''} onValueChange={(v) => handleNewWoFormChange('assetId', v)} required>
+                                <SelectTrigger><SelectValue placeholder="Selecione o equipamento com problema" /></SelectTrigger>
+                                <SelectContent>{locationAssets.map(asset => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="title">Título do Chamado</Label>
+                            <Input id="title" name="title" value={newWoFormData.title || ''} onChange={(e) => handleNewWoFormChange('title', e.target.value)} placeholder="Título curto do problema" required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="symptom">Sintoma Observado</Label>
+                            <Select name="symptom" value={newWoFormData.description || ''} onValueChange={(v) => handleNewWoFormChange('description', v)} required>
+                                <SelectTrigger><SelectValue placeholder="O que está acontecendo?" /></SelectTrigger>
+                                <SelectContent>{symptoms.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="priority">Nível de Urgência</Label>
+                            <Select name="priority" value={newWoFormData.priority || 'Média'} onValueChange={(v) => handleNewWoFormChange('priority', v as OrderPriority)} required>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>{urgencyLevels.map(ul => <SelectItem key={ul.value} value={ul.value}>{ul.label}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button type="submit" className="w-full">
+                           <PlusCircle className="mr-2 h-4 w-4" /> Abrir Chamado
+                        </Button>
+                    </CardFooter>
+                </form>
+            </Card>
+
+            <Card className="md:col-span-3">
+                <CardHeader>
+                    <CardTitle>Acompanhamento de Ordens de Serviço</CardTitle>
+                    <CardDescription>Veja o andamento dos chamados abertos e os últimos concluídos.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Ativo</TableHead>
+                                <TableHead>Serviço</TableHead>
+                                <TableHead>Técnico</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-24 text-center">Carregando...</TableCell>
+                            </TableRow>
+                            ) : (
+                            <>
+                            {openWorkOrders.map(wo => (
+                                <TableRow key={`open-${wo.id}`}>
+                                    <TableCell className="font-medium">{getAssetName(wo.assetId)}</TableCell>
+                                    <TableCell>{wo.title}</TableCell>
+                                    <TableCell>{getTechnicianName(wo.responsibleId)}</TableCell>
+                                    <TableCell>{getStatusBadge(wo.status)}</TableCell>
+                                </TableRow>
+                            ))}
+                            {recentWorkOrders.map(wo => (
+                                <TableRow key={`recent-${wo.id}`} className="bg-muted/30">
+                                    <TableCell className="font-medium text-muted-foreground">{getAssetName(wo.assetId)}</TableCell>
+                                    <TableCell className="text-muted-foreground">{wo.title}</TableCell>
+                                    <TableCell className="text-muted-foreground">{getTechnicianName(wo.responsibleId)}</TableCell>
+                                    <TableCell>{getStatusBadge(wo.status)}</TableCell>
+                                </TableRow>
+                            ))}
+                            </>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Meus Ativos</CardTitle>
+                <CardDescription>Clique em um ativo para ver seu histórico de manutenções.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    {locationAssets.map(asset => (
+                        <button key={asset.id} onClick={() => openAssetDetailDialog(asset)} className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <div className="flex justify-between items-center">
+                                <span className="font-medium">{asset.name}</span>
+                                <Badge variant={getAssetStatus(asset.id) === 'Operacional' ? 'default' : 'destructive'} className={getAssetStatus(asset.id) === 'Operacional' ? 'bg-green-600' : ''}>
+                                    {getAssetStatus(asset.id)}
+                                </Badge>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    </div>
+
+    <Dialog open={isAssetDetailOpen} onOpenChange={setIsAssetDetailOpen}>
+    <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+            <DialogTitle>Dossiê do Ativo: {selectedAsset?.name}</DialogTitle>
+            <DialogDescription>
+                Histórico de manutenções e intervenções realizadas neste equipamento.
+            </DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="max-h-[60vh] -mx-6 px-6">
+            <Timeline className="py-4">
+                {getAssetTimeline(selectedAsset).map((event) => (
+                    <TimelineItem key={event.id}>
+                        <TimelineConnector />
+                        <TimelineHeader>
+                            <TimelineTime>{format(new Date(event.date), 'dd/MM/yy')}</TimelineTime>
+                            <TimelineIcon>
+                                <event.icon className={cn("h-4 w-4", event.color)} />
+                            </TimelineIcon>
+                            <TimelineTitle>{event.title}</TimelineTitle>
+                        </TimelineHeader>
+                        <TimelineContent>
+                            <TimelineDescription>{event.description}</TimelineDescription>
+                        </TimelineContent>
+                    </TimelineItem>
+                ))}
+            </Timeline>
+        </ScrollArea>
+        <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssetDetailOpen(false)}>Fechar</Button>
+        </DialogFooter>
+    </DialogContent>
+    </Dialog>
+</>
   );
 }
