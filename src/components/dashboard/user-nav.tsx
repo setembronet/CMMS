@@ -37,7 +37,12 @@ export function UserNav() {
   };
 
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('');
+    if (!name) return '';
+    const names = name.split(' ');
+    if (names.length > 1) {
+      return `${names[0][0]}${names[names.length - 1][0]}`;
+    }
+    return name.substring(0, 2);
   }
 
   return (

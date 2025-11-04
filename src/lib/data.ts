@@ -1,4 +1,3 @@
-
 import type { MaintenanceFrequency, RootCause, RecommendedAction, PurchaseOrder, AccountsPayable, Contract, CustomerLocation, AccountsReceivable, WorkOrder, Product, Supplier, Schedule, Company, CMMSRole, Addon, Plan, CompanySegment, ChecklistTemplate, User } from './types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
