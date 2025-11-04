@@ -38,7 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Trash2, FileText } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Calendar as CalendarIcon, Trash2, FileText, ArrowUpDown } from 'lucide-react';
 import { maintenanceFrequencies } from '@/lib/data';
 import type { Contract, MaintenancePlan, ContractType, MaintenanceFrequency, CustomerLocation, Asset, ContractStatus, WorkOrder, Product, User } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -58,6 +58,12 @@ const emptyPlan: Omit<MaintenancePlan, 'id' | 'lastGenerated'> = {
   description: '',
 };
 
+type SortDescriptor = {
+  column: keyof Contract | 'revenue' | 'costs' | 'margin';
+  direction: 'ascending' | 'descending';
+};
+
+
 export default function ContractsPage() {
   const { selectedClient } = useClient();
   const { t, locale } = useI18n();
@@ -72,13 +78,15 @@ export default function ContractsPage() {
   const { data: allUsers, loading: usersLoading } = useCollection<User>('users');
 
 
-  const [contracts, setLocalContracts] = React.useState<Contract[]>([]);
+  const [contracts, setLocalContracts] = React.useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingContract, setEditingContract] = React.useState<Contract | null>(null);
   const [formData, setFormData] = React.useState<Contract | null>(null);
   
   const [availableLocations, setAvailableLocations] = React.useState<CustomerLocation[]>([]);
   const [availableAssets, setAvailableAssets] = React.useState<Asset[]>([]);
+  const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor | null>(null);
+
 
   const dateLocale = React.useMemo(() => {
     switch (locale) {
@@ -100,17 +108,66 @@ export default function ContractsPage() {
   }), []);
 
 
+  const calculateContractCosts = React.useCallback((contract: Contract) => {
+    const ninetyDaysAgo = addDays(new Date(), -90).getTime();
+    const contractWorkOrders = allWorkOrders.filter(wo => 
+      (contract.coveredAssetIds || []).includes(wo.assetId) &&
+      wo.creationDate >= ninetyDaysAgo
+    );
+
+    let partsCost = 0;
+    if (contract.contractType === 'Integral') {
+        partsCost = contractWorkOrders.reduce((total, wo) => {
+            const orderPartsCost = (wo.partsUsed || []).reduce((acc, part) => {
+                const product = allProducts.find(p => p.id === part.productId);
+                return acc + (product ? product.price * part.quantity : 0);
+            }, 0);
+            return total + orderPartsCost;
+        }, 0);
+    }
+    
+    const laborCost = contractWorkOrders.reduce((total, wo) => {
+        if (!wo.startDate || !wo.endDate || !wo.responsibleId) return total;
+        const technician = allUsers.find(u => u.id === wo.responsibleId);
+        if (!technician || !technician.costPerHour) return total;
+        
+        const durationInHours = differenceInMilliseconds(new Date(wo.endDate), new Date(wo.startDate)) / (1000 * 60 * 60);
+        return total + (durationInHours * technician.costPerHour);
+    }, 0);
+
+    return partsCost + laborCost;
+  }, [allWorkOrders, allProducts, allUsers]);
+
+  const isLoading = contractsLoading || locationsLoading || assetsLoading || workOrdersLoading || productsLoading || usersLoading;
+
+
   React.useEffect(() => {
-    if (selectedClient && !contractsLoading && !locationsLoading) {
+    if (selectedClient && !isLoading) {
       const clientLocations = allLocations.filter(l => l.clientId === selectedClient.id);
       setAvailableLocations(clientLocations);
       const clientLocationIds = clientLocations.map(l => l.id);
-      setLocalContracts(allContracts.filter(c => clientLocationIds.includes(c.customerLocationId)));
+      
+      const enrichedContracts = allContracts
+        .filter(c => clientLocationIds.includes(c.customerLocationId))
+        .map(contract => {
+            const revenue90d = contract.monthlyValue * 3;
+            const costs90d = calculateContractCosts(contract);
+            const margin = revenue90d > 0 ? (revenue90d - costs90d) / revenue90d : -1;
+            return {
+                ...contract,
+                revenue90d,
+                costs90d,
+                margin,
+            }
+        });
+
+      setLocalContracts(enrichedContracts);
+
     } else {
       setLocalContracts([]);
       setAvailableLocations([]);
     }
-  }, [selectedClient, allContracts, allLocations, contractsLoading, locationsLoading]);
+  }, [selectedClient, allContracts, allLocations, allAssets, allWorkOrders, allProducts, allUsers, isLoading, calculateContractCosts]);
   
   React.useEffect(() => {
     if (formData?.customerLocationId && !assetsLoading) {
@@ -119,6 +176,32 @@ export default function ContractsPage() {
         setAvailableAssets([]);
     }
   }, [formData, allAssets, assetsLoading]);
+
+  const sortedContracts = React.useMemo(() => {
+    if (!sortDescriptor) return contracts;
+
+    return [...contracts].sort((a, b) => {
+        const first = a[sortDescriptor.column];
+        const second = b[sortDescriptor.column];
+        let cmp = (first < second) ? -1 : (first > second) ? 1 : 0;
+
+        if (sortDescriptor.direction === 'descending') {
+            cmp *= -1;
+        }
+
+        return cmp;
+    });
+  }, [contracts, sortDescriptor]);
+
+
+  const requestSort = (column: keyof Contract | 'revenue' | 'costs' | 'margin') => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortDescriptor && sortDescriptor.column === column && sortDescriptor.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortDescriptor({ column, direction });
+  };
+
 
   const getLocationName = (id: string) => allLocations.find(l => l.id === id)?.name || 'N/A';
   const getAssetName = (id: string) => allAssets.find(a => a.id === id)?.name || 'N/A';
@@ -249,43 +332,12 @@ export default function ContractsPage() {
     }
   }
 
-  const calculateContractCosts = React.useCallback((contract: Contract) => {
-    const ninetyDaysAgo = addDays(new Date(), -90).getTime();
-    const contractWorkOrders = allWorkOrders.filter(wo => 
-      contract.coveredAssetIds.includes(wo.assetId) &&
-      wo.creationDate >= ninetyDaysAgo
-    );
-
-    let partsCost = 0;
-    if (contract.contractType === 'Integral') {
-        partsCost = contractWorkOrders.reduce((total, wo) => {
-            const orderPartsCost = (wo.partsUsed || []).reduce((acc, part) => {
-                const product = allProducts.find(p => p.id === part.productId);
-                return acc + (product ? product.price * part.quantity : 0);
-            }, 0);
-            return total + orderPartsCost;
-        }, 0);
-    }
-    
-    const laborCost = contractWorkOrders.reduce((total, wo) => {
-        if (!wo.startDate || !wo.endDate || !wo.responsibleId) return total;
-        const technician = allUsers.find(u => u.id === wo.responsibleId);
-        if (!technician || !technician.costPerHour) return total;
-        
-        const durationInHours = differenceInMilliseconds(new Date(wo.endDate), new Date(wo.startDate)) / (1000 * 60 * 60);
-        return total + (durationInHours * technician.costPerHour);
-    }, 0);
-
-    return partsCost + laborCost;
-  }, [allWorkOrders, allProducts, allUsers]);
-
   const getMarginStyle = (margin: number) => {
       if (margin < 0) return "text-destructive";
       if (margin < 0.2) return "text-amber-600 dark:text-amber-500";
       return "text-green-600 dark:text-green-500";
   }
 
-  const isLoading = contractsLoading || locationsLoading || assetsLoading || workOrdersLoading || productsLoading || usersLoading;
 
   if (!selectedClient) {
     return (
@@ -312,7 +364,12 @@ export default function ContractsPage() {
               <TableHead>{t('contracts.table.finalClient')}</TableHead>
               <TableHead>Receita (90d)</TableHead>
               <TableHead>Custos (90d)</TableHead>
-              <TableHead>Margem (90d)</TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => requestSort('margin')} className="px-1">
+                    Margem % (90d)
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+              </TableHead>
               <TableHead>{t('contracts.table.status')}</TableHead>
               <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
@@ -322,20 +379,16 @@ export default function ContractsPage() {
                 <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">Carregando contratos...</TableCell>
                 </TableRow>
-            ) : contracts.map(contract => {
+            ) : sortedContracts.map(contract => {
                 const status = getStatus(contract);
-                const revenue90d = contract.monthlyValue * 3;
-                const costs90d = calculateContractCosts(contract);
-                const margin = revenue90d > 0 ? (revenue90d - costs90d) / revenue90d : -1;
-
                 return (
                   <TableRow key={contract.id}>
                     <TableCell className="font-medium">{contract.title}</TableCell>
                     <TableCell>{getLocationName(contract.customerLocationId)}</TableCell>
-                    <TableCell>R$ {revenue90d.toFixed(2)}</TableCell>
-                    <TableCell>R$ {costs90d.toFixed(2)}</TableCell>
-                    <TableCell className={cn("font-semibold", getMarginStyle(margin))}>
-                      {margin === -1 ? 'N/A' : `${(margin * 100).toFixed(1)}%`}
+                    <TableCell>R$ {contract.revenue90d.toFixed(2)}</TableCell>
+                    <TableCell>R$ {contract.costs90d.toFixed(2)}</TableCell>
+                    <TableCell className={cn("font-semibold", getMarginStyle(contract.margin))}>
+                      {contract.margin === -1 ? 'N/A' : `${(contract.margin * 100).toFixed(1)}%`}
                     </TableCell>
                     <TableCell>
                         <Badge variant="outline" className={cn('border', getStatusBadgeVariant(status))}>
@@ -519,5 +572,3 @@ export default function ContractsPage() {
     </div>
   );
 }
-
-    
