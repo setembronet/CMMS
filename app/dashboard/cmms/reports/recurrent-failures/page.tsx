@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
-import { AlertTriangle, TrendingDown, Wrench, Loader2 } from 'lucide-react';
+import { TrendingDown, Wrench, Loader2 } from 'lucide-react';
 import type { WorkOrder, Asset, User, Product } from '@/lib/types';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
