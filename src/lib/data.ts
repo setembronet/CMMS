@@ -1,12 +1,10 @@
 
-import type { Company, User, Asset, WorkOrder, Plan, Addon, CompanySegment, CMMSRole, CustomerLocation, Contact, Interaction, Product, Contract, MaintenanceFrequency, ChecklistTemplate, Supplier, SupplierCategory, PurchaseOrder, ChartOfAccount, CostCenter, AccountsPayable, AccountsReceivable, BankAccount, Checklist, Schedule } from './types';
-import { PlaceHolderImages } from './placeholder-images';
+import type { MaintenanceFrequency, RootCause, RecommendedAction, PurchaseOrder, AccountsPayable, Contract, CustomerLocation, AccountsReceivable, WorkOrder, Product, Supplier, Schedule, Company, CMMSRole, Addon, Plan, CompanySegment, ChecklistTemplate, User } from './types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
 
-const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';
-
-// This file is now mostly deprecated in favor of Firestore, but some data might still be here for reference.
-// The goal is to move all of these to Firestore collections.
+// This file contains only static or helper data that doesn't change.
+// All dynamic application data is now managed in Firestore.
 
 export const maintenanceFrequencies: { value: MaintenanceFrequency, label: string }[] = [
     { value: 'DIARIA', label: 'Diária' },
@@ -33,22 +31,25 @@ export const recommendedActions: { value: string, label: string }[] = [
 ];
 
 
-export let kpis = {
-    activeUsers: 0,
-    mockMrr: 1250, 
-    activeClients: 0,
-    inactiveClients: 0,
-    overdueInvoices: [
-        {id: 'inv-001', companyId: 'client-01', customerLocationId: 'loc-01', dueDate: '2024-07-15', totalValue: 249},
-        {id: 'inv-002', companyId: 'client-02', customerLocationId: 'loc-03', dueDate: '2024-07-10', totalValue: 999},
-    ],
+export const createAccountPayableFromPO = (po: PurchaseOrder, allSuppliers: Supplier[]): Omit<AccountsPayable, 'id'> => {
+  const supplier = allSuppliers.find(s => s.id === po.supplierId);
+  return {
+    description: `Fatura referente à OC #${po.id.slice(-6)}`,
+    supplierOrCreditor: supplier?.name || 'Fornecedor Desconhecido',
+    dueDate: new Date().getTime(),
+    value: po.totalValue,
+    status: 'Pendente',
+    costCenterId: 'cc-03', // Compras
+    chartOfAccountId: 'coa-9', // Fornecedores
+    isRecurring: false,
+    recurrenceFrequency: 'MENSAL',
+    recurrenceInstallments: 1
+  }
 };
 
 
 export const generateReceivablesFromContracts = (clientId: string, contracts: Contract[], existingReceivables: AccountsReceivable[], customerLocations: CustomerLocation[]) => {
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
     const clientContracts = contracts.filter(c => {
         const location = customerLocations.find(l => l.id === c.customerLocationId);
         return location?.clientId === clientId;
@@ -62,10 +63,11 @@ export const generateReceivablesFromContracts = (clientId: string, contracts: Co
         const alreadyExists = existingReceivables.some(ar => ar.description === descriptionPattern);
 
         if (!alreadyExists) {
-            const newReceivable: Omit<AccountsReceivable, 'id'> = {
+            const newReceivable: Omit<AccountsReceivable, 'id'> & { id: string } = {
+                id: `ar-${Date.now()}-${contract.id}`,
                 description: descriptionPattern,
                 customerLocationId: contract.customerLocationId,
-                dueDate: new Date(currentYear, currentMonth, 10).getTime(), 
+                dueDate: new Date(today.getFullYear(), today.getMonth(), 10).getTime(), 
                 value: contract.monthlyValue,
                 status: 'Pendente',
                 chartOfAccountId: 'coa-3', 
@@ -78,9 +80,46 @@ export const generateReceivablesFromContracts = (clientId: string, contracts: Co
     return { newReceivables, generatedCount };
 }
 
+// In a real application, this would fetch all collections from Firestore.
+export const getBackupData = (data: any) => {
+  console.log("Backup function called. In a real app, this would fetch from all Firestore collections.");
+  return {
+    ...data
+  };
+};
 
-// These functions are for in-memory data manipulation, which is now deprecated.
-// They will be removed in a future step once all components use Firestore directly.
+// In a real application, this would perform batch writes to all collections.
+export const restoreData = (data: any) => {
+  console.log("Restore function called. This is a mock implementation.");
+  // The actual logic would involve iterating through collections and using setDoc.
+};
+
+
+// These exports are here for reference, but data is now primarily managed via Firestore hooks in components.
+// Note: These empty arrays and functions are being kept to avoid breaking other parts of the app that
+// might still be importing them, even if they are not actively used.
+export const companies: Company[] = [];
+export const segments: CompanySegment[] = [];
+export let cmmsRoles: CMMSRole[] = [];
+export const customerLocations: CustomerLocation[] = [];
+export const users: User[] = [];
+export const assets: Asset[] = [];
+export const contracts: Contract[] = [];
+export const products: Product[] = [];
+export const suppliers: Supplier[] = [];
+export const workOrders: WorkOrder[] = [];
+export const costCenters: CostCenter[] = [];
+export const chartOfAccounts: ChartOfAccount[] = [];
+export const accountsPayable: AccountsPayable[] = [];
+export const accountsReceivable: AccountsReceivable[] = [];
+export const bankAccounts: BankAccount[] = [];
+export const checklistTemplates: ChecklistTemplate[] = [];
+export const schedules: Schedule[] = [];
+export const plans: Plan[] = [];
+export const addons: Addon[] = [];
+export const kpis = {};
+
+
 export const setWorkOrders = (newWorkOrders: WorkOrder[]) => {};
 export const setProducts = (newProducts: Product[]) => {};
 export const setContracts = (newContracts: Contract[]) => {};
@@ -88,12 +127,9 @@ export const setSuppliers = (newSuppliers: Supplier[]) => {};
 export const setPurchaseOrders = (newPOs: PurchaseOrder[]) => {};
 export const setSchedules = (newSchedules: Schedule[]) => {};
 export const setAccountsPayable = (newAPs: AccountsPayable[]) => {};
-export const createAccountPayableFromPO = (po: PurchaseOrder): Omit<AccountsPayable, 'id'> => { return {} as any };
 export const setAccountsReceivable = (newARs: AccountsReceivable[]) => {};
 export const setBankAccounts = (newBAs: BankAccount[]) => {};
 export const setKpis = (newKpis: typeof kpis) => {};
-export const getBackupData = () => {};
-export const restoreData = (data: any) => {};
 export const setCompanies = (newCompanies: Company[]) => {};
 export const setCustomerLocations = (newLocations: CustomerLocation[]) => {}
 export const setUsers = (newUsers: User[]) => {};
@@ -102,3 +138,4 @@ export const setAddons = (newAddons: Addon[]) => {};
 export const setSegments = (newSegments: CompanySegment[]) => {};
 export const setChecklistTemplates = (newTemplates: ChecklistTemplate[]) => {};
 export const setCmmsRoles = (newRoles: CMMSRole[]) => {};
+const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || '';

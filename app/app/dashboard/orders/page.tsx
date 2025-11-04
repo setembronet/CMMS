@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -383,7 +384,7 @@ export default function WorkOrdersPage() {
             if (quantityChange !== 0) {
                 const product = allProducts.find(p => p.id === productId);
                 if (product) {
-                    const newStock = product.stock + quantityChange; // add back old, subtract new
+                    const newStock = product.stock - quantityChange;
                     await updateDocument(firestore, 'products', productId, { stock: newStock });
                 }
             }
