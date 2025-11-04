@@ -32,6 +32,7 @@ import {
   ArrowRightLeft,
   Landmark,
   CalendarDays,
+  LineChart
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -239,6 +240,14 @@ export function SidebarNav() {
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                             <SidebarMenuSubItem>
+                                <SidebarMenuSubButton asChild isActive={isActive('/dashboard/client-portal', true)}>
+                                    <Link href="/dashboard/client-portal">
+                                        <Home />
+                                        <span>{t('sidebar.clientPortal')}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/assets', true)}>
                                     <Link href="/dashboard/assets">
                                         <Package />
@@ -311,6 +320,29 @@ export function SidebarNav() {
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                         </SidebarMenuSub>
+
+                         <Collapsible asChild defaultOpen={pathname.startsWith('/dashboard/cmms/reports')}>
+                            <div>
+                                <CollapsibleTrigger className="w-full">
+                                    <div className="flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 px-4 py-2 cursor-pointer hover:text-sidebar-foreground">
+                                        <span>Relatórios</span>
+                                        <ChevronDown className={cn("transition-transform duration-200", pathname.startsWith('/dashboard/cmms/reports') && "rotate-180")} />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <SidebarMenuSub>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton asChild isActive={isActive('/dashboard/cmms/reports/technician-productivity', true)}>
+                                                <Link href="/dashboard/cmms/reports/technician-productivity">
+                                                    <LineChart />
+                                                    <span>Produtividade</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    </SidebarMenuSub>
+                                </CollapsibleContent>
+                            </div>
+                        </Collapsible>
                         
                         <Collapsible asChild defaultOpen={isCmmsBackofficeActive}>
                             <div>
@@ -378,38 +410,6 @@ export function SidebarNav() {
                 </div>
             </Collapsible>
            </SidebarMenuItem>
-
-           <SidebarMenuItem>
-                <Collapsible asChild defaultOpen={isClientPortalActive}>
-                    <div>
-                        <CollapsibleTrigger asChild>
-                            <SidebarMenuButton
-                                isActive={isClientPortalActive}
-                                className="justify-between"
-                                tooltip={{ children: t('sidebar.clientPortal') }}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Home />
-                                    <span>{t('sidebar.clientPortal')}</span>
-                                </div>
-                                <ChevronDown className={cn("transition-transform duration-200", isClientPortalActive && "rotate-180")} />
-                            </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                           <SidebarMenuSub>
-                               <SidebarMenuSubItem>
-                                 <SidebarMenuSubButton asChild isActive={isActive('/dashboard/client-portal', true)}>
-                                    <Link href="/dashboard/client-portal">
-                                        <LayoutGrid />
-                                        <span>Visão Geral</span>
-                                    </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                           </SidebarMenuSub>
-                        </CollapsibleContent>
-                    </div>
-                </Collapsible>
-            </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu className="mt-auto">
            <SidebarMenuItem>
