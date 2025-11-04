@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown, Gauge, ListChecks, Timer, User } from 'lucide-react';
+import { ArrowUpDown, Gauge, ListChecks, Timer, User as UserIcon, Loader2 } from 'lucide-react';
 import type { WorkOrder, User } from '@/lib/types';
 import { useClient } from '@/context/client-provider';
 import { useI18n } from '@/hooks/use-i18n';
@@ -19,7 +20,6 @@ import { useCollection } from '@/firebase/firestore';
 import { subDays, differenceInHours } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2 } from 'lucide-react';
 
 type TechnicianProductivityData = {
   technician: User;
@@ -31,7 +31,7 @@ type TechnicianProductivityData = {
 };
 
 type SortDescriptor = {
-  column: keyof TechnicianProductivityData | 'technician.name';
+  column: keyof TechnicianProductivityData | 'technicianName';
   direction: 'ascending' | 'descending';
 };
 
@@ -92,27 +92,25 @@ export default function TechnicianProductivityReportPage() {
   }, [isLoading, selectedClient, workOrders, users]);
   
   const sortedData = React.useMemo(() => {
-    if (!sortDescriptor) return productivityData;
-
     return [...productivityData].sort((a, b) => {
+      const { column, direction } = sortDescriptor;
       let first: any;
       let second: any;
-      
-      if (sortDescriptor.column === 'technician.name') {
+
+      if (column === 'technicianName') {
         first = a.technician.name;
         second = b.technician.name;
       } else {
-        first = a[sortDescriptor.column as keyof TechnicianProductivityData];
-        second = b[sortDescriptor.column as keyof TechnicianProductivityData];
+        first = a[column as keyof Omit<TechnicianProductivityData, 'technician'>];
+        second = b[column as keyof Omit<TechnicianProductivityData, 'technician'>];
       }
       
-      // Handle nulls: null values are always considered 'larger' (pushed to the end when ascending)
       if (first === null) return 1;
       if (second === null) return -1;
       
       let cmp = (first < second) ? -1 : (first > second) ? 1 : 0;
       
-      if (sortDescriptor.direction === 'descending') {
+      if (direction === 'descending') {
           cmp *= -1;
       }
 
@@ -121,7 +119,7 @@ export default function TechnicianProductivityReportPage() {
 
   }, [productivityData, sortDescriptor]);
 
-  const requestSort = (column: keyof TechnicianProductivityData | 'technician.name') => {
+  const requestSort = (column: keyof TechnicianProductivityData | 'technicianName') => {
       let direction: 'ascending' | 'descending' = 'ascending';
       if (sortDescriptor && sortDescriptor.column === column && sortDescriptor.direction === 'ascending') {
           direction = 'descending';
@@ -161,8 +159,8 @@ export default function TechnicianProductivityReportPage() {
             <TableHeader>
               <TableRow>
                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('technician.name')} className="px-1">
-                        <User className="mr-2 h-4 w-4" />
+                    <Button variant="ghost" onClick={() => requestSort('technicianName')} className="px-1">
+                        <UserIcon className="mr-2 h-4 w-4" />
                         Técnico
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
